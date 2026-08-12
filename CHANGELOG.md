@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.1.3] - 2026-08-12
+- Atualização do título da aplicação para **WebRiders TCV**.
+- Vinculação dinâmica do subtítulo da barra lateral com a constante de versão do sistema (`config.APP_VERSION`).
+
 ## [1.1.2] - 2026-08-12
 - Redesign completo da tela e popups de carregamento (`LoadingPopup`, `LoadingOverlay`, `PopupLoadingOverlay`).
 - Novo spinner duplo animado em vermelho elétrico (`#FF1E27`), fundo esmaecido (`#070709`) e marca WEBRIDERS.

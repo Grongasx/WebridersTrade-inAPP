@@ -30,6 +30,12 @@ FONT_MONO  = ("Consolas", 11)
 FONT_CODE  = ("Consolas", 14, "bold")
 
 # ═══════════════════════════════════════════
+# Nome e Versão da Aplicação
+# ═══════════════════════════════════════════
+APP_TITLE   = "WebRiders TCV"
+APP_VERSION = "v1.1.3"
+
+# ═══════════════════════════════════════════
 # Caminho do banco de dados
 # ═══════════════════════════════════════════
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vale_presente.db")

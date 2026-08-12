@@ -3,7 +3,7 @@ Sidebar com navegacao do sistema.
 """
 
 import tkinter as tk
-from config import BG, BG2, BG3, GOLD, TEXT, TEXT_DIM
+from config import BG, BG2, BG3, GOLD, TEXT, TEXT_DIM, APP_TITLE, APP_VERSION
 from config import FONT_SMALL
 from ui.components.base import UIBuilder
 
@@ -26,8 +26,8 @@ class Sidebar:
         fl = UIBuilder.frame(self.frame, bg=BG2, pady=22)
         fl.pack(fill="x")
         UIBuilder.label(fl, "❖", font=("Segoe UI Black", 32), bg=BG2, fg=GOLD).pack()
-        UIBuilder.label(fl, "WEBRIDERS CLUB", font=("Segoe UI Black", 13, "bold"), bg=BG2, fg=TEXT).pack()
-        UIBuilder.label(fl, "Trade-in & Vales v4.0", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack()
+        UIBuilder.label(fl, APP_TITLE, font=("Segoe UI Black", 14, "bold"), bg=BG2, fg=TEXT).pack()
+        UIBuilder.label(fl, f"Versão {APP_VERSION}", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack()
         UIBuilder.separator(self.frame).pack(fill="x", padx=14, pady=2)
 
         menus = [
@@ -50,7 +50,7 @@ class Sidebar:
 
         UIBuilder.separator(self.frame).pack(fill="x", padx=14, pady=6)
         UIBuilder.label(self.frame, self.db_path, font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(side="bottom", pady=(0, 8))
-        UIBuilder.label(self.frame, "WEBRIDERS CLUB", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD).pack(side="bottom", pady=2)
+        UIBuilder.label(self.frame, APP_TITLE, font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD).pack(side="bottom", pady=2)
     
     def set_active(self, key):
         """Define o botao ativo na sidebar."""

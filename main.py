@@ -14,7 +14,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # Configuracoes
-from config import BG, DB_PATH
+from config import BG, DB_PATH, APP_TITLE, APP_VERSION
 
 # Core
 from core.database import init_db, get_conn
@@ -44,7 +44,7 @@ class App(tk.Tk):
     
     def __init__(self):
         super().__init__()
-        self.title("WEBRIDERS CLUB — Trade-in & Vale Manager v4.0")
+        self.title(f"{APP_TITLE} — {APP_VERSION}")
         self.geometry("1200x720")
         self.minsize(900, 600)
         self.configure(bg=BG)
