@@ -65,9 +65,10 @@ class App(tk.Tk):
         # Tela inicial
         self.show("dashboard")
         
-    def executar_async(self, funcao_task, callback_sucesso=None, mensagem="Carregando..."):
-        """Executa a função de banco em background enquanto exibe o popup escurecido."""
-        self.loading.start(mensagem)
+    def executar_async(self, funcao_task, callback_sucesso=None, mensagem="Carregando...", show_global_loading=True):
+        """Executa a função de banco em background. Se show_global_loading=True, exibe o popup escurecido na janela principal."""
+        if show_global_loading:
+            self.loading.start(mensagem)
 
         def worker():
             resultado = None
@@ -78,12 +79,13 @@ class App(tk.Tk):
                 erro = e
 
             # Devolve o resultado para a Thread Principal do Tkinter
-            self.after(0, lambda: self._finalizar_async(resultado, erro, callback_sucesso))
+            self.after(0, lambda: self._finalizar_async(resultado, erro, callback_sucesso, show_global_loading))
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def _finalizar_async(self, resultado, erro, callback_sucesso):
-        self.loading.stop() # Fecha o popup e remove o escurecimento
+    def _finalizar_async(self, resultado, erro, callback_sucesso, show_global_loading=True):
+        if show_global_loading:
+            self.loading.stop() # Fecha o popup e remove o escurecimento apenas se exibido
         if erro:
             print(f"[ERRO ASYNC]: {erro}")
             self.toast.show(f"Erro ao carregar dados: {erro}", "erro")

@@ -1,5 +1,8 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.1.4] - 2026-08-12
+- Adicionado parâmetro `show_global_loading=False` em `executar_async` para evitar que a tela principal esmaecida/carregue ao abrir janelas popup.
+
 ## [1.1.3] - 2026-08-12
 - Atualização do título da aplicação para **WebRiders TCV**.
 - Vinculação dinâmica do subtítulo da barra lateral com a constante de versão do sistema (`config.APP_VERSION`).

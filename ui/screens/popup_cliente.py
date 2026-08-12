@@ -79,7 +79,8 @@ class PopupClienteDetalhe:
         self.app.executar_async(
             funcao_task=_buscar_db,
             callback_sucesso=_ao_concluir,
-            mensagem=None
+            mensagem=None,
+            show_global_loading=False
         )
     
     def _render_conteudo(self, cli, vales):
@@ -152,7 +153,8 @@ class PopupClienteDetalhe:
                         self.app.executar_async(
                             funcao_task=_tarefa_baixa,
                             callback_sucesso=_ao_concluir_baixa,
-                            mensagem=None
+                            mensagem=None,
+                            show_global_loading=False
                         )
 
                 UIBuilder.button(vf, "✅ Dar Baixa", dar_baixa, color=BG3, width=14).pack(anchor="e", pady=(4, 0))
@@ -216,7 +218,8 @@ class PopupClienteDetalhe:
                     self.app.executar_async(
                         funcao_task=_tarefa_baixa,
                         callback_sucesso=_ao_concluir_baixa,
-                        mensagem=None
+                        mensagem=None,
+                        show_global_loading=False
                     )
 
             UIBuilder.button(brow, "✅ Dar Baixa", dar_baixa, color=SUCCESS, width=14).pack(side="left", padx=8)
@@ -270,7 +273,8 @@ class PopupClienteEditar:
         self.app.executar_async(
             funcao_task=_buscar_db,
             callback_sucesso=_ao_concluir,
-            mensagem=None
+            mensagem=None,
+            show_global_loading=False
         )
 
     def _render_form(self, cli):
@@ -325,8 +329,8 @@ class PopupClienteEditar:
             self.app.executar_async(
                 funcao_task=_tarefa_salvar,
                 callback_sucesso=_ao_concluir_salvar,
-                callback_erro=_ao_erro,
-                mensagem=None
+                mensagem=None,
+                show_global_loading=False
             )
 
         self.win.bind("<Return>", lambda _: salvar())
@@ -419,7 +423,8 @@ class PopupResgatarVale:
             self.app.executar_async(
                 funcao_task=_tarefa_buscar,
                 callback_sucesso=_ao_concluir_busca,
-                mensagem=None
+                mensagem=None,
+                show_global_loading=False
             )
 
         UIBuilder.button(body, "🔍 Buscar", buscar, color=BG3, width=14).pack(anchor="w")
@@ -467,7 +472,8 @@ class PopupResgatarVale:
             self.app.executar_async(
                 funcao_task=_tarefa_resgatar,
                 callback_sucesso=_ao_concluir_resgate,
-                mensagem=None
+                mensagem=None,
+                show_global_loading=False
             )
 
         UIBuilder.button(brow, "✅ Confirmar Resgate", confirmar, color=SUCCESS, width=18).pack(side="left")
