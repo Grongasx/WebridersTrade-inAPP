@@ -44,7 +44,7 @@ class App(tk.Tk):
     
     def __init__(self):
         super().__init__()
-        self.title("Vale Presente Manager v4.0")
+        self.title("WEBRIDERS CLUB — Trade-in & Vale Manager v4.0")
         self.geometry("1200x720")
         self.minsize(900, 600)
         self.configure(bg=BG)

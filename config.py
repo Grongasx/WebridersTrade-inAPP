@@ -6,23 +6,23 @@ Configuracoes globais do Vale Presente Manager.
 import os
 
 # ═══════════════════════════════════════════
-# Paleta de cores – tema escuro com dourado
+# Paleta de cores – WEBRIDERS CLUB (Off-Black e Vermelho Elétrico)
 # ═══════════════════════════════════════════
-BG       = "#1A1A2E"
-BG2      = "#16213E"
-BG3      = "#0F3460"
-ACCENT   = "#E94560"
-GOLD     = "#F5A623"
-TEXT     = "#EAEAEA"
-TEXT_DIM = "#8A8FA8"
-SUCCESS  = "#4CAF50"
-WARNING  = "#FF9800"
-DANGER   = "#E94560"
+BG       = "#0D0D10"
+BG2      = "#18181C"
+BG3      = "#24242A"
+ACCENT   = "#FF1E27"
+GOLD     = "#FF1E27"
+TEXT     = "#FFFFFF"
+TEXT_DIM = "#9E9EA7"
+SUCCESS  = "#22C55E"
+WARNING  = "#F59E0B"
+DANGER   = "#FF1E27"
 
 # ═══════════════════════════════════════════
 # Fontes
 # ═══════════════════════════════════════════
-FONT_TITLE = ("Segoe UI", 22, "bold")
+FONT_TITLE = ("Segoe UI Black", 22, "bold")
 FONT_H2    = ("Segoe UI", 14, "bold")
 FONT_BODY  = ("Segoe UI", 11)
 FONT_SMALL = ("Segoe UI", 9)

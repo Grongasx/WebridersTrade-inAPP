@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.1.0] - 2026-08-12
+- Redesign completo da interface gráfica para a identidade visual **WEBRIDERS CLUB**.
+- Nova paleta Off-Black (`#0D0D10`), Grafite (`#18181C`) e Vermelho Elétrico (`#FF1E27`).
+- Atualização do logotipo e barra de navegação para `WEBRIDERS CLUB — Trade-in & Vale Manager`.
+
 ## [1.0.4] - 2026-08-12
 - Passagem de objeto `date` nativo em `novo_vale_screen.py`.
 - Tratamento de exceção genérica no cadastro em `novo_cliente_screen.py`.
