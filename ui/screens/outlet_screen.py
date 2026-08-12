@@ -33,9 +33,19 @@ class OutletScreen(BaseScreen):
         def _buscar_db():
             with get_conn() as conn:
                 return conn.execute("""
-                    SELECT p.id, p.codigo_barras, p.nome, p.tamanho, c.nome, p.preco_outlet, p.estoque, p.status, c.id AS cliente_id
+                    SELECT p.id, 
+                           COALESCE(p.sku, p.codigo_barras) AS sku, 
+                           COALESCE(p.tipo, 'Outros') AS tipo, 
+                           CONCAT(COALESCE(p.marca, ''), ' ', COALESCE(p.modelo, p.nome)) AS produto,
+                           CONCAT(COALESCE(p.grafico, '—'), ' / ', COALESCE(p.cor, '—')) AS grafico_cor,
+                           COALESCE(p.numeracao, p.tamanho, '—') AS numeracao,
+                           COALESCE(c.nome, '—') AS cliente_nome, 
+                           COALESCE(p.preco_outlet, p.valor_sugerido, 0) AS preco, 
+                           COALESCE(p.quantidade, p.estoque, 1) AS quantidade, 
+                           p.status, 
+                           c.id AS cliente_id
                     FROM produtos_outlet p 
-                    JOIN clientes c ON p.cliente_id = c.id 
+                    LEFT JOIN clientes c ON p.cliente_id = c.id 
                     ORDER BY p.id DESC
                 """).fetchall()
 
@@ -52,27 +62,27 @@ class OutletScreen(BaseScreen):
         )
     
     def _build(self):
-        h = self.build_header("🏷️ Outlet — Produtos", fg=GOLD)
+        h = self.build_header("🏷️ Outlet — Produtos & SKU", fg=GOLD)
         
         fb = UIBuilder.frame(self.content, pady=10, padx=28)
         fb.pack(fill="x")
-        UIBuilder.label(fb, "🔍 Buscar:", bg=BG, fg=TEXT_DIM, font=FONT_SMALL).pack(side="left", padx=(0, 6))
-        UIBuilder.entry(fb, var=self._busca_out, width=35).pack(side="left", ipady=5)
+        UIBuilder.label(fb, "🔍 Buscar SKU, Produto, Marca ou Cliente:", bg=BG, fg=TEXT_DIM, font=FONT_SMALL).pack(side="left", padx=(0, 6))
+        UIBuilder.entry(fb, var=self._busca_out, width=38).pack(side="left", ipady=5)
         
         # Filtra a treeview em memória sem nova requisição SQL
         self._busca_out.trace_add("write", lambda *_: self._popular_tree())
 
         brow = UIBuilder.frame(self.content, padx=28, pady=8)
         brow.pack(side="bottom", fill="x")
-        UIBuilder.button(brow, "➕ Dar Entrada", self._entrada, color=GOLD, fg="#000", width=18).pack(side="left", padx=4)
-        UIBuilder.button(brow, "✅ Dar Baixa / Venda", self._baixa, color=SUCCESS, width=18).pack(side="left", padx=4)
+        UIBuilder.button(brow, "➕ Novo Produto / SKU", self._entrada, color=GOLD, fg="#000", width=22).pack(side="left", padx=4)
+        UIBuilder.button(brow, "✅ Dar Baixa / Venda", self._baixa, color=SUCCESS, width=20).pack(side="left", padx=4)
         UIBuilder.button(brow, "🗑 Remover", self._excluir, color=DANGER, width=16).pack(side="left", padx=4)
 
         tf = UIBuilder.frame(self.content, padx=28, pady=4)
         tf.pack(fill="both", expand=True)
-        cols = ("ID", "Cód. Barras", "Produto/Item", "Tamanho", "Dono (Cliente)", "Preço Outlet", "Qtd", "Status")
-        widths = [45, 130, 200, 60, 180, 110, 50, 100]
-        anchors = ["center", "w", "w", "center", "w", "center", "center", "center"]
+        cols = ("ID", "SKU", "Tipo", "Marca / Modelo", "Gráfico / Cor", "Numeração", "Proprietário", "Preço Outlet", "Qtd", "Status")
+        widths = [45, 140, 75, 180, 130, 80, 140, 95, 45, 80]
+        anchors = ["center", "center", "center", "w", "w", "center", "w", "center", "center", "center"]
         self._tree_out = UIBuilder.make_tree(tf, cols, widths, anchors)
 
     def _popular_tree(self):
@@ -85,17 +95,17 @@ class OutletScreen(BaseScreen):
             self._tree_out.delete(r)
 
         for r in self._todos_produtos:
-            # r = (id, codigo_barras, nome_prod, tamanho, nome_cli, preco_outlet, estoque, status, cliente_id)
-            cod_barras = (r[1] or "").lower()
-            nome_prod = (r[2] or "").lower()
-            nome_cli = (r[4] or "").lower()
+            # r = (id, sku, tipo, produto, grafico_cor, numeracao, cliente_nome, preco, quantidade, status, cliente_id)
+            sku_str = (r[1] or "").lower()
+            prod_str = (r[3] or "").lower()
+            cli_str = (r[6] or "").lower()
 
-            if busca and (busca not in cod_barras and busca not in nome_prod and busca not in nome_cli): 
+            if busca and (busca not in sku_str and busca not in prod_str and busca not in cli_str): 
                 continue
 
             self._tree_out.insert(
                 "", "end", iid=str(r[0]), 
-                values=(r[0], r[1] or "—", r[2], r[3] or "—", r[4], brl(r[5]), r[6], r[7])
+                values=(r[0], r[1] or "—", r[2], r[3], r[4], r[5], r[6], brl(r[7]), r[8], r[9])
             )
 
     def _sel_id(self):
@@ -119,9 +129,9 @@ class OutletScreen(BaseScreen):
         if not item_data: 
             return
 
-        nome_prod = item_data[2]
-        preco_outlet = float(item_data[5])
-        cliente_id = item_data[8]
+        nome_prod = item_data[3]
+        preco_outlet = float(item_data[7] or 0)
+        cliente_id = item_data[10]
 
         win = tk.Toplevel(self.app)
         win.title("Baixa de Produto")

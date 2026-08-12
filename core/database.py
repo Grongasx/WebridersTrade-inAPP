@@ -95,15 +95,24 @@ def init_db():
         # Migração: Adiciona colunas faltantes na tabela produtos_outlet
         colunas_outlet = [
             ("cliente_id", "BIGINT REFERENCES clientes(id) ON DELETE SET NULL"),
+            ("sku", "VARCHAR(100) UNIQUE"),
+            ("tipo", "VARCHAR(100)"),
             ("marca", "VARCHAR(100)"),
+            ("modelo", "VARCHAR(100)"),
+            ("grafico", "VARCHAR(255)"),
+            ("cor", "VARCHAR(100)"),
+            ("numeracao", "VARCHAR(50)"),
             ("tamanho", "VARCHAR(50)"),
-            ("estoque", "INT DEFAULT 1")
+            ("quantidade", "INT DEFAULT 1"),
+            ("estoque", "INT DEFAULT 1"),
+            ("valor_sugerido", "NUMERIC(10, 2)")
         ]
         for col_nome, col_def in colunas_outlet:
             conn.execute(f"""
                 ALTER TABLE produtos_outlet 
                 ADD COLUMN IF NOT EXISTS {col_nome} {col_def};
             """)
+
 
         # 5. Tabela Vendas Outlet
         conn.execute("""

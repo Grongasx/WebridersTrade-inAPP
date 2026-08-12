@@ -162,3 +162,126 @@ def creditar_cliente(cliente_id, valor, tipo, motivo, conn=None):
         with get_conn() as c:
             _executar(c)
             c.commit()
+
+
+# ═══════════════════════════════════════════
+# Estruturas de produtos e cálculo de SKU
+# ═══════════════════════════════════════════
+TIPO_PREFIXOS = {
+    "Shape": "SHP",
+    "Rodas": "ROD",
+    "Trucks": "TRK",
+    "Lixas": "LIX",
+    "Tênis": "TNS",
+    "Vestuário": "VES",
+    "Acessórios": "ACS",
+    "Hardware": "HRD",
+    "Outros": "OUT",
+}
+
+NUMERACAO_POR_TIPO = {
+    "Shape": ["7.5\"", "7.75\"", "8.0\"", "8.125\"", "8.25\"", "8.375\"", "8.5\"", "8.75\"", "9.0\"", "Único"],
+    "Rodas": ["50mm", "51mm", "52mm", "53mm", "54mm", "55mm", "56mm", "58mm", "60mm"],
+    "Trucks": ["129mm", "139mm", "144mm", "149mm", "154mm", "159mm", "169mm"],
+    "Tênis": ["34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    "Vestuário": ["PP", "P", "M", "G", "GG", "XGG", "Único"],
+    "Lixas": ["Padrão", "Grip Tape", "Único"],
+    "Acessórios": ["Único", "Infantil", "Adulto"],
+    "Hardware": ["7/8\"", "1\"", "1 1/8\"", "1 1/4\"", "Único"],
+    "Outros": ["Único", "Padrão"]
+}
+
+
+def calcular_sku(tipo, marca, modelo, grafico, cor, numeracao, seed_id=None):
+    """
+    Calcula dinamicamente um SKU interno único no formato:
+    WR-[TIPO]-[MARCA]-[TAMANHO]-[HASH] Ex: WR-SHP-SAN-80-4912
+    """
+    t_pref = TIPO_PREFIXOS.get(tipo, "OUT")
+    
+    m_clean = re.sub(r"[^A-Za-Z0-9]", "", (marca or "").upper())
+    m_pref = (m_clean[:3] if len(m_clean) >= 3 else m_clean.ljust(3, "X")) if m_clean else "GEN"
+
+    n_clean = re.sub(r"[^A-Za-Z0-9]", "", (numeracao or "").upper())
+    n_pref = n_clean[:4] if n_clean else "UNI"
+
+    if seed_id:
+        seq = f"{int(seed_id):04d}"
+    else:
+        import time
+        raw = f"{tipo}{marca}{modelo}{grafico}{cor}{numeracao}{time.time()}"
+        h_val = abs(hash(raw)) % 10000
+        seq = f"{h_val:04d}"
+
+    return f"WR-{t_pref}-{m_pref}-{n_pref}-{seq}"
+
+
+CODE39_PATTERNS = {
+    '0': '101001101', '1': '201001002', '2': '102001002', '3': '202001001',
+    '4': '101021002', '5': '201021001', '6': '102021001', '7': '101001202',
+    '8': '201001201', '9': '102001201', 'A': '201002101', 'B': '102002101',
+    'C': '202002100', 'D': '101022100', 'E': '201022100', 'F': '102022100',
+    'G': '101002201', 'H': '201002200', 'I': '102002200', 'J': '101022200',
+    'K': '201001021', 'L': '102001021', 'M': '202001020', 'N': '101021020',
+    'O': '201021020', 'P': '102021020', 'Q': '101002021', 'R': '201002020',
+    'S': '102002020', 'T': '101022020', 'U': '220010101', 'V': '120020101',
+    'W': '220020100', 'X': '120010201', 'Y': '220010200', 'Z': '120020200',
+    '-': '120010102', '.': '220010100', ' ': '120201001', '$': '120120100',
+    '/': '120100120', '+': '120012010', '%': '100120120', '*': '120102010'
+}
+
+
+def gerar_imagem_barcode_sku(codigo_str: str, largura_px: int, altura_px: int):
+    """Gera uma imagem PIL de código de barras Code39 universal para SKUs e EANs."""
+    from PIL import Image, ImageDraw, ImageFont
+    
+    raw_code = str(codigo_str).upper().strip()
+    valid_code = ''.join([c for c in raw_code if c in CODE39_PATTERNS])
+    if not valid_code:
+        valid_code = "SKU-0000"
+        
+    full_code = f"*{valid_code}*"
+    
+    largura_px = max(40, largura_px)
+    altura_px = max(20, altura_px)
+    
+    modules = []
+    for char in full_code:
+        pat = CODE39_PATTERNS.get(char, CODE39_PATTERNS['*'])
+        for i, val in enumerate(pat):
+            is_bar = (i % 2 == 0)
+            width = 2.2 if val == '2' else 1.0
+            modules.append((is_bar, width))
+        modules.append((False, 1.0))  # Gap entre caracteres
+        
+    total_units = sum(w for _, w in modules)
+    unit_px = largura_px / float(total_units)
+    
+    img = Image.new("RGB", (largura_px, altura_px), "white")
+    draw = ImageDraw.Draw(img)
+    
+    text_h = max(8, int(altura_px * 0.28))
+    bar_h = altura_px - text_h
+    
+    curr_x = 0.0
+    for is_bar, w_units in modules:
+        next_x = curr_x + (w_units * unit_px)
+        if is_bar:
+            draw.rectangle([int(curr_x), 0, int(next_x), bar_h], fill="black")
+        curr_x = next_x
+        
+    try:
+        font = ImageFont.truetype("arialbd.ttf", text_h - 1)
+    except IOError:
+        font = ImageFont.load_default()
+        
+    if hasattr(draw, "textlength"):
+        tw = draw.textlength(valid_code, font=font)
+    else:
+        bbox = font.getbbox(valid_code)
+        tw = bbox[2] - bbox[0]
+        
+    tx = max(0, int((largura_px - tw) / 2))
+    draw.text((tx, bar_h), valid_code, fill="black", font=font)
+    
+    return img

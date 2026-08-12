@@ -1,5 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.0] - 2026-08-12
+- Migração completa do cadastro de produtos outlet: remoção do EAN-13 e implementação do **SKU interno inteligente** (`calcular_sku`).
+- Adição das colunas `sku`, `tipo`, `marca`, `modelo`, `grafico` (opcional/null), `cor`, `numeracao`, `quantidade` e `valor_sugerido` no PostgreSQL.
+- Menu suspenso de numeração/tamanho categorizado dinamicamente pelo `Tipo` de produto.
+- Renderizador Code39 em imagens PIL para código de barras de etiquetas térmicas a partir do SKU.
+
 ## [1.2.1] - 2026-08-12
 - Correção do indicador de carregamento e parâmetro `show_global_loading=False` no resgate de vale presente em `vales_screen.py`.
 
