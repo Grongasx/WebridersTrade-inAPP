@@ -14,21 +14,17 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # Configuracoes
-from config import BG, BG2, BG3, ACCENT, GOLD, TEXT, TEXT_DIM, SUCCESS, DANGER
-from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL, FONT_MONO, FONT_CODE
-from config import DB_PATH
+from config import BG, DB_PATH
 
 # Core
 from core.database import init_db, get_conn
 
 # Utils
-from utils.helpers import gerar_codigo, agora, hoje, brl, vencido, validar_cpf, txt_para_float, validar_moeda
-from utils.formatters import CurrencyFormatter
-from utils.printer import PDFPrinter
+from utils.helpers import agora, brl
 
 # UI Components
 from ui.components.sidebar import Sidebar
-from ui.components.base import ToastNotification, ScrollableFrame, UIBuilder, LoadingPopup
+from ui.components.base import ToastNotification, UIBuilder, LoadingPopup
 
 # Screens
 from ui.screens.dashboard_screen import DashboardScreen
@@ -137,11 +133,6 @@ class App(tk.Tk):
         self.clipboard_append(codigo)
         self.update()
         self.toast.show(f"Codigo {codigo} copiado!", "sucesso")
-    
-    def _mostrar_novo_vale_cli(self, cid, nome):
-        """Mostra tela de novo vale pre-selecionando cliente."""
-        self.screens["novo_vale"].show(cid_pre=cid, nome_pre=nome)
-        self.sidebar.set_active("novo_vale")
     
     def _obter_impressoras_windows(self):
         """Obtem lista de impressoras disponiveis no Windows."""
