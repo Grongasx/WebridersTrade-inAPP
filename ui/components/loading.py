@@ -1,23 +1,26 @@
 import tkinter as tk
-from config import BG2, ACCENT, TEXT, FONT_BODY
+from config import BG2, BG3, ACCENT, TEXT
 
 class LoadingOverlay(tk.Frame):
-    """Overlay semi-transparente ou bloco com indicador visual de carregamento."""
+    """Overlay semi-transparente ou bloco com indicador visual de carregamento WEBRIDERS CLUB."""
     def __init__(self, parent):
-        super().__init__(parent, bg=BG2)
+        super().__init__(parent, bg="#070709")
         self.is_running = False
         self._angle = 0
         
         # Container central
-        self.box = tk.Frame(self, bg=BG2, padx=20, pady=20)
+        self.box = tk.Frame(self, bg=BG2, padx=28, pady=22, highlightbackground=ACCENT, highlightthickness=1)
         self.box.place(relx=0.5, rely=0.5, anchor="center")
         
+        # Emblem Webriders
+        tk.Label(self.box, text="❖ WEBRIDERS", font=("Segoe UI Black", 10, "bold"), bg=BG2, fg=ACCENT).pack(pady=(0, 8))
+
         # Canvas para animação do spinner
-        self.canvas = tk.Canvas(self.box, width=50, height=50, bg=BG2, highlightthickness=0)
+        self.canvas = tk.Canvas(self.box, width=48, height=48, bg=BG2, highlightthickness=0)
         self.canvas.pack()
         
         # Mensagem de texto
-        self.label = tk.Label(self.box, text="Carregando...", bg=BG2, fg=TEXT, font=FONT_BODY)
+        self.label = tk.Label(self.box, text="Carregando...", bg=BG2, fg=TEXT, font=("Segoe UI", 11, "bold"))
         self.label.pack(pady=(10, 0))
 
     def start(self, mensagem="Processando..."):
@@ -39,15 +42,16 @@ class LoadingOverlay(tk.Frame):
             return
             
         self.canvas.delete("all")
-        # Desenha o arco giratório
+        # Trilho sutil
+        self.canvas.create_oval(4, 4, 44, 44, outline=BG3, width=4)
+        # Arco animado giratório
         self.canvas.create_arc(
-            5, 5, 45, 45, 
+            4, 4, 44, 44, 
             start=self._angle, 
-            extent=100, 
+            extent=110, 
             outline=ACCENT, 
             width=4, 
             style="arc"
         )
-        self._angle = (self._angle + 15) % 360
-        # Agenda o próximo frame em 30ms (~30 FPS)
-        self.after(30, self._animate)
+        self._angle = (self._angle + 14) % 360
+        self.after(25, self._animate)

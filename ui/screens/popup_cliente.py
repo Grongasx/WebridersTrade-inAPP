@@ -16,14 +16,14 @@ class PopupLoadingOverlay:
 
     def __init__(self, parent_win, mensagem="Carregando..."):
         self.parent = parent_win
-        self.overlay = tk.Frame(self.parent, bg="#111622")
+        self.overlay = tk.Frame(self.parent, bg="#070709")
         self.overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        card = UIBuilder.frame(self.overlay, bg=BG2, padx=24, pady=18)
+        card = tk.Frame(self.overlay, bg=BG2, padx=28, pady=20, highlightbackground=ACCENT, highlightthickness=1)
         card.place(relx=0.5, rely=0.5, anchor="center")
 
-        UIBuilder.label(card, "⏳", font=("Segoe UI", 20), bg=BG2, fg=GOLD).pack()
-        UIBuilder.label(card, mensagem, font=FONT_BODY, bg=BG2, fg=TEXT).pack(pady=(6, 0))
+        UIBuilder.label(card, "❖ WEBRIDERS", font=("Segoe UI Black", 10, "bold"), bg=BG2, fg=ACCENT).pack()
+        UIBuilder.label(card, mensagem, font=("Segoe UI", 11, "bold"), bg=BG2, fg=TEXT).pack(pady=(6, 0))
 
     def fechar(self):
         try:

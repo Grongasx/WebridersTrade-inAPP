@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.1.2] - 2026-08-12
+- Redesign completo da tela e popups de carregamento (`LoadingPopup`, `LoadingOverlay`, `PopupLoadingOverlay`).
+- Novo spinner duplo animado em vermelho elétrico (`#FF1E27`), fundo esmaecido (`#070709`) e marca WEBRIDERS.
+
 ## [1.1.1] - 2026-08-12
 - Correção da rota e rótulo da aba para `etiquetas` em `main.py` e `sidebar.py`.
 - Ajuste e limpeza de símbolos/emojis para compatibilidade perfeita no Windows Tkinter.

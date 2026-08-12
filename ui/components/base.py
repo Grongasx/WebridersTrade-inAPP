@@ -67,29 +67,31 @@ class ToastNotification:
         self.frame.lift()
 
 class LoadingPopup(tk.Frame):
-    """Popup modal com fundo esmaecido (~60% escuro) e caixa de carregamento centralizada."""
+    """Popup modal com fundo esmaecido e indicador visual de carregamento WEBRIDERS CLUB."""
     
     def __init__(self, root):
-        # Cor de fundo ajustada para um tom de esmaecimento suave (#12131a) em vez de preto total
-        super().__init__(root, bg="#12131a")
+        super().__init__(root, bg="#070709")
         self.root = root
         self.is_running = False
         self._angle = 0
 
-        # Modal / Card centralizado com borda destacada
+        # Modal / Card centralizado com borda destacada em vermelho elétrico
         self.box = tk.Frame(
             self, 
             bg=BG2, 
-            padx=32, 
-            pady=24, 
-            highlightbackground=GOLD, 
+            padx=36, 
+            pady=28, 
+            highlightbackground=ACCENT, 
             highlightthickness=1
         )
         self.box.place(relx=0.5, rely=0.5, anchor="center")
 
+        # Emblem Webriders no topo do spinner
+        tk.Label(self.box, text="❖ WEBRIDERS", font=("Segoe UI Black", 10, "bold"), bg=BG2, fg=ACCENT).pack(pady=(0, 10))
+
         # Canvas para animação do spinner
-        self.canvas = tk.Canvas(self.box, width=44, height=44, bg=BG2, highlightthickness=0)
-        self.canvas.pack(pady=(0, 10))
+        self.canvas = tk.Canvas(self.box, width=48, height=48, bg=BG2, highlightthickness=0)
+        self.canvas.pack(pady=(0, 12))
 
         # Texto da mensagem
         self.label = tk.Label(
@@ -97,8 +99,8 @@ class LoadingPopup(tk.Frame):
             text="Carregando...", 
             bg=BG2, 
             fg=TEXT, 
-            font=FONT_BODY,
-            wraplength=280,
+            font=("Segoe UI", 11, "bold"),
+            wraplength=300,
             justify="center"
         )
         self.label.pack()
@@ -123,17 +125,17 @@ class LoadingPopup(tk.Frame):
 
         self.canvas.delete("all")
         # Trilho de fundo sutil
-        self.canvas.create_oval(4, 4, 40, 40, outline=BG3, width=3)
-        # Arco animado giratório
+        self.canvas.create_oval(4, 4, 44, 44, outline=BG3, width=4)
+        # Arco animado giratório em vermelho elétrico
         self.canvas.create_arc(
-            4, 4, 40, 40,
+            4, 4, 44, 44,
             start=self._angle,
-            extent=100,
-            outline=GOLD,
-            width=3,
+            extent=110,
+            outline=ACCENT,
+            width=4,
             style="arc"
         )
-        self._angle = (self._angle + 12) % 360
+        self._angle = (self._angle + 14) % 360
         self.root.after(25, self._animate)
         
 class ScrollableFrame(tk.Frame):
