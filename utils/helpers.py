@@ -194,15 +194,15 @@ NUMERACAO_POR_TIPO = {
 
 def calcular_sku(tipo, marca, modelo, grafico, cor, numeracao, seed_id=None):
     """
-    Calcula dinamicamente um SKU interno único no formato:
+    Calcula dinamente um SKU interno único no formato:
     WR-[TIPO]-[MARCA]-[TAMANHO]-[HASH] Ex: WR-SHP-SAN-80-4912
     """
     t_pref = TIPO_PREFIXOS.get(tipo, "OUT")
     
-    m_clean = re.sub(r"[^A-Za-Z0-9]", "", (marca or "").upper())
+    m_clean = re.sub(r"[^A-Z0-9]", "", (marca or "").upper())
     m_pref = (m_clean[:3] if len(m_clean) >= 3 else m_clean.ljust(3, "X")) if m_clean else "GEN"
 
-    n_clean = re.sub(r"[^A-Za-Z0-9]", "", (numeracao or "").upper())
+    n_clean = re.sub(r"[^A-Z0-9]", "", (numeracao or "").upper())
     n_pref = n_clean[:4] if n_clean else "UNI"
 
     if seed_id:

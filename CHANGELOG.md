@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.1] - 2026-08-12
+- Correção do erro de expressão regular (`re.PatternError: bad character range`) em `calcular_sku` em `helpers.py`.
+- Reformulação do mecanismo de scroll vertical com mousewheel em `base.py` (`ScrollableFrame` e `scrolled_canvas`) para rolagem fluida e sem perda de foco.
+
 ## [1.3.0] - 2026-08-12
 - Migração completa do cadastro de produtos outlet: remoção do EAN-13 e implementação do **SKU interno inteligente** (`calcular_sku`).
 - Adição das colunas `sku`, `tipo`, `marca`, `modelo`, `grafico` (opcional/null), `cor`, `numeracao`, `quantidade` e `valor_sugerido` no PostgreSQL.

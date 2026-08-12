@@ -254,42 +254,43 @@ class UIBuilder:
             if not canvas.winfo_exists():
                 return
             canvas.configure(scrollregion=canvas.bbox("all"))
-            # A linha `canvas.yview_moveto(0)` foi REMOVIDA daqui.
-            # Ela forçava o scroll para o topo sempre que o layout atualizava.
             state["after_id"] = None
 
+        def _on_mouse_wheel(event):
+            if not canvas.winfo_exists():
+                return
+            if event.num == 4:
+                canvas.yview_scroll(-2, "units")
+            elif event.num == 5:
+                canvas.yview_scroll(2, "units")
+            else:
+                delta = int(-1 * (event.delta / 40))
+                if delta == 0:
+                    delta = -1 if event.delta > 0 else 1
+                canvas.yview_scroll(delta, "units")
+
+        def _vincular_scroll(widget):
+            try:
+                widget.bind("<MouseWheel>", _on_mouse_wheel, add="+")
+                widget.bind("<Button-4>", _on_mouse_wheel, add="+")
+                widget.bind("<Button-5>", _on_mouse_wheel, add="+")
+                for child in widget.winfo_children():
+                    _vincular_scroll(child)
+            except Exception:
+                pass
+
         def _on_inner_configure(_e=None):
+            if not canvas.winfo_exists():
+                return
             canvas.configure(scrollregion=canvas.bbox("all"))
+            _vincular_scroll(inner)
             if state["after_id"]:
                 canvas.after_cancel(state["after_id"])
             state["after_id"] = canvas.after(30, _settle)
 
         inner.bind("<Configure>", _on_inner_configure)
         canvas.bind("<Configure>", lambda e: canvas.itemconfig(cw, width=e.width))
-
-        def _on_mouse_wheel(event):
-            if not canvas.winfo_exists():
-                return
-            if event.num == 4:
-                canvas.yview_scroll(-1, "units")
-            elif event.num == 5:
-                canvas.yview_scroll(1, "units")
-            else:
-                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-        def _bind_scroll(_e=None):
-            top = canvas.winfo_toplevel()
-            top.bind_all("<MouseWheel>", _on_mouse_wheel)
-            top.bind_all("<Button-4>", _on_mouse_wheel)
-            top.bind_all("<Button-5>", _on_mouse_wheel)
-
-        def _unbind_scroll(_e=None):
-            top = canvas.winfo_toplevel()
-            top.unbind_all("<MouseWheel>")
-            top.unbind_all("<Button-4>")
-            top.unbind_all("<Button-5>")
-
-        canvas.bind("<Enter>", _bind_scroll)
-        canvas.bind("<Leave>", _unbind_scroll)
+        _vincular_scroll(canvas)
+        _vincular_scroll(inner)
 
         return canvas, inner
