@@ -119,7 +119,8 @@ class NovoValeScreen(BaseScreen):
             self.toast.show("⚠ Informe um valor válido.", "erro")
             return
 
-        validade = None if self._tipo_val.get() == "vitalicio" else self._cal.get_date().isoformat()
+        validade = None if self._tipo_val.get() == "vitalicio" else self._cal.get_date()
+
         obs = self._obs_var.get().strip() or None
 
         codigo = gerar_codigo()

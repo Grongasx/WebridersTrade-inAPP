@@ -204,3 +204,5 @@ class NovoClienteScreen(BaseScreen):
             
         except psycopg.IntegrityError:
             self.toast.show("⚠ Erro: Este E-mail ou CPF já está cadastrado.", "erro")
+        except Exception as e:
+            self.toast.show(f"⚠ Erro ao cadastrar cliente: {str(e)}", "erro")

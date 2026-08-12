@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.0.4] - 2026-08-12
+- Passagem de objeto `date` nativo em `novo_vale_screen.py`.
+- Tratamento de exceção genérica no cadastro em `novo_cliente_screen.py`.
+
 ## [1.0.3] - 2026-08-12
 - Remoção de arquivos confidenciais (`.env`, `vale_presente.db`, `config_local.json`) e diretórios de IA/cache do versionamento Git.
 - Adição do modelo seguro `.env.example`.
