@@ -51,7 +51,7 @@ class App(tk.Tk):
         
         # Inicializacao
         init_db()
-        UIBuilder.setup_tree_style()
+        UIBuilder.setup_tree_style(self)
         self.toast = ToastNotification(self)
         self.loading = LoadingPopup(self)
         

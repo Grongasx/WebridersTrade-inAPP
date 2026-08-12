@@ -218,12 +218,44 @@ class UIBuilder:
         return r
     
     @staticmethod
-    def setup_tree_style():
+    def setup_tree_style(root=None):
         s = ttk.Style()
         s.theme_use("default")
+        
+        # Estilização da Treeview
         s.configure("Dark.Treeview", background=BG2, foreground=TEXT, fieldbackground=BG2, font=FONT_BODY, rowheight=34)
         s.configure("Dark.Treeview.Heading", background=BG3, foreground=GOLD, font=("Segoe UI", 10, "bold"), relief="flat")
         s.map("Dark.Treeview", background=[("selected", BG3)], foreground=[("selected", TEXT)])
+
+        # Estilização completa do Combobox no tema WEBRIDERS CLUB
+        s.configure("TCombobox", 
+                    fieldbackground=BG3, 
+                    background=BG2, 
+                    foreground=TEXT, 
+                    darkcolor=BG2, 
+                    lightcolor=BG2, 
+                    bordercolor=BG3, 
+                    arrowcolor=ACCENT, 
+                    padding=6,
+                    font=("Segoe UI", 10, "bold"))
+        s.map("TCombobox", 
+              fieldbackground=[("readonly", BG3), ("focus", BG3)],
+              selectbackground=[("readonly", ACCENT), ("focus", ACCENT)],
+              selectforeground=[("readonly", TEXT), ("focus", TEXT)],
+              foreground=[("readonly", TEXT)],
+              arrowcolor=[("hover", GOLD), ("focus", ACCENT)])
+
+        if root:
+            # Estilização do menu flutuante (Popdown Listbox)
+            root.option_add("*TCombobox*Listbox.background", BG2)
+            root.option_add("*TCombobox*Listbox.foreground", TEXT)
+            root.option_add("*TCombobox*Listbox.selectBackground", ACCENT)
+            root.option_add("*TCombobox*Listbox.selectForeground", TEXT)
+            root.option_add("*TCombobox*Listbox.font", ("Segoe UI", 10))
+            root.option_add("*TCombobox*Listbox.bd", 1)
+            root.option_add("*TCombobox*Listbox.relief", "flat")
+            root.option_add("*TCombobox*Listbox.highlightThickness", 1)
+            root.option_add("*TCombobox*Listbox.highlightColor", ACCENT)
     
     @staticmethod
     def make_tree(parent, cols, widths, anchors=None):

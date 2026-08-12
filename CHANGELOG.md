@@ -1,5 +1,8 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.3] - 2026-08-12
+- Redesign completo e estilização escura dos menus suspensos (`ttk.Combobox` e `Popdown Listbox`) em `base.py` alinhados com o tema visual **WEBRIDERS CLUB** (grafite `#18181C`, vermelho elétrico `#FF1E27` e seta personalizada).
+
 ## [1.3.2] - 2026-08-12
 - Otimização de alta performance na digitação de valores em `CurrencyFormatter` (`formatters.py`) e `novo_vale_screen.py` evitando delete/insert redundantes.
 - Tornada a geração de SKU determinística em `helpers.py` (remoção de `time.time()`), eliminando completamente o lag e recálculo infinito ao digitar atributos de produto.
