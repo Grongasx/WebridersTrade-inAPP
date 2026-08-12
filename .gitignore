@@ -1,5 +1,18 @@
-__pycache__/
-*.pyc
+# Segredos e dados confidenciais
 .env
-vale_presente.db
+.env.local
+.env.*
+!.env.example
+
+# Banco de dados local e configs da máquina
+*.db
+config_local.json
+
+# Arquivos de Agente e IA
+.agents/
 .crg/
+
+# Python e IDEs
+__pycache__/
+*.py[cod]
+.vscode/

@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.0.3] - 2026-08-12
+- Remoção de arquivos confidenciais (`.env`, `vale_presente.db`, `config_local.json`) e diretórios de IA/cache do versionamento Git.
+- Adição do modelo seguro `.env.example`.
+- Atualização do `.gitignore` para segurança total no GitHub.
+
 ## [1.0.2] - 2026-08-12
 - Criação da skill `relatorio-feedback` em `.agents/skills/relatorio-feedback/SKILL.md`.
 - Atualização das diretrizes de relatório final em `AGENTS.md`.
