@@ -216,7 +216,8 @@ class PopupProdutoEntrada:
                 cor=vs["cor"].get(),
                 numeracao=vs["numeracao"].get()
             )
-            vs["sku"].set(sku_calc)
+            if vs["sku"].get() != sku_calc:
+                vs["sku"].set(sku_calc)
 
         # Triggers de cálculo automático do SKU
         for k in ["marca", "modelo", "grafico", "cor", "numeracao"]:

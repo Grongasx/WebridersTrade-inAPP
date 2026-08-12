@@ -208,8 +208,7 @@ def calcular_sku(tipo, marca, modelo, grafico, cor, numeracao, seed_id=None):
     if seed_id:
         seq = f"{int(seed_id):04d}"
     else:
-        import time
-        raw = f"{tipo}{marca}{modelo}{grafico}{cor}{numeracao}{time.time()}"
+        raw = f"{tipo}:{marca}:{modelo}:{grafico}:{cor}:{numeracao}".upper()
         h_val = abs(hash(raw)) % 10000
         seq = f"{h_val:04d}"
 

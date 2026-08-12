@@ -64,12 +64,15 @@ class NovoValeScreen(BaseScreen):
         def formatar(event=None):
             if event and event.keysym in ("Left","Right","Up","Down","Shift_L","Shift_R","Tab","Return"): 
                 return
-            digits = re.sub(r"\D", "", e_valor.get())
+            val_atual = e_valor.get()
+            digits = re.sub(r"\D", "", val_atual)
             if not digits: 
                 digits = "0"
             fmt = f"R$ {int(digits)/100:,.2f}".replace(",","X").replace(".",",").replace("X",".")
-            e_valor.delete(0,"end")
-            e_valor.insert(0, fmt)
+            if val_atual != fmt:
+                e_valor.delete(0, "end")
+                e_valor.insert(0, fmt)
+                e_valor.icursor("end")
         e_valor.bind("<KeyRelease>", formatar)
 
         # Atalhos

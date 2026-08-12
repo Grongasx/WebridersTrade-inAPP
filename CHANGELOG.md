@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.2] - 2026-08-12
+- Otimização de alta performance na digitação de valores em `CurrencyFormatter` (`formatters.py`) e `novo_vale_screen.py` evitando delete/insert redundantes.
+- Tornada a geração de SKU determinística em `helpers.py` (remoção de `time.time()`), eliminando completamente o lag e recálculo infinito ao digitar atributos de produto.
+
 ## [1.3.1] - 2026-08-12
 - Correção do erro de expressão regular (`re.PatternError: bad character range`) em `calcular_sku` em `helpers.py`.
 - Reformulação do mecanismo de scroll vertical com mousewheel em `base.py` (`ScrollableFrame` e `scrolled_canvas`) para rolagem fluida e sem perda de foco.
