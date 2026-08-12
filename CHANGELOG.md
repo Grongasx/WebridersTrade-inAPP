@@ -1,5 +1,8 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.2.1] - 2026-08-12
+- Correção do indicador de carregamento e parâmetro `show_global_loading=False` no resgate de vale presente em `vales_screen.py`.
+
 ## [1.2.0] - 2026-08-12
 - Unificação dos popups de cliente (`Detalhe`, `Edição`, `Resgate de Vales` e `Detalhes do Vale`) em uma **única janela popup** baseada em seções dinâmicas em `popup_cliente.py`.
 - Eliminação de múltiplas janelas modal sobrepostas.

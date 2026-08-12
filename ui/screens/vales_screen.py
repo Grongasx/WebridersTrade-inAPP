@@ -10,6 +10,7 @@ from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
 from utils.helpers import brl, agora, vencido, creditar_cliente
+from ui.screens.popup_cliente import PopupLoadingOverlay
 
 
 class ValesScreen(BaseScreen):
@@ -230,6 +231,8 @@ class PopupSelecionarClienteResgate:
             if not messagebox.askyesno("Confirmar", f"Resgatar vale {self.codigo} de {brl(self.valor)} para {nome}?", parent=win):
                 return
 
+            loading_resgate = PopupLoadingOverlay(win, "Resgatando vale...")
+
             def _tarefa_resgatar():
                 with get_conn() as conn:
                     cur = conn.execute(
@@ -244,6 +247,7 @@ class PopupSelecionarClienteResgate:
                     return True
 
             def _ao_resgatar_concluido(sucesso):
+                loading_resgate.fechar()
                 win.destroy()
                 if not sucesso:
                     messagebox.showerror("Erro", "Esse vale não está mais disponível para resgate.")
@@ -255,7 +259,8 @@ class PopupSelecionarClienteResgate:
             self.app.executar_async(
                 funcao_task=_tarefa_resgatar,
                 callback_sucesso=_ao_resgatar_concluido,
-                mensagem="Resgatando vale presente..."
+                mensagem=None,
+                show_global_loading=False
             )
 
         UIBuilder.button(brow, "✅ Confirmar", confirmar, color=SUCCESS, width=16).pack(side="left")
