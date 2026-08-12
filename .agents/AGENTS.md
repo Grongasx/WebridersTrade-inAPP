@@ -51,3 +51,6 @@ vale_presente_manager/
 
 6. **Fluxo de Git Commit**:
    - Validação com `py_compile` ok $\rightarrow$ atualizar `CHANGELOG.md` $\rightarrow$ executar `git commit`.
+
+7. **Relatório de Feedback Final**:
+   - Toda conclusão de tarefa deve apresentar o relatório sintético de execução, incluindo status, métricas do grafo e estimativa de consumo de tokens.

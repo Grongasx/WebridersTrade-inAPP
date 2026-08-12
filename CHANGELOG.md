@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.0.2] - 2026-08-12
+- Criação da skill `relatorio-feedback` em `.agents/skills/relatorio-feedback/SKILL.md`.
+- Atualização das diretrizes de relatório final em `AGENTS.md`.
+
 ## [1.0.1] - 2026-08-12
 - Remoção do arquivo legado `migrar.py`.
 - Limpeza de imports e métodos não utilizados em `main.py`.
