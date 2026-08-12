@@ -101,6 +101,7 @@ class App(tk.Tk):
             "confirmacao": ConfirmacaoScreen(self, None),
             "creditos": CreditosScreen(self, None),
             "outlet": OutletScreen(self, None),
+            "etiquetas": ConfiguracoesScreen(self, None),
             "configuracoes": ConfiguracoesScreen(self, None),
             "exportar": ExportarScreen(self, None),
         }

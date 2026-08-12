@@ -116,11 +116,11 @@ class DashboardScreen(BaseScreen):
         row1 = UIBuilder.frame(wrap, bg=BG)
         row1.pack(fill="x", pady=(0, 14))
 
-        self._metric_card(row1, "👤", dados["total_cli"],    "Clientes",              TEXT)
-        self._metric_card(row1, "🎟️", dados["total_vales"],  "Total de Vales",        TEXT)
-        self._metric_card(row1, "✅", dados["disponiveis"],  "Vales Disponíveis",     SUCCESS)
-        self._metric_card(row1, "✔️", dados["usados"],       "Vales Usados",          TEXT_DIM)
-        self._metric_card(row1, "⏰", dados["vencidos"],     "Vencidos",              DANGER)
+        self._metric_card(row1, "👥", dados["total_cli"],    "Clientes",              TEXT)
+        self._metric_card(row1, "🎟", dados["total_vales"],  "Total de Vales",        TEXT)
+        self._metric_card(row1, "✓", dados["disponiveis"],  "Vales Disponíveis",     SUCCESS)
+        self._metric_card(row1, "✔", dados["usados"],       "Vales Usados",          TEXT_DIM)
+        self._metric_card(row1, "⏱", dados["vencidos"],     "Vencidos",              DANGER)
 
         # Linha 2: Detalhes Financeiros e Top Clientes
         row2 = UIBuilder.frame(wrap, bg=BG)

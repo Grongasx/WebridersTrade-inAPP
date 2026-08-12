@@ -25,19 +25,19 @@ class Sidebar:
         
         fl = UIBuilder.frame(self.frame, bg=BG2, pady=22)
         fl.pack(fill="x")
-        UIBuilder.label(fl, "🛑", font=("Segoe UI", 30), bg=BG2, fg=GOLD).pack()
+        UIBuilder.label(fl, "❖", font=("Segoe UI Black", 32), bg=BG2, fg=GOLD).pack()
         UIBuilder.label(fl, "WEBRIDERS CLUB", font=("Segoe UI Black", 13, "bold"), bg=BG2, fg=TEXT).pack()
         UIBuilder.label(fl, "Trade-in & Vales v4.0", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack()
         UIBuilder.separator(self.frame).pack(fill="x", padx=14, pady=2)
 
         menus = [
-            ("dashboard",     "📊 Dashboard",          "dashboard"),
-            ("clientes",      "👤 Clientes",           "clientes"),
-            ("creditos",      "💳 Crédito de Cliente", "creditos"),
-            ("outlet",        "📦 Produtos Outlet",    "outlet"),
-            ("vales",         "🎟️ Vale Presentes",     "vales"),
-            ("exportar",      "📤 Exportar Dados",     "exportar"),
-            ("configuracoes", "⚙️ Etiquetas",          "configuracoes"), 
+            ("dashboard", "⊞  Dashboard",            "dashboard"),
+            ("clientes",  "👥  Clientes",             "clientes"),
+            ("creditos",  "💳  Créditos & Saldos",    "creditos"),
+            ("outlet",    "🏷  Produtos Outlet",      "outlet"),
+            ("vales",     "🎁  Vales Presentes",       "vales"),
+            ("exportar",  "⤓  Exportar Dados",       "exportar"),
+            ("etiquetas", "🖨  Etiquetas & Impressão", "etiquetas"), 
         ]
         
         for key, txt, target in menus:

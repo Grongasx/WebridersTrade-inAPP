@@ -65,7 +65,7 @@ class ConfiguracoesScreen(BaseScreen):
         )
 
     def _build(self):
-        h = self.build_header("⚙️ Etiquetas & Fila de Impressão (PDF)", fg=GOLD)
+        h = self.build_header("🖨  Etiquetas & Impressão Térmica", fg=GOLD)
 
         main_fm = UIBuilder.frame(self.content, padx=28, pady=10)
         main_fm.pack(fill="both", expand=True)
@@ -75,7 +75,7 @@ class ConfiguracoesScreen(BaseScreen):
         col_esq.pack(side="left", fill="y", padx=(0, 10))
         UIBuilder.label(
             col_esq,
-            "🖨️ Hardware & Bobina (3 Colunas)",
+            "🖨  Hardware & Impressora (3 Colunas)",
             font=FONT_H2,
             bg=BG2,
             fg=GOLD,

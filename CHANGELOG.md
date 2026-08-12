@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.1.1] - 2026-08-12
+- Correção da rota e rótulo da aba para `etiquetas` em `main.py` e `sidebar.py`.
+- Ajuste e limpeza de símbolos/emojis para compatibilidade perfeita no Windows Tkinter.
+
 ## [1.1.0] - 2026-08-12
 - Redesign completo da interface gráfica para a identidade visual **WEBRIDERS CLUB**.
 - Nova paleta Off-Black (`#0D0D10`), Grafite (`#18181C`) e Vermelho Elétrico (`#FF1E27`).
