@@ -1,5 +1,8 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.4] - 2026-08-13
+- Validação de configuração de credenciais Git do usuário `grongasx` (`gustavinihb12@gmail.com`).
+
 ## [1.3.3] - 2026-08-12
 - Redesign completo e estilização escura dos menus suspensos (`ttk.Combobox` e `Popdown Listbox`) em `base.py` alinhados com o tema visual **WEBRIDERS CLUB** (grafite `#18181C`, vermelho elétrico `#FF1E27` e seta personalizada).
 
