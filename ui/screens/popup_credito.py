@@ -30,8 +30,14 @@ class PopupLancarCredito:
         win.configure(bg=BG)
         win.grab_set()
         
+        # 1. EMPACOTAR O RODAPÉ PRIMEIRO (Garante que o botão sempre fique visível)
+        brow = UIBuilder.frame(win, bg=BG2, padx=36, pady=14)
+        brow.pack(fill="x", side="bottom")
+
+        # 2. EMPACOTAR O CARD CENTRAL (Ocupa o resto do espaço disponível)
         fm = UIBuilder.card(win, bg=BG2, px=36, py=24)
-        fm.pack(fill="both", expand=True, padx=20, pady=20)
+        fm.pack(fill="both", expand=True, padx=20, pady=(20, 10))
+        
         UIBuilder.label(fm, f"👤 {cli[0]}", font=FONT_H2, bg=BG2).pack(anchor="w")
         UIBuilder.label(fm, f"Saldo Atual: {brl(cli[1])}", font=FONT_BODY, bg=BG2, fg=SUCCESS).pack(anchor="w", pady=(0,15))
         
@@ -44,13 +50,12 @@ class PopupLancarCredito:
         valor_var = tk.StringVar(value="0,00")
         motivo_var = tk.StringVar()
         UIBuilder.label(fm, "Valor (R$)*", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(10,0))
+        
         e_val = UIBuilder.entry(fm, var=valor_var, width=20)
         e_val.pack(fill="x", ipady=6)
         e_val.bind("<KeyRelease>", lambda _: CurrencyFormatter.mascara_moeda_dinamica(e_val))
-        UIBuilder.field(fm, "Motivo", motivo_var, bg=BG2)
         
-        brow = UIBuilder.frame(win, bg=BG2, padx=36, pady=14)
-        brow.pack(fill="x", side="bottom")
+        UIBuilder.field(fm, "Motivo", motivo_var, bg=BG2)
 
         def salvar():
             val = txt_para_float(valor_var.get())
@@ -63,17 +68,24 @@ class PopupLancarCredito:
                 return
             motivo = motivo_var.get().strip() or "Ajuste manual"
             novo_saldo = cli[1] + val if tipo == "entrada" else cli[1] - val
-            with get_conn() as conn:
-                conn.execute("UPDATE clientes SET saldo=%s WHERE id=%s", (novo_saldo, self.cid))
-                conn.execute("""
-                    INSERT INTO historico_credito (cliente_id,tipo,valor,motivo,criado) 
-                    VALUES (%s,%s,%s,%s,%s)
-                """, (self.cid, tipo, val, motivo, agora()))
-                conn.commit()
-            win.destroy()
-            self.callback()
-            self.app.toast.show("Crédito atualizado!", "sucesso")
+            try:
+                with get_conn() as conn:
+                    conn.execute("UPDATE clientes SET saldo=%s WHERE id=%s", (novo_saldo, self.cid))
+                    conn.execute("""
+                        INSERT INTO historico_credito (cliente_id,tipo,valor,motivo,criado) 
+                        VALUES (%s,%s,%s,%s,%s)
+                    """, (self.cid, tipo, val, motivo, agora()))
+                    conn.commit()
+                win.destroy()
+                self.callback()
+                self.app.toast.show("Crédito atualizado!", "sucesso")
+            except Exception as e:
+                self.app.toast.show(f"Erro ao salvar: {e}", "erro")
+
+        # Binds para poder pressionar Enter para salvar
+        e_val.bind("<Return>", lambda _: salvar())
         
+        # Botão de confirmação renderizado no rodapé
         UIBuilder.button(brow, "Confirmar", salvar, color=SUCCESS).pack(side="left")
 
 

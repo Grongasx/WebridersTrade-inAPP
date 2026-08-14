@@ -82,7 +82,7 @@ class NovoClienteScreen(BaseScreen):
         fm.pack(fill="x", padx=40, pady=20)
         UIBuilder.label(fm, "Cadastrar novo cliente", font=FONT_H2, bg=BG2).pack(anchor="w", pady=(0, 22))
 
-        # Nome e CPF
+        # Nome e CPF (CPF agora é opcional)
         row1 = UIBuilder.frame(fm, bg=BG2, pady=10)
         row1.pack(fill="x")
         col_L = UIBuilder.frame(row1, bg=BG2)
@@ -91,9 +91,9 @@ class NovoClienteScreen(BaseScreen):
         col_R.pack(side="left", fill="x", expand=True, padx=(15, 0))
 
         self._campo(col_L, "Nome completo *", self._vs_cli["nome"])
-        self._campo(col_R, "CPF *", self._vs_cli["cpf"], key_callback=self._on_cpf_key)
+        self._campo(col_R, "CPF", self._vs_cli["cpf"], key_callback=self._on_cpf_key)
 
-        # Email e Telefone
+        # Email e Telefone (Email agora é opcional)
         row2 = UIBuilder.frame(fm, bg=BG2, pady=10)
         row2.pack(fill="x")
         col_L2 = UIBuilder.frame(row2, bg=BG2)
@@ -101,7 +101,7 @@ class NovoClienteScreen(BaseScreen):
         col_R2 = UIBuilder.frame(row2, bg=BG2)
         col_R2.pack(side="left", fill="x", expand=True, padx=(15, 0))
 
-        self._campo(col_L2, "E-mail *", self._vs_cli["email"])
+        self._campo(col_L2, "E-mail", self._vs_cli["email"])
         self._campo(col_R2, "Telefone *", self._vs_cli["tel"], key_callback=self._on_tel_key)
 
     def _campo(self, parent, label, var, key_callback=None):
@@ -121,7 +121,6 @@ class NovoClienteScreen(BaseScreen):
     # ═══════════════════════════════════════════
     def _on_cpf_key(self, event):
         """Aplica a máscara no CPF mantendo a posição do cursor ajustada."""
-        # Ignora teclas de navegação para não atrapalhar a movimentação
         if event.keysym in ("Left", "Right", "Up", "Down", "Tab", "Shift_L", "Shift_R", "Control_L", "Control_R", "Return", "Escape"):
             return
 
@@ -131,7 +130,6 @@ class NovoClienteScreen(BaseScreen):
 
         if texto_atual != formatado:
             self._vs_cli["cpf"].set(formatado)
-            # Mantém o cursor no final do campo após formatar
             entry.icursor(tk.END)
 
     def _on_tel_key(self, event):
@@ -145,7 +143,6 @@ class NovoClienteScreen(BaseScreen):
 
         if texto_atual != formatado:
             self._vs_cli["tel"].set(formatado)
-            # Mantém o cursor no final do campo após formatar
             entry.icursor(tk.END)
 
     # ═══════════════════════════════════════════
@@ -162,19 +159,13 @@ class NovoClienteScreen(BaseScreen):
             self.toast.show("⚠ O nome completo é obrigatório.", "erro")
             return
             
-        # 2. Validação de CPF
-        if not cpf:
-            self.toast.show("⚠ O CPF é obrigatório.", "erro")
-            return
-        if not validar_cpf(cpf):
+        # 2. Validação de CPF (Opcional, mas se preenchido precisa ser válido)
+        if cpf and not validar_cpf(cpf):
             self.toast.show("⚠ CPF inválido. Verifique os números digitados.", "erro")
             return
             
-        # 3. Validação de E-mail
-        if not email:
-            self.toast.show("⚠ O e-mail é obrigatório.", "erro")
-            return
-        if not validar_email_texto(email):
+        # 3. Validação de E-mail (Opcional, mas se preenchido precisa ser válido)
+        if email and not validar_email_texto(email):
             self.toast.show("⚠ E-mail inválido. Utilize o formato nome@dominio.com", "erro")
             return
             
@@ -187,12 +178,16 @@ class NovoClienteScreen(BaseScreen):
             self.toast.show("⚠ Telefone inválido. Informe o DDD e o número completo.", "erro")
             return
 
+        # Trata campos opcionais para salvarem como NULL no banco caso estejam vazios
+        cpf_db = cpf if cpf else None
+        email_db = email if email else None
+
         # 5. Salvar no Banco
         try:
             with get_conn() as conn:
                 conn.execute(
                     "INSERT INTO clientes (nome,email,telefone,cpf,criado) VALUES (%s,%s,%s,%s,%s)",
-                    (nome, email, tel, cpf, agora())
+                    (nome, email_db, tel, cpf_db, agora())
                 )
                 conn.commit()
             
