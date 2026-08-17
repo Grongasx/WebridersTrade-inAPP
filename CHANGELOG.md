@@ -1,5 +1,13 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.8] - 2026-08-17
+- Refatoração do módulo de impressão [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
+  - Remoção de acoplamento indevido (`from ui.screens.popup_config import gerar_e_persistir_ean13`).
+  - Suporte e preservação nativa de SKUs internos inteligentes e códigos Code39 para etiquetas sem sobrescrever dados no banco.
+  - Atualização em lote de status na tabela `fila_impressao` via `WHERE id = ANY(%s)`.
+  - Tratamento aprimorado de quebra de linhas multi-parágrafos em `_aplicar_quebra_de_linha`.
+  - Tratamento seguro de exceções e fallbacks caso os módulos Win32/PIL estejam ausentes.
+
 ## [1.3.7] - 2026-08-17
 - Refatoração de migrações DDL em [core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py): substituição de loops dinâmicos com `sql.SQL()` por instruções DDL diretas (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`) em bloco único com `LiteralString`.
 - Resolução do erro de verificação de tipos (`Argument str is not assignable to parameter obj with type LiteralString in function psycopg.sql.SQL.__init__`).

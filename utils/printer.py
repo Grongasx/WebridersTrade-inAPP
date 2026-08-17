@@ -1,5 +1,10 @@
+"""
+Módulo de impressão de etiquetas térmicas e gerenciamento de fila.
+"""
+
 import os
 import json
+from typing import List, Dict, Any, Tuple, Optional
 
 try:
     import win32print
@@ -7,16 +12,29 @@ try:
     import win32con
     from PIL import Image, ImageDraw, ImageFont, ImageWin
 except ImportError:
-    pass
+    win32print = None
+    win32ui = None
+    win32con = None
+    Image = None
+    ImageDraw = None
+    ImageFont = None
+    ImageWin = None
 
 from core.database import get_conn
 from core.config_local import carregar_config_local
-from ui.screens.popup_config import gerar_e_persistir_ean13
 from utils.helpers import gerar_imagem_barcode_sku
 
 
 class PDFPrinter:
-    def processar_impressao_multi_colunas(self, ids_selecionados):
+    """
+    Controlador de impressão direta de etiquetas térmicas em impressoras Zebra/Windows.
+    Suporta carreiras multi-colunas com compensação de offset e códigos Code39/EAN.
+    """
+
+    def processar_impressao_multi_colunas(self, ids_selecionados: List[int]) -> Tuple[bool, str]:
+        """
+        Processa os registros selecionados na fila de impressão e envia à impressora configurada.
+        """
         if not ids_selecionados:
             return False, "Nenhum item selecionado para impressão."
 
@@ -35,16 +53,27 @@ class PDFPrinter:
             if not rows:
                 return False, "Nenhum item válido encontrado na fila."
 
-            lista_dados = []
+            lista_dados: List[Dict[str, Any]] = []
             for row in rows:
                 try:
-                    dados_prod = json.loads(row[1]) if isinstance(row[1], str) else row[1]
+                    dados_prod = json.loads(row[1]) if isinstance(row[1], str) else (row[1] or {})
+                    if not isinstance(dados_prod, dict):
+                        dados_prod = {}
+
                     item_id = dados_prod.get("id") or dados_prod.get("produto_id") or row[3] or row[0]
                     dados_prod["id_banco"] = str(item_id)
 
-                    codigo_atual = dados_prod.get("codigo") or dados_prod.get("codigo_barras")
-                    ean_validado = gerar_e_persistir_ean13(conn, int(item_id), codigo_atual)
-                    dados_prod["codigo"] = ean_validado
+                    # Prioriza SKU interno ou código de barras cadastrado
+                    codigo_atual = (
+                        dados_prod.get("sku")
+                        or dados_prod.get("codigo")
+                        or dados_prod.get("codigo_barras")
+                        or dados_prod.get("codigo_ean")
+                    )
+                    if not codigo_atual:
+                        codigo_atual = f"WR-{int(item_id):06d}"
+
+                    dados_prod["codigo"] = str(codigo_atual)
 
                     qtd = int(row[2] or 1)
                     for _ in range(qtd):
@@ -58,9 +87,12 @@ class PDFPrinter:
         try:
             self.imprimir_etiquetas_direto(lista_dados, nome_impressora, cfgs)
 
+            # Atualiza status de todos os itens impressos em lote
             with get_conn() as conn:
-                for i in ids_selecionados:
-                    conn.execute("UPDATE fila_impressao SET status='Impresso' WHERE id=%s", (i,))
+                conn.execute(
+                    "UPDATE fila_impressao SET status = 'Impresso' WHERE id = ANY(%s)",
+                    (list(ids_selecionados),)
+                )
                 conn.commit()
 
             return True, f"Impresso com sucesso {len(lista_dados)} etiqueta(s)!"
@@ -68,9 +100,22 @@ class PDFPrinter:
         except Exception as e:
             return False, f"Erro ao enviar para a impressora: {str(e)}"
 
-    def imprimir_etiquetas_direto(self, lista_dados, nome_impressora, cfgs):
+    def imprimir_etiquetas_direto(
+        self,
+        lista_dados: List[Dict[str, Any]],
+        nome_impressora: str,
+        cfgs: Dict[str, Any]
+    ) -> None:
+        """
+        Renderiza e transmite os dados para o Device Context (DC) da impressora Windows.
+        """
+        if not win32print or not win32ui or not win32con or not Image:
+            raise RuntimeError(
+                "Módulos pywin32 ou Pillow não estão disponíveis para impressão GDI no Windows."
+            )
+
         if not nome_impressora or not nome_impressora.strip():
-            raise Exception("Nenhuma impressora foi selecionada nas configurações.")
+            raise ValueError("Nenhuma impressora foi selecionada nas configurações.")
 
         nome_impressora = nome_impressora.strip()
 
@@ -83,7 +128,7 @@ class PDFPrinter:
 
         if impressoras_instaladas and nome_impressora not in impressoras_instaladas:
             lista_str = "\n• " + "\n• ".join(impressoras_instaladas)
-            raise Exception(
+            raise RuntimeError(
                 f"A impressora '{nome_impressora}' não está cadastrada no Windows.\n\n"
                 f"Impressoras disponíveis na máquina:{lista_str}\n\n"
                 f"Acesse a tela de Configurações no app, selecione a impressora e clique em Salvar."
@@ -93,7 +138,7 @@ class PDFPrinter:
         try:
             hdc.CreatePrinterDC(nome_impressora)
         except Exception as e:
-            raise Exception(f"Falha ao conectar à impressora '{nome_impressora}': {str(e)}")
+            raise RuntimeError(f"Falha ao conectar à impressora '{nome_impressora}': {str(e)}")
 
         w_tot_mm = float(cfgs.get("etiq_largura_mm", 108))
         h_tot_mm = float(cfgs.get("etiq_altura_mm", 22))
@@ -104,7 +149,7 @@ class PDFPrinter:
         px_mm_x = dpi_x / 25.4
         px_mm_y = dpi_y / 25.4
 
-        # Leitura dos offsets de hardware da impressora no Windows
+        # Leitura dos offsets físicos de hardware da impressora
         try:
             offset_x_px = hdc.GetDeviceCaps(win32con.PHYSICALOFFSETX) or 0
             offset_y_px = hdc.GetDeviceCaps(win32con.PHYSICALOFFSETY) or 0
@@ -122,11 +167,13 @@ class PDFPrinter:
             for i in range(0, len(lista_dados), cols_por_linha):
                 grupo_carreira = lista_dados[i : i + cols_por_linha]
 
-                img_carreira = self.gerar_imagem_carreira(grupo_carreira, w_px, h_px, cfgs, px_mm_x, px_mm_y, dpi_y)
+                img_carreira = self.gerar_imagem_carreira(
+                    grupo_carreira, w_px, h_px, cfgs, px_mm_x, px_mm_y, dpi_y
+                )
 
                 hdc.StartPage()
                 dib = ImageWin.Dib(img_carreira)
-                
+
                 # Compensação dos offsets físicos do hardware na renderização
                 dest_rect = (
                     -offset_x_px,
@@ -141,15 +188,31 @@ class PDFPrinter:
         finally:
             hdc.DeleteDC()
 
-    def _obter_hdc_handle(self, hdc):
+    def _obter_hdc_handle(self, hdc: Any) -> Any:
+        """Obtém o identificador HDC seguro para desenho com PIL ImageWin."""
         if hasattr(hdc, "GetHandleOutput"):
             return hdc.GetHandleOutput()
         elif hasattr(hdc, "GetSafeHdc"):
             return hdc.GetSafeHdc()
         return hdc
 
-    def gerar_imagem_carreira(self, grupo, w_px, h_px, cfgs, px_mm_x, px_mm_y, dpi_y=203):
-        """Gera a imagem com distribuição uniforme de colunas eliminando o desvio acumulativo."""
+    def gerar_imagem_carreira(
+        self,
+        grupo: List[Dict[str, Any]],
+        w_px: int,
+        h_px: int,
+        cfgs: Dict[str, Any],
+        px_mm_x: float,
+        px_mm_y: float,
+        dpi_y: int = 203
+    ) -> Any:
+        """
+        Gera a imagem de uma carreira de etiquetas com distribuição uniforme,
+        eliminando o desvio acumulativo horizontal.
+        """
+        if not Image or not ImageDraw or not ImageFont:
+            raise RuntimeError("Módulo PIL/Pillow não disponível.")
+
         img = Image.new("RGB", (w_px, h_px), "white")
         draw = ImageDraw.Draw(img)
 
@@ -162,7 +225,6 @@ class PDFPrinter:
         cols = int(cfgs.get("etiq_por_linha", 3))
 
         # CÁLCULO DE PASSO E GAP SEM ERRO ACUMULATIVO:
-        # Se houver mais de 1 coluna, recalcula o gap exato com base na largura total
         if cols > 1:
             espaco_gaps_mm = w_tot_mm - m_esq_mm - m_dir_mm - (cols * w_indiv_mm)
             if espaco_gaps_mm >= 0:
@@ -180,11 +242,10 @@ class PDFPrinter:
         }
 
         for col, item in enumerate(grupo):
-            # Posicionamento absoluto e individual de cada coluna na esteira
             col_x_start_mm = m_esq_mm + (col * (w_indiv_mm + gap_efetivo_mm))
 
             nome = str(item.get("nome") or item.get("descricao") or "PRODUTO")
-            
+
             preco = item.get("preco") or item.get("preco_outlet") or "R$ 0,00"
             if isinstance(preco, (int, float)):
                 preco = f"R$ {preco:.2f}".replace(".", ",")
@@ -194,7 +255,12 @@ class PDFPrinter:
                     preco = f"R$ {preco}"
 
             codigo = str(
-                item.get("codigo") or item.get("codigo_barras") or item.get("codigo_ean") or item.get("id_banco") or "200000000001"
+                item.get("codigo")
+                or item.get("sku")
+                or item.get("codigo_barras")
+                or item.get("codigo_ean")
+                or item.get("id_banco")
+                or "WR-000001"
             )
 
             elementos_dados = {
@@ -210,7 +276,7 @@ class PDFPrinter:
                 y_mm = float(cfg_elem.get("y_mm", 0.5))
                 max_w_mm = float(cfg_elem.get("max_w_mm", 32.0))
 
-                # Trava rígida: proíbe elemento de vazar a borda direita da própria etiqueta
+                # Trava rígida: impede o elemento de vazar a borda da etiqueta individual
                 max_w_disponivel_mm = max(1.0, w_indiv_mm - x_mm)
                 max_w_efetivo_mm = min(max_w_mm, max_w_disponivel_mm)
 
@@ -239,29 +305,31 @@ class PDFPrinter:
 
         return img
 
-    def _aplicar_quebra_de_linha(self, draw, texto, font, max_w_px):
-        """Aplica quebra de linha restringindo o texto ao limite em pixels."""
-        palavras = texto.split(" ")
-        linhas = []
-        linha_atual = ""
+    def _aplicar_quebra_de_linha(self, draw: Any, texto: str, font: Any, max_w_px: int) -> str:
+        """Aplica quebra de linha restringindo o texto ao limite em pixels com suporte a múltiplos parágrafos."""
+        linhas_resultado: List[str] = []
 
-        for palavra in palavras:
-            test_line = f"{linha_atual} {palavra}".strip() if linha_atual else palavra
-            
-            if hasattr(draw, "textlength"):
-                w_text = draw.textlength(test_line, font=font)
-            else:
-                bbox = font.getbbox(test_line)
-                w_text = bbox[2] - bbox[0]
+        for paragrafo in str(texto).split("\n"):
+            palavras = paragrafo.split(" ")
+            linha_atual = ""
 
-            if w_text <= max_w_px:
-                linha_atual = test_line
-            else:
-                if linha_atual:
-                    linhas.append(linha_atual)
-                linha_atual = palavra
+            for palavra in palavras:
+                test_line = f"{linha_atual} {palavra}".strip() if linha_atual else palavra
 
-        if linha_atual:
-            linhas.append(linha_atual)
+                if hasattr(draw, "textlength"):
+                    w_text = draw.textlength(test_line, font=font)
+                else:
+                    bbox = font.getbbox(test_line)
+                    w_text = bbox[2] - bbox[0]
 
-        return "\n".join(linhas) if linhas else texto
+                if w_text <= max_w_px:
+                    linha_atual = test_line
+                else:
+                    if linha_atual:
+                        linhas_resultado.append(linha_atual)
+                    linha_atual = palavra
+
+            if linha_atual:
+                linhas_resultado.append(linha_atual)
+
+        return "\n".join(linhas_resultado) if linhas_resultado else str(texto)
