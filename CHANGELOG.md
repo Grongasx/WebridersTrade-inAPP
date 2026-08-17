@@ -1,5 +1,14 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.4.0] - 2026-08-17
+- Reformulação da tela de Etiquetas e Fila de Impressão ([ui/screens/configuracoes_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/configuracoes_screen.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
+  - Exibição do ID do produto na coluna principal da Treeview da fila em vez do ID de impressão.
+  - Implementação de modal avançado `PopupAddProduto` com barra de pesquisa dinâmica por ID, Nome, Marca, Modelo, Dono ou SKU.
+  - Renomeação do botão de inserção para `"➕ Add Produto"`.
+  - Renomeação do botão de exclusão para `"🗑️ Excluir"`.
+  - Adição de seletores numéricos (Spinbox/stepper com setas `➕`/`➖`) com validação de quantidade manual restrita a $x \ge 1$.
+  - Suporte a edição individual com ajuste de cópias em `PopupEditarEtiqueta`.
+
 ## [1.3.15] - 2026-08-17
 - Criação da skill de diagnóstico e troubleshooting [problem-troubleshooting](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/problem-troubleshooting/SKILL.md):
   - Catalogação de erros frequentes e resoluções (banco Neon/psycopg, tipagem estática Pyright/win32, driver de impressão GDI e concorrência Tkinter).

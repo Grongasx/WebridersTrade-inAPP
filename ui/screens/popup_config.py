@@ -27,6 +27,7 @@ from config import (
 from ui.components.base import UIBuilder
 from core.database import get_conn
 from core.config_local import carregar_config_local, salvar_config_local
+from utils.helpers import brl, agora
 
 
 def gerar_e_persistir_ean13(conn, produto_id: int, ean_atual: str = None) -> str:
@@ -113,8 +114,8 @@ def gerar_imagem_ean13(codigo_str: str, largura_px: int, altura_px: int) -> Imag
     return img
 
 
-class PopupAddPorId:
-    """Popup para adicionar produto na fila por ID."""
+class PopupAddProduto:
+    """Popup avançado para pesquisar e adicionar produtos na fila de impressão."""
 
     def __init__(self, app, callback):
         self.app = app
@@ -123,76 +124,245 @@ class PopupAddPorId:
 
     def _build(self):
         win = tk.Toplevel(self.app)
-        win.title("Adicionar na Fila")
-        win.geometry("400x300")
+        win.title("Adicionar Produto à Fila de Impressão")
+        win.geometry("720x580")
+        win.minsize(620, 480)
         win.configure(bg=BG)
         win.grab_set()
 
-        h_modal = UIBuilder.frame(win, bg=BG2, padx=15, pady=10)
+        # Cabeçalho Modal
+        h_modal = UIBuilder.frame(win, bg=BG2, padx=18, pady=12)
         h_modal.pack(fill="x")
-        UIBuilder.label(h_modal, "📦 Inserir Produto", font=FONT_H2, bg=BG2, fg=GOLD).pack(anchor="w")
+        UIBuilder.label(
+            h_modal, "📦 Adicionar Produto à Fila", font=FONT_H2, bg=BG2, fg=GOLD
+        ).pack(anchor="w")
 
-        b_modal = UIBuilder.frame(win, bg=BG, padx=20, pady=15)
+        # Corpo Modal
+        b_modal = UIBuilder.frame(win, bg=BG, padx=18, pady=12)
         b_modal.pack(fill="both", expand=True)
 
-        v_id_prod = tk.StringVar()
+        # Barra de Pesquisa Dinâmica
+        f_busca = UIBuilder.frame(b_modal, bg=BG, pady=4)
+        f_busca.pack(fill="x")
+        UIBuilder.label(
+            f_busca,
+            "🔍 Pesquisar Produto (ID, Nome, Marca, Modelo, Dono ou SKU):",
+            font=FONT_SMALL,
+            bg=BG,
+            fg=TEXT,
+        ).pack(anchor="w", pady=(0, 4))
+
+        v_busca = tk.StringVar()
+        e_busca = UIBuilder.entry(f_busca, var=v_busca, width=40)
+        e_busca.pack(fill="x", ipady=5)
+        e_busca.focus_set()
+
+        # Treeview de Produtos
+        tf_prod = UIBuilder.frame(b_modal, bg=BG2, pady=6)
+        tf_prod.pack(fill="both", expand=True, pady=(8, 10))
+
+        cols = ("ID", "Produto / Modelo", "Dono", "Preço", "SKU / Código")
+        tv_prod = UIBuilder.make_tree(
+            tf_prod,
+            cols,
+            [55, 230, 130, 85, 110],
+            ["center", "w", "w", "center", "center"],
+        )
+
+        def filtrar(*_):
+            termo = v_busca.get().strip().lower()
+            for item in tv_prod.get_children():
+                tv_prod.delete(item)
+
+            with get_conn() as conn:
+                rows = conn.execute("""
+                    SELECT p.id, p.nome, p.marca, p.modelo, p.grafico, p.preco_outlet, 
+                           p.sku, p.codigo_barras, c.nome, p.tamanho
+                    FROM produtos_outlet p
+                    LEFT JOIN clientes c ON p.cliente_id = c.id
+                    ORDER BY p.id DESC
+                    LIMIT 200
+                """).fetchall()
+
+            for r in rows:
+                pid = r[0]
+                nome = r[1] or ""
+                marca = r[2] or ""
+                modelo = r[3] or ""
+                grafico = r[4] or ""
+                preco_val = r[5]
+                preco_str = brl(preco_val) if preco_val is not None else "R$ 0,00"
+                sku = r[6] or r[7] or f"WR-{pid:06d}"
+                dono = r[8] or "—"
+
+                prod_desc = f"{marca} {modelo}".strip() or nome
+                if grafico:
+                    prod_desc += f" ({grafico})"
+                if not prod_desc:
+                    prod_desc = f"Produto #{pid}"
+
+                if termo:
+                    conteudo = f"{pid} {nome} {marca} {modelo} {grafico} {dono} {sku}".lower()
+                    if termo not in conteudo:
+                        continue
+
+                tv_prod.insert(
+                    "", "end", iid=str(pid), values=(pid, prod_desc, dono, preco_str, sku)
+                )
+
+        v_busca.trace_add("write", filtrar)
+        filtrar()
+
+        # Barra Inferior: Quantidade com Spinbox / Stepper (mínimo 1) e Botões
+        bot_bar = UIBuilder.card(b_modal, bg=BG2, px=14, py=10)
+        bot_bar.pack(fill="x", pady=(4, 0))
+
+        lbl_qtd = UIBuilder.label(
+            bot_bar, "Quantidade de Cópias:", font=FONT_BODY, bg=BG2, fg=TEXT
+        )
+        lbl_qtd.pack(side="left", padx=(4, 10))
+
         v_qtd_prod = tk.StringVar(value="1")
-        UIBuilder.field(b_modal, "ID ou Código de Barras:", v_id_prod, bg=BG)
-        UIBuilder.field(b_modal, "Quantidade de Etiquetas:", v_qtd_prod, bg=BG)
+
+        def decrementar():
+            try:
+                val = int(v_qtd_prod.get())
+                if val > 1:
+                    v_qtd_prod.set(str(val - 1))
+            except ValueError:
+                v_qtd_prod.set("1")
+
+        def incrementar():
+            try:
+                val = int(v_qtd_prod.get())
+                v_qtd_prod.set(str(max(1, val + 1)))
+            except ValueError:
+                v_qtd_prod.set("1")
+
+        btn_dec = tk.Button(
+            bot_bar,
+            text="➖",
+            command=decrementar,
+            bg=BG3,
+            fg=TEXT,
+            activebackground=ACCENT,
+            activeforeground="#FFF",
+            font=("Segoe UI", 9, "bold"),
+            relief="flat",
+            padx=6,
+            pady=2,
+            cursor="hand2",
+        )
+        btn_dec.pack(side="left", padx=(0, 2))
+
+        sp_qtd = ttk.Spinbox(
+            bot_bar,
+            from_=1,
+            to=9999,
+            textvariable=v_qtd_prod,
+            width=5,
+            justify="center",
+            font=("Segoe UI", 10, "bold"),
+        )
+        sp_qtd.pack(side="left", padx=2)
+
+        btn_inc = tk.Button(
+            bot_bar,
+            text="➕",
+            command=incrementar,
+            bg=BG3,
+            fg=TEXT,
+            activebackground=ACCENT,
+            activeforeground="#FFF",
+            font=("Segoe UI", 9, "bold"),
+            relief="flat",
+            padx=6,
+            pady=2,
+            cursor="hand2",
+        )
+        btn_inc.pack(side="left", padx=(2, 15))
 
         def confirmar():
-            termo = v_id_prod.get().strip()
-            qtd_p = v_qtd_prod.get().strip()
-            if not termo or not qtd_p.isdigit() or int(qtd_p) <= 0:
-                messagebox.showwarning("Aviso", "Valores inválidos.")
-                return
+            sel = tv_prod.selection()
+            if not sel:
+                # Se não houver seleção mas a busca retornou exatamente 1 item, seleciona ele
+                filhos = tv_prod.get_children()
+                if len(filhos) == 1:
+                    sel = [filhos[0]]
+                else:
+                    self.app.toast.show("Selecione um produto na lista.", "aviso")
+                    return
+
+            try:
+                qtd_final = int(v_qtd_prod.get().strip())
+                if qtd_final < 1:
+                    qtd_final = 1
+            except ValueError:
+                qtd_final = 1
+
+            prod_id = int(sel[0])
+
             try:
                 with get_conn() as conn:
-                    p_row = conn.execute(
-                        """
-                        SELECT p.id, p.nome, p.preco_outlet, p.codigo_barras, p.marca, p.tamanho, c.nome 
-                        FROM produtos_outlet p LEFT JOIN clientes c ON p.cliente_id=c.id 
-                        WHERE p.id::text=%s OR p.codigo_barras=%s
-                    """,
-                        (termo, termo),
-                    ).fetchone()
+                    p_row = conn.execute("""
+                        SELECT p.id, p.nome, p.preco_outlet, p.sku, p.codigo_barras, 
+                               p.marca, p.modelo, p.tamanho, c.nome
+                        FROM produtos_outlet p 
+                        LEFT JOIN clientes c ON p.cliente_id = c.id 
+                        WHERE p.id = %s
+                    """, (prod_id,)).fetchone()
 
                     if not p_row:
-                        messagebox.showerror("Não encontrado", "Produto não encontrado.")
+                        self.app.toast.show("Produto não encontrado no banco.", "erro")
                         return
 
-                    prod_id = p_row[0]
-                    ean_existente = p_row[3]
-                    ean_final = gerar_e_persistir_ean13(conn, prod_id, ean_existente)
+                    cod_final = p_row[3] or p_row[4]
+                    if not cod_final:
+                        cod_final = f"WR-{prod_id:06d}"
+
+                    nome_prod = p_row[1] or f"{p_row[5] or ''} {p_row[6] or ''}".strip() or f"Produto #{prod_id}"
+                    preco_formatado = brl(p_row[2]) if p_row[2] is not None else "R$ 0,00"
 
                     dados = {
                         "id": prod_id,
-                        "nome": p_row[1] or "",
-                        "preco": f"{float(p_row[2]):.2f}" if p_row[2] else "0.00",
-                        "codigo": ean_final,
-                        "marca": p_row[4] or "",
-                        "tamanho": p_row[5] or "",
-                        "dono": p_row[6] or "",
+                        "nome": nome_prod,
+                        "preco": preco_formatado,
+                        "codigo": cod_final,
+                        "sku": p_row[3] or cod_final,
+                        "marca": p_row[5] or "",
+                        "modelo": p_row[6] or "",
+                        "tamanho": p_row[7] or "",
+                        "dono": p_row[8] or "",
                     }
 
-                    conn.execute(
-                        """
+                    conn.execute("""
                         INSERT INTO fila_impressao (produto_id, texto_etiqueta, quantidade, status, criado) 
                         VALUES (%s, %s, %s, 'Pendente', CURRENT_TIMESTAMP)
-                    """,
-                        (prod_id, json.dumps(dados), int(qtd_p)),
-                    )
+                    """, (prod_id, json.dumps(dados), qtd_final))
                     conn.commit()
 
                 win.destroy()
                 self.callback()
-                self.app.toast.show("Adicionado com sucesso!", "sucesso")
+                self.app.toast.show(
+                    f"Produto ID {prod_id} adicionado à fila ({qtd_final} etiqueta{'s' if qtd_final > 1 else ''})!",
+                    "sucesso",
+                )
             except Exception as e:
-                messagebox.showerror("Erro", str(e))
+                self.app.toast.show(f"Erro ao adicionar: {str(e)}", "erro")
 
-        btn_bar = UIBuilder.frame(win, bg=BG, padx=20, pady=10)
-        btn_bar.pack(fill="x")
-        UIBuilder.button(btn_bar, "✔️ Confirmar", confirmar, color=SUCCESS, width=14).pack(side="right")
+        tv_prod.bind("<Double-1>", lambda _: confirmar())
+        e_busca.bind("<Return>", lambda _: confirmar())
+
+        UIBuilder.button(
+            bot_bar, "✔️ Adicionar à Fila", confirmar, color=SUCCESS, fg="#000", width=18
+        ).pack(side="right", padx=(5, 0))
+
+        UIBuilder.button(
+            bot_bar, "❌ Cancelar", win.destroy, color=BG3, width=12
+        ).pack(side="right")
+
+
+PopupAddPorId = PopupAddProduto
 
 
 class PopupConfigDimensoes:
@@ -775,18 +945,82 @@ class PopupEditarEtiqueta:
         f_r.pack(side="left", fill="x", expand=True)
         UIBuilder.field(f_l, "Preço", vs["preco"], bg=BG)
         UIBuilder.field(f_r, "Tam", vs["tamanho"], bg=BG)
-        UIBuilder.field(fm, "Qtd (Impressões)", v_qtd, bg=BG)
+        # Stepper para quantidade
+        f_qtd = UIBuilder.frame(fm, bg=BG, pady=5)
+        f_qtd.pack(fill="x")
+        UIBuilder.label(f_qtd, "Qtd (Impressões):", font=FONT_SMALL, bg=BG, fg=TEXT_DIM).pack(anchor="w", pady=(0, 2))
+
+        f_sp = UIBuilder.frame(f_qtd, bg=BG)
+        f_sp.pack(anchor="w")
+
+        def dec_qtd():
+            try:
+                val = int(v_qtd.get())
+                if val > 1:
+                    v_qtd.set(str(val - 1))
+            except ValueError:
+                v_qtd.set("1")
+
+        def inc_qtd():
+            try:
+                val = int(v_qtd.get())
+                v_qtd.set(str(max(1, val + 1)))
+            except ValueError:
+                v_qtd.set("1")
+
+        tk.Button(
+            f_sp,
+            text="➖",
+            command=dec_qtd,
+            bg=BG3,
+            fg=TEXT,
+            font=("Segoe UI", 9, "bold"),
+            relief="flat",
+            padx=6,
+            pady=2,
+            cursor="hand2",
+        ).pack(side="left", padx=(0, 2))
+
+        sp_edit = ttk.Spinbox(
+            f_sp,
+            from_=1,
+            to=9999,
+            textvariable=v_qtd,
+            width=6,
+            justify="center",
+            font=("Segoe UI", 10, "bold"),
+        )
+        sp_edit.pack(side="left", padx=2)
+
+        tk.Button(
+            f_sp,
+            text="➕",
+            command=inc_qtd,
+            bg=BG3,
+            fg=TEXT,
+            font=("Segoe UI", 9, "bold"),
+            relief="flat",
+            padx=6,
+            pady=2,
+            cursor="hand2",
+        ).pack(side="left", padx=(2, 0))
 
         def salvar():
             d = {k: v.get().strip() for k, v in vs.items()}
             d["dono"] = dados.get("dono", "")
+            try:
+                qtd_salvar = max(1, int(v_qtd.get().strip()))
+            except ValueError:
+                qtd_salvar = 1
+
             with get_conn() as conn:
                 conn.execute(
                     "UPDATE fila_impressao SET texto_etiqueta=%s, quantidade=%s WHERE id=%s",
-                    (json.dumps(d), int(v_qtd.get()), self.fid),
+                    (json.dumps(d), qtd_salvar, self.fid),
                 )
                 conn.commit()
             win.destroy()
             self.callback()
+            self.app.toast.show("Etiqueta atualizada com sucesso!", "sucesso")
 
         UIBuilder.button(fm, "💾 Atualizar", salvar, color=SUCCESS, width=20).pack(pady=10)

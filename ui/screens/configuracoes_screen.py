@@ -46,7 +46,7 @@ class ConfiguracoesScreen(BaseScreen):
         def _buscar_db():
             with get_conn() as conn:
                 return conn.execute("""
-                    SELECT id, texto_etiqueta, quantidade, status 
+                    SELECT id, produto_id, texto_etiqueta, quantidade, status 
                     FROM fila_impressao 
                     WHERE status = 'Pendente' 
                     ORDER BY id ASC
@@ -169,11 +169,11 @@ class ConfiguracoesScreen(BaseScreen):
 
         tf = UIBuilder.frame(col_dir, bg=BG2)
         tf.pack(fill="both", expand=True)
-        cols_fila = ("ID", "Produto (Dados)", "Código", "Qtd", "Status")
+        cols_fila = ("ID Prod", "Produto (Dados)", "Código", "Qtd", "Status")
         self._tree_fila = UIBuilder.make_tree(
             tf,
             cols_fila,
-            [40, 240, 100, 50, 80],
+            [65, 230, 110, 50, 80],
             ["center", "w", "center", "center", "center"],
         )
 
@@ -190,10 +190,10 @@ class ConfiguracoesScreen(BaseScreen):
         ).pack(anchor="w", pady=(0, 4))
         UIBuilder.button(
             brow,
-            "➕ Add por ID",
-            self._add_por_id,
+            "➕ Add Produto",
+            self._add_produto,
             color=ACCENT,
-            width=14,
+            width=15,
         ).pack(side="left", padx=(0, 5), pady=5)
         UIBuilder.button(
             brow,
@@ -204,11 +204,11 @@ class ConfiguracoesScreen(BaseScreen):
             width=18,
         ).pack(side="left", padx=2, pady=5)
         UIBuilder.button(
-            brow, "🗑️", self._remover, color=DANGER, width=4
+            brow, "🗑️ Excluir", self._remover, color=DANGER, width=12
         ).pack(side="left", padx=2, pady=5)
 
     def _popular_tree(self):
-        """Preenche a Treeview com os dados armazenados em memória."""
+        """Preenche a Treeview com os dados armazenados em memória exibindo o ID do produto."""
         if not self._tree_fila:
             return
 
@@ -216,14 +216,21 @@ class ConfiguracoesScreen(BaseScreen):
             self._tree_fila.delete(r)
 
         for r in self._itens_fila:
+            fila_id = r[0]
+            prod_id = r[1]
             try:
-                d = json.loads(r[1])
+                d = json.loads(r[2]) if isinstance(r[2], str) else (r[2] or {})
                 n = f"{d.get('nome')} | {d.get('preco')}"
-                c = d.get("codigo", "—")
+                c = d.get("codigo") or d.get("sku") or "—"
+                if not prod_id:
+                    prod_id = d.get("id") or d.get("id_banco") or "—"
             except Exception:
                 n, c = "ERRO DE FORMATO", "—"
+                if not prod_id:
+                    prod_id = "—"
+
             self._tree_fila.insert(
-                "", "end", iid=str(r[0]), values=(r[0], n, c, r[2], r[3])
+                "", "end", iid=str(fila_id), values=(prod_id, n, c, r[3], r[4])
             )
 
     def _editar(self):
@@ -284,10 +291,13 @@ class ConfiguracoesScreen(BaseScreen):
             mensagem="Removendo itens da fila..."
         )
 
-    def _add_por_id(self):
-        from ui.screens.popup_config import PopupAddPorId
+    def _add_produto(self):
+        from ui.screens.popup_config import PopupAddProduto
 
-        PopupAddPorId(self.app, self._carregar_configuracoes)
+        PopupAddProduto(self.app, self._carregar_configuracoes)
+
+    def _add_por_id(self):
+        self._add_produto()
 
     def _abrir_config_dimensoes(self):
         from ui.screens.popup_config import PopupConfigDimensoes
