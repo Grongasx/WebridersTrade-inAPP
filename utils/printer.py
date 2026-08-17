@@ -4,7 +4,7 @@ Módulo de impressão de etiquetas térmicas e gerenciamento de fila.
 
 import os
 import json
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple, Optional, cast
 
 try:
     import win32print
@@ -152,7 +152,7 @@ class PDFPrinter:
         # Tentativa 2: Fallback via Win32 GDI direto (win32gui.CreateDC)
         if hdc is None and win32gui is not None:
             try:
-                raw_hdc = win32gui.CreateDC("WINSPOOL", nome_impressora, None)
+                raw_hdc = win32gui.CreateDC("WINSPOOL", nome_impressora, cast(Any, None))
                 if raw_hdc:
                     hdc = win32ui.CreateDCFromHandle(raw_hdc)
             except Exception as e:

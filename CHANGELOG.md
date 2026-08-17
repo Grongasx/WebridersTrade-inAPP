@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.10] - 2026-08-17
+- Correção de tipagem em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
+  - Aplicação de `cast(Any, None)` no parâmetro `InitData` de `win32gui.CreateDC` para compatibilidade com o stub `PyDEVMODEW` do Pyright/Pylance.
+
 ## [1.3.9] - 2026-08-17
 - Correção de criação de Device Context (DC) de impressora em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
   - Resolução do erro `NoneType has no attribute 'CreatePrinterDC'` quando `win32ui.CreateDC()` retorna `None`.
