@@ -1,5 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.4.3] - 2026-08-17
+- Correção de tipagem em chamada de função ([ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
+  - Conversão explícita de `data["texto"]` para `str` na chamada `gerar_imagem_ean13(str(data["texto"]), ...)`, eliminando falso positivo de união de tipos `float | int | str` do verificador estático.
+  - Declaração explícita de `self.layout_elementos: Dict[str, Dict[str, Any]]`.
+  - Documentação da resolução na skill [problem-troubleshooting](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/problem-troubleshooting/SKILL.md).
+
 ## [1.4.2] - 2026-08-17
 - Correção de tipagem estática no Designer Visual ([ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
   - Declaração explícita de `self._drag_data: Dict[str, Any]` em `PopupConfigDimensoes` para evitar inferência restritiva `dict[str, int | None]` do Pyright/Pylance.

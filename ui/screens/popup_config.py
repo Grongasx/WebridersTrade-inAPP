@@ -290,7 +290,7 @@ class PopupConfigDimensoes:
         self.callback = callback
         self._photo_cache = {}
 
-        self.layout_elementos = {
+        self.layout_elementos: Dict[str, Dict[str, Any]] = {
             "nome": {
                 "tipo": "texto",
                 "texto": "CAMISA POLO MASCULINA OUTLET",
@@ -479,7 +479,7 @@ class PopupConfigDimensoes:
         cb_elem.bind("<<ComboboxSelected>>", lambda e: self._selecionar_elemento(self.v_elem_sel.get()))
 
         UIBuilder.label(r1, "Texto Teste:", bg=BG2, fg=TEXT).pack(side="left", padx=(0, 5))
-        self.v_elem_texto = tk.StringVar(value=self.layout_elementos["nome"]["texto"])
+        self.v_elem_texto = tk.StringVar(value=str(self.layout_elementos["nome"]["texto"]))
         ent_texto = UIBuilder.entry(r1, var=self.v_elem_texto, width=28)
         ent_texto.pack(side="left", fill="x", expand=True)
         ent_texto.bind("<KeyRelease>", self._on_texto_changed)
@@ -579,7 +579,7 @@ class PopupConfigDimensoes:
                 h_mm = float(data.get("height_mm", 9.0))
                 h_px = max(15, int(h_mm * self.PX_PER_MM))
 
-                bar_pil = gerar_imagem_ean13(data["texto"], max_w_px, h_px)
+                bar_pil = gerar_imagem_ean13(str(data["texto"]), max_w_px, h_px)
                 bar_photo = ImageTk.PhotoImage(bar_pil)
                 self._photo_cache[key] = bar_photo
 
@@ -594,7 +594,7 @@ class PopupConfigDimensoes:
                 item_id = self.canvas.create_text(
                     x_px,
                     y_px,
-                    text=data["texto"],
+                    text=str(data["texto"]),
                     anchor="nw",
                     width=max_w_px,
                     font=("Arial", -px_font, is_bold),
@@ -630,7 +630,7 @@ class PopupConfigDimensoes:
         self.item_selecionado = key
         self.v_elem_sel.set(key)
         data = self.layout_elementos[key]
-        self.v_elem_texto.set(data["texto"])
+        self.v_elem_texto.set(str(data["texto"]))
         self.v_font_size.set(str(data["font_size"]))
         self.v_max_w.set(str(data.get("max_w_mm", 32.0)))
 
