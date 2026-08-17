@@ -187,7 +187,7 @@ class PDFPrinter:
         h_px = int(h_tot_mm * px_mm_y)
 
         try:
-            hdc.StartDoc("Impressao_Etiquetas_Outlet")
+            cast(Any, hdc).StartDoc("Impressao_Etiquetas_Outlet")
             hdc_handle = self._obter_hdc_handle(hdc)
 
             for i in range(0, len(lista_dados), cols_por_linha):
