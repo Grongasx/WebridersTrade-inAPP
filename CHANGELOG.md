@@ -1,5 +1,8 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.12] - 2026-08-17
+- Correção de assinatura em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py): remoção do argumento `None` em `hdc.StartDoc("Impressao_Etiquetas_Outlet")` para satisfazer o verificador estático de tipos.
+
 ## [1.3.11] - 2026-08-17
 - Correção de assinatura em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
   - Adição explícita do parâmetro `outputFile=None` na chamada `hdc.StartDoc("Impressao_Etiquetas_Outlet", None)` em conformidade com o stub de tipagem `PyCDC.StartDoc`.
