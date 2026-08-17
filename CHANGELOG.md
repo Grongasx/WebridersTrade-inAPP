@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.7] - 2026-08-17
+- Refatoração de migrações DDL em [core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py): substituição de loops dinâmicos com `sql.SQL()` por instruções DDL diretas (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`) em bloco único com `LiteralString`.
+- Resolução do erro de verificação de tipos (`Argument str is not assignable to parameter obj with type LiteralString in function psycopg.sql.SQL.__init__`).
+- Redução de latência de rede no Neon DB consolidando 18 queries individuais em 2 transações diretas.
+
 ## [1.3.6] - 2026-08-17
 - Correção de tipagem e segurança em `core/database.py`: migração das queries DDL dinâmicas (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`) de f-strings para composição segura com `psycopg.sql` (`sql.SQL` e `sql.Identifier`).
 - Resolução do erro de sobrecarga de tipo no Pyright/psycopg 3 (`Argument str is not assignable to parameter query with type LiteralString | Composed | SQL | bytes`).

@@ -4,7 +4,6 @@ Módulo de conexão e inicialização do banco de dados PostgreSQL (Neon).
 
 import os
 import psycopg
-from psycopg import sql
 from contextlib import contextmanager
 from dotenv import load_dotenv
 
@@ -80,21 +79,15 @@ def init_db():
         """)
 
         # Migração: Adiciona colunas faltantes na tabela historico_credito
-        colunas_historico = [
-            ("cliente_id", "BIGINT REFERENCES clientes(id) ON DELETE CASCADE"),
-            ("valor", "NUMERIC(10, 2) NOT NULL DEFAULT 0.00"),
-            ("tipo", "VARCHAR(50) NOT NULL DEFAULT 'manual'"),
-            ("descricao", "TEXT"),
-            ("motivo", "TEXT"),
-            ("criado", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        ]
-        for col_nome, col_def in colunas_historico:
-            conn.execute(
-                sql.SQL("ALTER TABLE historico_credito ADD COLUMN IF NOT EXISTS {} {}").format(
-                    sql.Identifier(col_nome),
-                    sql.SQL(col_def)
-                )
-            )
+        conn.execute("""
+            ALTER TABLE historico_credito
+                ADD COLUMN IF NOT EXISTS cliente_id BIGINT REFERENCES clientes(id) ON DELETE CASCADE,
+                ADD COLUMN IF NOT EXISTS valor NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS tipo VARCHAR(50) NOT NULL DEFAULT 'manual',
+                ADD COLUMN IF NOT EXISTS descricao TEXT,
+                ADD COLUMN IF NOT EXISTS motivo TEXT,
+                ADD COLUMN IF NOT EXISTS criado TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+        """)
 
         # 4. Tabela Produtos Outlet
         conn.execute("""
@@ -111,27 +104,21 @@ def init_db():
         """)
 
         # Migração: Adiciona colunas faltantes na tabela produtos_outlet
-        colunas_outlet = [
-            ("cliente_id", "BIGINT REFERENCES clientes(id) ON DELETE SET NULL"),
-            ("sku", "VARCHAR(100) UNIQUE"),
-            ("tipo", "VARCHAR(100)"),
-            ("marca", "VARCHAR(100)"),
-            ("modelo", "VARCHAR(100)"),
-            ("grafico", "VARCHAR(255)"),
-            ("cor", "VARCHAR(100)"),
-            ("numeracao", "VARCHAR(50)"),
-            ("tamanho", "VARCHAR(50)"),
-            ("quantidade", "INT DEFAULT 1"),
-            ("estoque", "INT DEFAULT 1"),
-            ("valor_sugerido", "NUMERIC(10, 2)")
-        ]
-        for col_nome, col_def in colunas_outlet:
-            conn.execute(
-                sql.SQL("ALTER TABLE produtos_outlet ADD COLUMN IF NOT EXISTS {} {}").format(
-                    sql.Identifier(col_nome),
-                    sql.SQL(col_def)
-                )
-            )
+        conn.execute("""
+            ALTER TABLE produtos_outlet
+                ADD COLUMN IF NOT EXISTS cliente_id BIGINT REFERENCES clientes(id) ON DELETE SET NULL,
+                ADD COLUMN IF NOT EXISTS sku VARCHAR(100) UNIQUE,
+                ADD COLUMN IF NOT EXISTS tipo VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS marca VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS modelo VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS grafico VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS cor VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS numeracao VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS tamanho VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS quantidade INT DEFAULT 1,
+                ADD COLUMN IF NOT EXISTS estoque INT DEFAULT 1,
+                ADD COLUMN IF NOT EXISTS valor_sugerido NUMERIC(10, 2);
+        """)
 
 
         # 5. Tabela Vendas Outlet
