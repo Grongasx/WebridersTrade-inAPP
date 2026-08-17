@@ -78,6 +78,21 @@ def init_db():
             );
         """)
 
+        # Migração: Adiciona colunas faltantes na tabela historico_credito
+        colunas_historico = [
+            ("cliente_id", "BIGINT REFERENCES clientes(id) ON DELETE CASCADE"),
+            ("valor", "NUMERIC(10, 2) NOT NULL DEFAULT 0.00"),
+            ("tipo", "VARCHAR(50) NOT NULL DEFAULT 'manual'"),
+            ("descricao", "TEXT"),
+            ("motivo", "TEXT"),
+            ("criado", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        ]
+        for col_nome, col_def in colunas_historico:
+            conn.execute(f"""
+                ALTER TABLE historico_credito 
+                ADD COLUMN IF NOT EXISTS {col_nome} {col_def};
+            """)
+
         # 4. Tabela Produtos Outlet
         conn.execute("""
             CREATE TABLE IF NOT EXISTS produtos_outlet (

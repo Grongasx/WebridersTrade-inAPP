@@ -1,5 +1,9 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.5] - 2026-08-17
+- Correção de migração de esquema no PostgreSQL: adição automática das colunas faltantes (`motivo`, `descricao`, `tipo`, `valor`) na tabela `historico_credito` via `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` em `core/database.py`.
+- Resolução do erro `column "motivo" of relation "historico_credito" does not exist` durante o resgate de vales presente e lançamentos de crédito.
+
 ## [1.3.4] - 2026-08-13
 - Validação de configuração de credenciais Git do usuário `grongasx` (`gustavinihb12@gmail.com`).
 
