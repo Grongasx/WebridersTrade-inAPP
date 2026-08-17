@@ -9,11 +9,13 @@ from typing import List, Dict, Any, Tuple, Optional
 try:
     import win32print
     import win32ui
+    import win32gui
     import win32con
     from PIL import Image, ImageDraw, ImageFont, ImageWin
 except ImportError:
     win32print = None
     win32ui = None
+    win32gui = None
     win32con = None
     Image = None
     ImageDraw = None
@@ -134,11 +136,35 @@ class PDFPrinter:
                 f"Acesse a tela de Configurações no app, selecione a impressora e clique em Salvar."
             )
 
-        hdc = win32ui.CreateDC()
+        hdc = None
+        erro_dc = None
+
+        # Tentativa 1: Via win32ui CreateDC e CreatePrinterDC
         try:
-            hdc.CreatePrinterDC(nome_impressora)
+            hdc_temp = win32ui.CreateDC()
+            if hdc_temp is not None:
+                hdc_temp.CreatePrinterDC(nome_impressora)
+                hdc = hdc_temp
         except Exception as e:
-            raise RuntimeError(f"Falha ao conectar à impressora '{nome_impressora}': {str(e)}")
+            erro_dc = str(e)
+            hdc = None
+
+        # Tentativa 2: Fallback via Win32 GDI direto (win32gui.CreateDC)
+        if hdc is None and win32gui is not None:
+            try:
+                raw_hdc = win32gui.CreateDC("WINSPOOL", nome_impressora, None)
+                if raw_hdc:
+                    hdc = win32ui.CreateDCFromHandle(raw_hdc)
+            except Exception as e:
+                erro_dc = str(e)
+                hdc = None
+
+        if hdc is None:
+            detalhe = f": {erro_dc}" if erro_dc else ""
+            raise RuntimeError(
+                f"Falha ao conectar à impressora '{nome_impressora}'{detalhe}. "
+                f"Verifique se o spooler do Windows está ativo e se o driver está instalado."
+            )
 
         w_tot_mm = float(cfgs.get("etiq_largura_mm", 108))
         h_tot_mm = float(cfgs.get("etiq_altura_mm", 22))
@@ -186,7 +212,10 @@ class PDFPrinter:
 
             hdc.EndDoc()
         finally:
-            hdc.DeleteDC()
+            try:
+                hdc.DeleteDC()
+            except Exception:
+                pass
 
     def _obter_hdc_handle(self, hdc: Any) -> Any:
         """Obtém o identificador HDC seguro para desenho com PIL ImageWin."""

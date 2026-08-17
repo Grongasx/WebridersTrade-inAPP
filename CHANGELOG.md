@@ -1,5 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.9] - 2026-08-17
+- Correção de criação de Device Context (DC) de impressora em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
+  - Resolução do erro `NoneType has no attribute 'CreatePrinterDC'` quando `win32ui.CreateDC()` retorna `None`.
+  - Implementação de fallback resiliente via GDI nativo com `win32gui.CreateDC("WINSPOOL", ...)` e `win32ui.CreateDCFromHandle()`.
+  - Tratamento seguro de desalocação (`DeleteDC`) no bloco `finally`.
+
 ## [1.3.8] - 2026-08-17
 - Refatoração do módulo de impressão [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
   - Remoção de acoplamento indevido (`from ui.screens.popup_config import gerar_e_persistir_ean13`).
