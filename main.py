@@ -20,7 +20,7 @@ from config import BG, DB_PATH, APP_TITLE, APP_VERSION
 from core.database import init_db, get_conn
 
 # Utils
-from utils.helpers import agora, brl
+from utils.helpers import agora, brl, gerar_e_persistir_ean13
 
 # UI Components
 from ui.components.sidebar import Sidebar
@@ -158,24 +158,27 @@ class App(tk.Tk):
         return ["Zebra"]
     
     def _adicionar_fila_impressao(self, produto_id):
-        """Adiciona produto a fila de impressao."""
+        """Adiciona produto a fila de impressao garantindo codigo de barras EAN-13 valido."""
         with get_conn() as conn:
             p = conn.execute("""
-                SELECT p.nome, p.marca, p.tamanho, p.codigo_barras, p.preco_outlet, c.nome
-                FROM produtos_outlet p JOIN clientes c ON p.cliente_id=c.id
+                SELECT p.nome, p.marca, p.tamanho, p.codigo_barras, p.preco_outlet, c.nome, p.sku
+                FROM produtos_outlet p LEFT JOIN clientes c ON p.cliente_id=c.id
                 WHERE p.id=%s
             """, (produto_id,)).fetchone()
             if not p:
                 return
+
+            ean_final = gerar_e_persistir_ean13(conn, produto_id, p[3])
 
             dados = {
                 "id": produto_id,
                 "nome": p[0],
                 "marca": p[1] or "",
                 "tamanho": p[2] or "",
-                "codigo": p[3],
+                "codigo": ean_final,
+                "sku": p[6] or ean_final,
                 "preco": brl(p[4]),
-                "dono": p[5]
+                "dono": p[5] or ""
             }
 
             conn.execute("""

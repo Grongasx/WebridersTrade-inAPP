@@ -27,91 +27,7 @@ from config import (
 from ui.components.base import UIBuilder
 from core.database import get_conn
 from core.config_local import carregar_config_local, salvar_config_local
-from utils.helpers import brl, agora
-
-
-def gerar_e_persistir_ean13(conn, produto_id: int, ean_atual: str = None) -> str:
-    """Garante um EAN-13 único e válido de 13 dígitos para o produto."""
-    if ean_atual and str(ean_atual).strip() and str(ean_atual).strip().lower() not in ["none", "—", "", "null"]:
-        digits = ''.join(filter(str.isdigit, str(ean_atual)))
-        if len(digits) == 13:
-            return digits
-
-    base = f"200{int(produto_id):09d}"[:12]
-    soma = sum(int(char) * (1 if idx % 2 == 0 else 3) for idx, char in enumerate(base))
-    digito = (10 - (soma % 10)) % 10
-    novo_ean = f"{base}{digito}"
-
-    try:
-        conn.execute("UPDATE produtos_outlet SET codigo_barras = %s WHERE id = %s", (novo_ean, produto_id))
-        conn.commit()
-    except Exception:
-        pass
-
-    return novo_ean
-
-
-def gerar_imagem_ean13(codigo_str: str, largura_px: int, altura_px: int) -> Image.Image:
-    """Gera uma imagem PIL de um Código de Barras EAN-13 padronizado."""
-    digits = ''.join(filter(str.isdigit, str(codigo_str))).zfill(13)[:13]
-
-    L_PATTERNS = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"]
-    G_PATTERNS = ["0100111", "0110011", "0011011", "0100001", "0011101", "0111001", "0000101", "0010001", "0001001", "0010111"]
-    R_PATTERNS = ["1110010", "1100110", "1101100", "1000010", "1011100", "1001110", "1010000", "1000100", "1001000", "1110100"]
-    PARITY_TABLE = [
-        "LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG",
-        "LGGGLL", "LGGGGL", "LGLGLG", "LGLGGL", "LGGLGL"
-    ]
-
-    first = int(digits[0])
-    parity = PARITY_TABLE[first]
-
-    bits = "101"
-    for i in range(6):
-        d = int(digits[i + 1])
-        bits += L_PATTERNS[d] if parity[i] == 'L' else G_PATTERNS[d]
-    bits += "01010"
-    for i in range(6):
-        d = int(digits[i + 7])
-        bits += R_PATTERNS[d]
-    bits += "101"
-
-    largura_px = max(20, largura_px)
-    altura_px = max(15, altura_px)
-
-    img = Image.new("RGB", (largura_px, altura_px), "white")
-    draw = ImageDraw.Draw(img)
-
-    num_modules = len(bits)
-    module_w = largura_px / float(num_modules)
-
-    text_h = max(8, int(altura_px * 0.28))
-    bar_h = altura_px - text_h
-
-    for idx, bit in enumerate(bits):
-        if bit == '1':
-            x0 = int(idx * module_w)
-            x1 = max(x0 + 1, int((idx + 1) * module_w))
-            is_guard = idx < 3 or (45 <= idx < 50) or idx >= 92
-            h = altura_px - 2 if is_guard else bar_h
-            draw.rectangle([x0, 0, x1, h], fill="black")
-
-    try:
-        font = ImageFont.truetype("arial.ttf", text_h - 1)
-    except IOError:
-        font = ImageFont.load_default()
-
-    txt = f"{digits[0]} {digits[1:7]} {digits[7:13]}"
-    if hasattr(draw, "textlength"):
-        tw = draw.textlength(txt, font=font)
-    else:
-        bbox = font.getbbox(txt)
-        tw = bbox[2] - bbox[0]
-
-    tx = max(0, int((largura_px - tw) / 2))
-    draw.text((tx, bar_h), txt, fill="black", font=font)
-
-    return img
+from utils.helpers import brl, agora, gerar_e_persistir_ean13, gerar_imagem_ean13
 
 
 class PopupAddProduto:
@@ -316,10 +232,7 @@ class PopupAddProduto:
                         self.app.toast.show("Produto não encontrado no banco.", "erro")
                         return
 
-                    cod_final = p_row[3] or p_row[4]
-                    if not cod_final:
-                        cod_final = f"WR-{prod_id:06d}"
-
+                    cod_final = gerar_e_persistir_ean13(conn, prod_id, p_row[4])
                     nome_prod = p_row[1] or f"{p_row[5] or ''} {p_row[6] or ''}".strip() or f"Produto #{prod_id}"
                     preco_formatado = brl(p_row[2]) if p_row[2] is not None else "R$ 0,00"
 

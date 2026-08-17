@@ -24,7 +24,7 @@ except ImportError:
 
 from core.database import get_conn
 from core.config_local import carregar_config_local
-from utils.helpers import gerar_imagem_barcode_sku
+from utils.helpers import gerar_imagem_ean13, gerar_imagem_barcode_sku
 
 
 class PDFPrinter:
@@ -317,7 +317,7 @@ class PDFPrinter:
                     h_bar_mm = float(cfg_elem.get("height_mm", 9.0))
                     h_bar_px = max(15, int(h_bar_mm * px_mm_y))
 
-                    bar_pil = gerar_imagem_barcode_sku(texto, max_w_px, h_bar_px)
+                    bar_pil = gerar_imagem_ean13(texto, max_w_px, h_bar_px)
                     img.paste(bar_pil, (pos_x, pos_y))
                 else:
                     font_pt = int(cfg_elem.get("font_size", 7))

@@ -1,5 +1,12 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.4.1] - 2026-08-17
+- Migração e geração de códigos de barra para o padrão internacional **EAN-13** ([utils/helpers.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/helpers.py), [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py), [main.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/main.py)):
+  - Substituição da renderização Code39 por gerador oficial EAN-13 numérico com cálculo de dígito verificador (módulo 10).
+  - Inclusão de margens de silêncio (quiet zones) e barras de guarda estendidas para leitura instantânea em leitores óticos e scanners Zebra/Honeywell/Elgin.
+  - Persistência e garantia de EAN-13 no cadastro de novos produtos outlet e na fila de impressão.
+  - Atualização do catálogo de diagnósticos na skill [problem-troubleshooting](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/problem-troubleshooting/SKILL.md).
+
 ## [1.4.0] - 2026-08-17
 - Reformulação da tela de Etiquetas e Fila de Impressão ([ui/screens/configuracoes_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/configuracoes_screen.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
   - Exibição do ID do produto na coluna principal da Treeview da fila em vez do ID de impressão.

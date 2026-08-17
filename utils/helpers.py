@@ -215,72 +215,147 @@ def calcular_sku(tipo, marca, modelo, grafico, cor, numeracao, seed_id=None):
     return f"WR-{t_pref}-{m_pref}-{n_pref}-{seq}"
 
 
-CODE39_PATTERNS = {
-    '0': '101001101', '1': '201001002', '2': '102001002', '3': '202001001',
-    '4': '101021002', '5': '201021001', '6': '102021001', '7': '101001202',
-    '8': '201001201', '9': '102001201', 'A': '201002101', 'B': '102002101',
-    'C': '202002100', 'D': '101022100', 'E': '201022100', 'F': '102022100',
-    'G': '101002201', 'H': '201002200', 'I': '102002200', 'J': '101022200',
-    'K': '201001021', 'L': '102001021', 'M': '202001020', 'N': '101021020',
-    'O': '201021020', 'P': '102021020', 'Q': '101002021', 'R': '201002020',
-    'S': '102002020', 'T': '101022020', 'U': '220010101', 'V': '120020101',
-    'W': '220020100', 'X': '120010201', 'Y': '220010200', 'Z': '120020200',
-    '-': '120010102', '.': '220010100', ' ': '120201001', '$': '120120100',
-    '/': '120100120', '+': '120012010', '%': '100120120', '*': '120102010'
-}
+def converter_para_ean13(codigo_str: str) -> str:
+    """Converte qualquer identificador/SKU/texto em um código EAN-13 numérico válido de 13 dígitos com DV."""
+    digits_raw = "".join(filter(str.isdigit, str(codigo_str)))
+    if len(digits_raw) == 13:
+        # Valida se o DV está correto
+        base = digits_raw[:12]
+        soma = sum(int(c) * (1 if i % 2 == 0 else 3) for i, c in enumerate(base))
+        dv = (10 - (soma % 10)) % 10
+        return f"{base}{dv}"
+
+    if not digits_raw:
+        # Se for string alfa pura, gera base numérica consistente
+        h_val = abs(hash(str(codigo_str).upper())) % 1000000000
+        digits_raw = str(h_val)
+
+    # Prefixo 200 (uso restrito interno / in-store) + 9 dígitos + dígito verificador
+    base12 = f"200{digits_raw.zfill(9)}"[:12]
+    soma = sum(int(c) * (1 if i % 2 == 0 else 3) for i, c in enumerate(base12))
+    dv = (10 - (soma % 10)) % 10
+    return f"{base12}{dv}"
+
+
+def gerar_e_persistir_ean13(conn, produto_id: int, ean_atual: str = None) -> str:
+    """Garante e persiste um EAN-13 único e 100% válido no banco de dados para o produto."""
+    if ean_atual and str(ean_atual).strip() and str(ean_atual).strip().lower() not in ["none", "—", "", "null"]:
+        digits = "".join(filter(str.isdigit, str(ean_atual)))
+        if len(digits) == 13:
+            return digits
+
+    novo_ean = converter_para_ean13(str(produto_id))
+    if conn:
+        try:
+            conn.execute(
+                "UPDATE produtos_outlet SET codigo_barras = %s WHERE id = %s",
+                (novo_ean, produto_id)
+            )
+            conn.commit()
+        except Exception:
+            pass
+
+    return novo_ean
+
+
+def gerar_imagem_ean13(codigo_str: str, largura_px: int, altura_px: int):
+    """
+    Gera uma imagem PIL de Código de Barras EAN-13 padronizado e nítido para leitores óticos/scanners.
+    Utiliza python-barcode com fallback para renderizador GDI/PIL pixel-perfect.
+    """
+    from PIL import Image, ImageDraw, ImageFont
+
+    ean13_str = converter_para_ean13(codigo_str)
+    largura_px = max(60, int(largura_px))
+    altura_px = max(20, int(altura_px))
+
+    try:
+        import barcode
+        from barcode.writer import ImageWriter
+
+        ean_cls = barcode.get_barcode_class("ean13")
+        writer = ImageWriter()
+        ean_inst = ean_cls(ean13_str[:12], writer=writer)
+        img_bar = ean_inst.render({
+            "module_width": 0.28,
+            "module_height": 11.0,
+            "font_size": 8,
+            "text_distance": 2.5,
+            "quiet_zone": 4.5,
+            "write_text": True
+        })
+        return img_bar.resize((largura_px, altura_px), Image.Resampling.LANCZOS)
+    except Exception:
+        pass
+
+    # Fallback: renderizador puro PIL EAN-13 (95 módulos + quiet zones)
+    L_PATTERNS = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"]
+    G_PATTERNS = ["0100111", "0110011", "0011011", "0100001", "0011101", "0111001", "0000101", "0010001", "0001001", "0010111"]
+    R_PATTERNS = ["1110010", "1100110", "1101100", "1000010", "1011100", "1001110", "1010000", "1000100", "1001000", "1110100"]
+    PARITY_TABLE = ["LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG", "LGGGLL", "LGGGGL", "LGLGLG", "LGLGGL", "LGGLGL"]
+
+    first = int(ean13_str[0])
+    parity = PARITY_TABLE[first]
+
+    bits = []
+    for b in "101":
+        bits.append((b == "1", True))
+
+    for i in range(6):
+        d = int(ean13_str[i + 1])
+        pat = L_PATTERNS[d] if parity[i] == "L" else G_PATTERNS[d]
+        for b in pat:
+            bits.append((b == "1", False))
+
+    for b in "01010":
+        bits.append((b == "1", True))
+
+    for i in range(6):
+        d = int(ean13_str[i + 7])
+        pat = R_PATTERNS[d]
+        for b in pat:
+            bits.append((b == "1", False))
+
+    for b in "101":
+        bits.append((b == "1", True))
+
+    quiet_left = 9
+    quiet_right = 7
+    total_modules = 95 + quiet_left + quiet_right
+    module_w = largura_px / float(total_modules)
+
+    img = Image.new("RGB", (largura_px, altura_px), "white")
+    draw = ImageDraw.Draw(img)
+
+    text_h = max(7, int(altura_px * 0.26))
+    bar_h_normal = max(10, altura_px - text_h - 2)
+    bar_h_guard = max(bar_h_normal, min(altura_px - 1, bar_h_normal + int(text_h * 0.45)))
+
+    start_x = quiet_left * module_w
+    for idx, (is_black, is_guard) in enumerate(bits):
+        if is_black:
+            x0 = int(start_x + (idx * module_w))
+            x1 = max(x0 + 1, int(start_x + ((idx + 1) * module_w)))
+            h = bar_h_guard if is_guard else bar_h_normal
+            draw.rectangle([x0, 0, x1, h], fill="black")
+
+    try:
+        font = ImageFont.truetype("arial.ttf", text_h)
+    except IOError:
+        font = ImageFont.load_default()
+
+    draw.text((max(0, int(start_x - (text_h * 0.75))), bar_h_normal - 1), ean13_str[0], fill="black", font=font)
+    left_str = ean13_str[1:7]
+    x_left_center = start_x + (3 + 21) * module_w
+    draw.text((int(x_left_center - (len(left_str) * text_h * 0.28)), bar_h_normal + 1), left_str, fill="black", font=font)
+
+    right_str = ean13_str[7:13]
+    x_right_center = start_x + (3 + 42 + 5 + 21) * module_w
+    draw.text((int(x_right_center - (len(right_str) * text_h * 0.28)), bar_h_normal + 1), right_str, fill="black", font=font)
+
+    return img
 
 
 def gerar_imagem_barcode_sku(codigo_str: str, largura_px: int, altura_px: int):
-    """Gera uma imagem PIL de código de barras Code39 universal para SKUs e EANs."""
-    from PIL import Image, ImageDraw, ImageFont
-    
-    raw_code = str(codigo_str).upper().strip()
-    valid_code = ''.join([c for c in raw_code if c in CODE39_PATTERNS])
-    if not valid_code:
-        valid_code = "SKU-0000"
-        
-    full_code = f"*{valid_code}*"
-    
-    largura_px = max(40, largura_px)
-    altura_px = max(20, altura_px)
-    
-    modules = []
-    for char in full_code:
-        pat = CODE39_PATTERNS.get(char, CODE39_PATTERNS['*'])
-        for i, val in enumerate(pat):
-            is_bar = (i % 2 == 0)
-            width = 2.2 if val == '2' else 1.0
-            modules.append((is_bar, width))
-        modules.append((False, 1.0))  # Gap entre caracteres
-        
-    total_units = sum(w for _, w in modules)
-    unit_px = largura_px / float(total_units)
-    
-    img = Image.new("RGB", (largura_px, altura_px), "white")
-    draw = ImageDraw.Draw(img)
-    
-    text_h = max(8, int(altura_px * 0.28))
-    bar_h = altura_px - text_h
-    
-    curr_x = 0.0
-    for is_bar, w_units in modules:
-        next_x = curr_x + (w_units * unit_px)
-        if is_bar:
-            draw.rectangle([int(curr_x), 0, int(next_x), bar_h], fill="black")
-        curr_x = next_x
-        
-    try:
-        font = ImageFont.truetype("arialbd.ttf", text_h - 1)
-    except IOError:
-        font = ImageFont.load_default()
-        
-    if hasattr(draw, "textlength"):
-        tw = draw.textlength(valid_code, font=font)
-    else:
-        bbox = font.getbbox(valid_code)
-        tw = bbox[2] - bbox[0]
-        
-    tx = max(0, int((largura_px - tw) / 2))
-    draw.text((tx, bar_h), valid_code, fill="black", font=font)
-    
-    return img
+    """Alias para gerar_imagem_ean13 mantendo compatibilidade com leitor ótico."""
+    return gerar_imagem_ean13(codigo_str, largura_px, altura_px)

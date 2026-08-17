@@ -27,6 +27,7 @@ from utils.helpers import (
     txt_para_float,
     brl,
     calcular_sku,
+    gerar_e_persistir_ean13,
     NUMERACAO_POR_TIPO,
     TIPO_PREFIXOS,
 )
@@ -280,6 +281,7 @@ class PopupProdutoEntrada:
                 ))
                 
                 pid = cur.fetchone()[0]
+                ean_final = gerar_e_persistir_ean13(conn, pid)
                 conn.commit()
             
             if hasattr(self.app, "_adicionar_fila_impressao"):
