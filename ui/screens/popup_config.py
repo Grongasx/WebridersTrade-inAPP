@@ -8,6 +8,7 @@ Recursos:
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
+from typing import Any, Dict
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
 from config import (
@@ -319,7 +320,7 @@ class PopupConfigDimensoes:
             },
         }
 
-        self._drag_data = {
+        self._drag_data: Dict[str, Any] = {
             "mode": None,
             "handle": None,
             "key": None,
