@@ -27,9 +27,10 @@ class PDFPrinter:
             return False, "Nenhuma impressora selecionada nas configurações locais."
 
         with get_conn() as conn:
-            placeholders = ",".join(["%s"] * len(ids_selecionados))
-            query = f"SELECT id, texto_etiqueta, quantidade, produto_id FROM fila_impressao WHERE id IN ({placeholders})"
-            rows = conn.execute(query, ids_selecionados).fetchall()
+            rows = conn.execute(
+                "SELECT id, texto_etiqueta, quantidade, produto_id FROM fila_impressao WHERE id = ANY(%s)",
+                (list(ids_selecionados),)
+            ).fetchall()
 
             if not rows:
                 return False, "Nenhum item válido encontrado na fila."

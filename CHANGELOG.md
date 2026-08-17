@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.6] - 2026-08-17
+- Correção de tipagem e segurança em `core/database.py`: migração das queries DDL dinâmicas (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`) de f-strings para composição segura com `psycopg.sql` (`sql.SQL` e `sql.Identifier`).
+- Resolução do erro de sobrecarga de tipo no Pyright/psycopg 3 (`Argument str is not assignable to parameter query with type LiteralString | Composed | SQL | bytes`).
+- Otimização da consulta de fila de impressão em `utils/printer.py` para operador parametrizado nativo `WHERE id = ANY(%s)`.
+
 ## [1.3.5] - 2026-08-17
 - Correção de migração de esquema no PostgreSQL: adição automática das colunas faltantes (`motivo`, `descricao`, `tipo`, `valor`) na tabela `historico_credito` via `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` em `core/database.py`.
 - Resolução do erro `column "motivo" of relation "historico_credito" does not exist` durante o resgate de vales presente e lançamentos de crédito.

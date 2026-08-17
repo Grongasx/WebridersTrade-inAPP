@@ -4,6 +4,7 @@ Módulo de conexão e inicialização do banco de dados PostgreSQL (Neon).
 
 import os
 import psycopg
+from psycopg import sql
 from contextlib import contextmanager
 from dotenv import load_dotenv
 
@@ -88,10 +89,12 @@ def init_db():
             ("criado", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         ]
         for col_nome, col_def in colunas_historico:
-            conn.execute(f"""
-                ALTER TABLE historico_credito 
-                ADD COLUMN IF NOT EXISTS {col_nome} {col_def};
-            """)
+            conn.execute(
+                sql.SQL("ALTER TABLE historico_credito ADD COLUMN IF NOT EXISTS {} {}").format(
+                    sql.Identifier(col_nome),
+                    sql.SQL(col_def)
+                )
+            )
 
         # 4. Tabela Produtos Outlet
         conn.execute("""
@@ -123,10 +126,12 @@ def init_db():
             ("valor_sugerido", "NUMERIC(10, 2)")
         ]
         for col_nome, col_def in colunas_outlet:
-            conn.execute(f"""
-                ALTER TABLE produtos_outlet 
-                ADD COLUMN IF NOT EXISTS {col_nome} {col_def};
-            """)
+            conn.execute(
+                sql.SQL("ALTER TABLE produtos_outlet ADD COLUMN IF NOT EXISTS {} {}").format(
+                    sql.Identifier(col_nome),
+                    sql.SQL(col_def)
+                )
+            )
 
 
         # 5. Tabela Vendas Outlet
