@@ -105,7 +105,7 @@ class ClientesScreen(BaseScreen):
     def _sel_id(self):
         sel = self._tree_cli.selection()
         if not sel:
-            self.toast.show("Selecione um cliente primeiro.", "aviso")
+            self.app.toast.show("Selecione um cliente primeiro.", "aviso")
             return None
         return int(sel[0])
 
@@ -145,7 +145,7 @@ class ClientesScreen(BaseScreen):
                 conn.commit()
 
         def _ao_excluir_sucesso(_):
-            self.toast.show(f"Cliente '{nome}' excluído.", "aviso")
+            self.app.toast.show(f"Cliente '{nome}' excluído.", "aviso")
             self._carregar_clientes()
 
         self.app.executar_async(

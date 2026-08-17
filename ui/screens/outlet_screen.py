@@ -121,7 +121,7 @@ class OutletScreen(BaseScreen):
     def _baixa(self):
         sel = self._tree_out.selection()
         if not sel: 
-            self.toast.show("Selecione um produto.", "aviso")
+            self.app.toast.show("Selecione um produto.", "aviso")
             return
 
         pid = int(sel[0])
@@ -169,7 +169,7 @@ class OutletScreen(BaseScreen):
                     conn.commit()
 
             def _ao_concluir_baixa(_):
-                self.toast.show("Baixa realizada com sucesso!", "sucesso")
+                self.app.toast.show("Baixa realizada com sucesso!", "sucesso")
                 self._carregar_outlet()
 
             self.app.executar_async(
@@ -183,7 +183,7 @@ class OutletScreen(BaseScreen):
     def _excluir(self):
         sel = self._tree_out.selection()
         if not sel: 
-            self.toast.show("Selecione um produto para remover.", "aviso")
+            self.app.toast.show("Selecione um produto para remover.", "aviso")
             return
 
         pid = int(sel[0])
@@ -194,7 +194,7 @@ class OutletScreen(BaseScreen):
                     conn.commit()
 
             def _ao_concluir_excluir(_):
-                self.toast.show("Produto removido.", "aviso")
+                self.app.toast.show("Produto removido.", "aviso")
                 self._carregar_outlet()
 
             self.app.executar_async(

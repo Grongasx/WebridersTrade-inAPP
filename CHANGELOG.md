@@ -1,5 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.4.4] - 2026-08-17
+- Padronização de notificações visuais Toast e resolução de erro estático `NoneType` ([ui/screens/configuracoes_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/configuracoes_screen.py), [ui/screens/outlet_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/outlet_screen.py), [ui/screens/novo_vale_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/novo_vale_screen.py), [ui/screens/novo_cliente_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/novo_cliente_screen.py), [ui/screens/creditos_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/creditos_screen.py), [ui/screens/clientes_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/clientes_screen.py)):
+  - Substituição de chamadas `self.toast.show(...)` por `self.app.toast.show(...)`, eliminando o erro de atributo de `NoneType` do analisador estático.
+  - Correção de referência de callback `_ao_excluir_sucesso` na exclusão assíncrona de clientes.
+  - Documentação da resolução na seção 2.5 da skill [problem-troubleshooting](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/problem-troubleshooting/SKILL.md).
+
 ## [1.4.3] - 2026-08-17
 - Correção de tipagem em chamada de função ([ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
   - Conversão explícita de `data["texto"]` para `str` na chamada `gerar_imagem_ean13(str(data["texto"]), ...)`, eliminando falso positivo de união de tipos `float | int | str` do verificador estático.

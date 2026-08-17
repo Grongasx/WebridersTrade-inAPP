@@ -107,7 +107,7 @@ class CreditosScreen(BaseScreen):
     def _sel_id(self):
         sel = self._tree_cred.selection()
         if not sel: 
-            self.toast.show("Selecione um cliente.", "aviso")
+            self.app.toast.show("Selecione um cliente.", "aviso")
             return None
         return int(self._tree_cred.item(sel[0], "values")[0])
 

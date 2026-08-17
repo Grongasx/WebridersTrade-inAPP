@@ -119,7 +119,7 @@ class NovoValeScreen(BaseScreen):
             if valor <= 0: 
                 raise ValueError
         except ValueError:
-            self.toast.show("⚠ Informe um valor válido.", "erro")
+            self.app.toast.show("⚠ Informe um valor válido.", "erro")
             return
 
         validade = None if self._tipo_val.get() == "vitalicio" else self._cal.get_date()

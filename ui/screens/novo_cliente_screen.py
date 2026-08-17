@@ -156,26 +156,26 @@ class NovoClienteScreen(BaseScreen):
         
         # 1. Validação de Nome
         if not nome:
-            self.toast.show("⚠ O nome completo é obrigatório.", "erro")
+            self.app.toast.show("⚠ O nome completo é obrigatório.", "erro")
             return
             
         # 2. Validação de CPF (Opcional, mas se preenchido precisa ser válido)
         if cpf and not validar_cpf(cpf):
-            self.toast.show("⚠ CPF inválido. Verifique os números digitados.", "erro")
+            self.app.toast.show("⚠ CPF inválido. Verifique os números digitados.", "erro")
             return
             
         # 3. Validação de E-mail (Opcional, mas se preenchido precisa ser válido)
         if email and not validar_email_texto(email):
-            self.toast.show("⚠ E-mail inválido. Utilize o formato nome@dominio.com", "erro")
+            self.app.toast.show("⚠ E-mail inválido. Utilize o formato nome@dominio.com", "erro")
             return
             
         # 4. Validação de Telefone (Garante pelo menos 10 dígitos: DDD + número)
         if not tel:
-            self.toast.show("⚠ O telefone é obrigatório.", "erro")
+            self.app.toast.show("⚠ O telefone é obrigatório.", "erro")
             return
         tel_numeros = re.sub(r"\D", "", tel)
         if len(tel_numeros) < 10:
-            self.toast.show("⚠ Telefone inválido. Informe o DDD e o número completo.", "erro")
+            self.app.toast.show("⚠ Telefone inválido. Informe o DDD e o número completo.", "erro")
             return
 
         # Trata campos opcionais para salvarem como NULL no banco caso estejam vazios
@@ -194,10 +194,10 @@ class NovoClienteScreen(BaseScreen):
             for v in self._vs_cli.values():
                 v.set("")
                 
-            self.toast.show(f"🎉 Cliente '{nome}' cadastrado com sucesso!", "sucesso")
+            self.app.toast.show(f"🎉 Cliente '{nome}' cadastrado com sucesso!", "sucesso")
             self.app.show("clientes")
             
         except psycopg.IntegrityError:
-            self.toast.show("⚠ Erro: Este E-mail ou CPF já está cadastrado.", "erro")
+            self.app.toast.show("⚠ Erro: Este E-mail ou CPF já está cadastrado.", "erro")
         except Exception as e:
-            self.toast.show(f"⚠ Erro ao cadastrar cliente: {str(e)}", "erro")
+            self.app.toast.show(f"⚠ Erro ao cadastrar cliente: {str(e)}", "erro")

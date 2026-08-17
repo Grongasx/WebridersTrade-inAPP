@@ -142,7 +142,7 @@ class ConfiguracoesScreen(BaseScreen):
             nome_selecionado = v_imp.get().strip()
             if nome_selecionado:
                 salvar_config_local({"nome_impressora": nome_selecionado})
-                self.toast.show(
+                self.app.toast.show(
                     f"Impressora '{nome_selecionado}' salva localmente!",
                     "sucesso",
                 )
@@ -236,7 +236,7 @@ class ConfiguracoesScreen(BaseScreen):
     def _editar(self):
         sel = self._tree_fila.selection()
         if not sel:
-            self.toast.show("Selecione para editar.", "aviso")
+            self.app.toast.show("Selecione para editar.", "aviso")
             return
         from ui.screens.popup_config import PopupEditarEtiqueta
 
@@ -245,7 +245,7 @@ class ConfiguracoesScreen(BaseScreen):
     def _imprimir(self):
         sel = self._tree_fila.selection()
         if not sel:
-            self.toast.show("Selecione itens para imprimir.", "aviso")
+            self.app.toast.show("Selecione itens para imprimir.", "aviso")
             return
         ids = [int(i) for i in sel]
 
@@ -255,10 +255,10 @@ class ConfiguracoesScreen(BaseScreen):
         def _ao_concluir_impressao(resultado):
             sucesso, msg = resultado
             if sucesso:
-                self.toast.show(msg, "sucesso")
+                self.app.toast.show(msg, "sucesso")
                 self._carregar_configuracoes()
             else:
-                self.toast.show(msg, "erro")
+                self.app.toast.show(msg, "erro")
 
         self.app.executar_async(
             funcao_task=_tarefa_imprimir,
@@ -282,7 +282,7 @@ class ConfiguracoesScreen(BaseScreen):
                 conn.commit()
 
         def _ao_remover_sucesso(_):
-            self.toast.show(f"{len(ids)} item(ns) removido(s) da fila.", "aviso")
+            self.app.toast.show(f"{len(ids)} item(ns) removido(s) da fila.", "aviso")
             self._carregar_configuracoes()
 
         self.app.executar_async(
