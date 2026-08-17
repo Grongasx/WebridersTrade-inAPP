@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.15] - 2026-08-17
+- Criação da skill de diagnóstico e troubleshooting [problem-troubleshooting](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/problem-troubleshooting/SKILL.md):
+  - Catalogação de erros frequentes e resoluções (banco Neon/psycopg, tipagem estática Pyright/win32, driver de impressão GDI e concorrência Tkinter).
+  - Atualização do [AGENTS.md](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/AGENTS.md) com diretriz contínua de documentação de novas soluções e problemas.
+
 ## [1.3.14] - 2026-08-17
 - Correção de tipagem em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
   - Adição de validação explícita de `ImageWin` na checagem de módulos em `imprimir_etiquetas_direto`.
