@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.3.14] - 2026-08-17
+- Correção de tipagem em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py):
+  - Adição de validação explícita de `ImageWin` na checagem de módulos em `imprimir_etiquetas_direto`.
+  - Uso de `cast(Any, ImageWin).Dib(img_carreira)` para evitar falso positivo do analisador estático quando `ImageWin` é importado condicionalmente.
+
 ## [1.3.13] - 2026-08-17
 - Correção de tipagem em [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py): uso de `cast(Any, hdc).StartDoc(...)` para suprimir falso positivo do stub `_win32typing.PyCDC.StartDoc`.
 

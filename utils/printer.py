@@ -111,7 +111,7 @@ class PDFPrinter:
         """
         Renderiza e transmite os dados para o Device Context (DC) da impressora Windows.
         """
-        if not win32print or not win32ui or not win32con or not Image:
+        if not win32print or not win32ui or not win32con or not Image or not ImageWin:
             raise RuntimeError(
                 "Módulos pywin32 ou Pillow não estão disponíveis para impressão GDI no Windows."
             )
@@ -198,7 +198,7 @@ class PDFPrinter:
                 )
 
                 hdc.StartPage()
-                dib = ImageWin.Dib(img_carreira)
+                dib = cast(Any, ImageWin).Dib(img_carreira)
 
                 # Compensação dos offsets físicos do hardware na renderização
                 dest_rect = (
