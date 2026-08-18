@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.7.6] - 2026-08-18
+- Eliminação do desvio acumulativo nas colunas e geração do pacote final de distribuição ([utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [config_local.json](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config_local.json), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
+  - Posicionamento estrito das 3 colunas individuais em `34.0 mm` com margem esquerda inicial de `2.0 mm` e gap zero, eliminando o estiramento artificial e o desvio da última coluna para fora do papel.
+  - Compilação concluída do pacote instalador ZIP e executável prontos para envio em `dist/`.
+
 ## [1.7.5] - 2026-08-18
 - Margens laterais aplicadas estritamente na fileira total ([utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
   - As margens esquerda e direita agora atuam exclusivamente nos limites da tira/fileira total, eliminando qualquer espaçamento ou recuo entre as colunas individuais de etiquetas.

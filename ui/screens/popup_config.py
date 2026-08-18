@@ -359,14 +359,14 @@ class PopupConfigDimensoes:
 
         cfgs = carregar_config_local()
 
-        self.v_w = tk.StringVar(value=cfgs.get("etiq_largura_mm", "108.0"))
+        self.v_w = tk.StringVar(value=cfgs.get("etiq_largura_mm", "112.0"))
         self.v_h = tk.StringVar(value=cfgs.get("etiq_altura_mm", "25.0"))
         self.v_c = tk.StringVar(value=cfgs.get("etiq_por_linha", "3"))
-        self.v_iw = tk.StringVar(value=cfgs.get("etiq_indiv_largura_mm", "36.0"))
+        self.v_iw = tk.StringVar(value=cfgs.get("etiq_indiv_largura_mm", "34.0"))
         self.v_ih = tk.StringVar(value=cfgs.get("etiq_indiv_altura_mm", "22.0"))
         self.v_gap = tk.StringVar(value=cfgs.get("etiq_espaco_colunas_mm", "0.0"))
-        self.v_me = tk.StringVar(value=cfgs.get("etiq_margem_esq", "0.0"))
-        self.v_md = tk.StringVar(value=cfgs.get("etiq_margem_dir", "0.0"))
+        self.v_me = tk.StringVar(value=cfgs.get("etiq_margem_esq", "2.0"))
+        self.v_md = tk.StringVar(value=cfgs.get("etiq_margem_dir", "2.0"))
         self.v_mt = tk.StringVar(value=cfgs.get("etiq_margem_top", "0.5"))
         self.v_mb = tk.StringVar(value=cfgs.get("etiq_margem_baix", "0.5"))
 

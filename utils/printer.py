@@ -255,7 +255,7 @@ class PDFPrinter:
 
         hdc = None
         erro_dc = None
-        w_tot_mm = float(cfgs.get("etiq_largura_mm", 108.0))
+        w_tot_mm = float(cfgs.get("etiq_largura_mm", 112.0))
         h_tot_mm = float(cfgs.get("etiq_altura_mm", 25.0))
         cols_por_linha = int(cfgs.get("etiq_por_linha", 3))
 
@@ -376,24 +376,13 @@ class PDFPrinter:
         img = Image.new("RGB", (w_px, h_px), "white")
         draw = ImageDraw.Draw(img)
 
-        w_tot_mm = float(cfgs.get("etiq_largura_mm", 108.0))
-        m_esq_mm = float(cfgs.get("etiq_margem_esq", 0.0))
-        m_dir_mm = float(cfgs.get("etiq_margem_dir", 0.0))
+        w_tot_mm = float(cfgs.get("etiq_largura_mm", 112.0))
+        w_indiv_mm = float(cfgs.get("etiq_indiv_largura_mm", 34.0))
+        m_esq_mm = float(cfgs.get("etiq_margem_esq", 2.0))
+        m_dir_mm = float(cfgs.get("etiq_margem_dir", 2.0))
         m_top_mm = float(cfgs.get("etiq_margem_top", 0.5))
-        gap_manual_mm = float(cfgs.get("etiq_espaco_colunas_mm", 0.0))
+        gap_mm = float(cfgs.get("etiq_espaco_colunas_mm", 0.0))
         cols = max(1, int(cfgs.get("etiq_por_linha", 3)))
-
-        # Margens esquerda e direita são aplicadas APENAS na fileira total
-        largura_util_fileira_mm = max(10.0, w_tot_mm - m_esq_mm - m_dir_mm)
-
-        # Divisão exata das colunas na fileira total
-        if cols > 1 and gap_manual_mm > 0:
-            espaco_gaps_total_mm = (cols - 1) * gap_manual_mm
-            w_indiv_mm = max(5.0, (largura_util_fileira_mm - espaco_gaps_total_mm) / float(cols))
-            gap_efetivo_mm = gap_manual_mm
-        else:
-            w_indiv_mm = largura_util_fileira_mm / float(cols)
-            gap_efetivo_mm = 0.0
 
         layout_cfg = cfgs.get("layout", {})
         layout_default = {
@@ -403,7 +392,7 @@ class PDFPrinter:
         }
 
         for col, item in enumerate(grupo):
-            col_x_start_mm = m_esq_mm + (col * (w_indiv_mm + gap_efetivo_mm))
+            col_x_start_mm = m_esq_mm + (col * (w_indiv_mm + gap_mm))
 
             nome = str(item.get("nome") or item.get("descricao") or "PRODUTO")
 
