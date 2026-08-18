@@ -172,10 +172,12 @@ class App(tk.Tk):
 
             dados = {
                 "id": produto_id,
+                "id_banco": str(produto_id),
                 "nome": p[0],
                 "marca": p[1] or "",
                 "tamanho": p[2] or "",
                 "codigo": ean_final,
+                "codigo_barras": ean_final,
                 "sku": p[6] or ean_final,
                 "preco": brl(p[4]),
                 "dono": p[5] or ""

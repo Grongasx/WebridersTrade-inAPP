@@ -78,12 +78,12 @@ class PopupAddProduto:
         tf_prod = UIBuilder.frame(b_modal, bg=BG2, pady=6)
         tf_prod.pack(fill="both", expand=True, pady=(8, 10))
 
-        cols = ("ID", "Produto / Modelo", "Dono", "Preço", "SKU / Código")
+        cols = ("ID", "Produto / Modelo", "EAN-13", "SKU", "Dono", "Preço")
         tv_prod = UIBuilder.make_tree(
             tf_prod,
             cols,
-            [55, 230, 130, 85, 110],
-            ["center", "w", "w", "center", "center"],
+            [50, 210, 110, 110, 110, 80],
+            ["center", "w", "center", "center", "w", "center"],
         )
 
         def filtrar(*_):
@@ -109,7 +109,8 @@ class PopupAddProduto:
                 grafico = r[4] or ""
                 preco_val = r[5]
                 preco_str = brl(preco_val) if preco_val is not None else "R$ 0,00"
-                sku = r[6] or r[7] or f"WR-{pid:06d}"
+                sku = r[6] or "—"
+                ean = r[7] or f"200{pid:09d}"
                 dono = r[8] or "—"
 
                 prod_desc = f"{marca} {modelo}".strip() or nome
@@ -119,12 +120,12 @@ class PopupAddProduto:
                     prod_desc = f"Produto #{pid}"
 
                 if termo:
-                    conteudo = f"{pid} {nome} {marca} {modelo} {grafico} {dono} {sku}".lower()
+                    conteudo = f"{pid} {nome} {marca} {modelo} {grafico} {dono} {sku} {ean}".lower()
                     if termo not in conteudo:
                         continue
 
                 tv_prod.insert(
-                    "", "end", iid=str(pid), values=(pid, prod_desc, dono, preco_str, sku)
+                    "", "end", iid=str(pid), values=(pid, prod_desc, ean, sku, dono, preco_str)
                 )
 
         v_busca.trace_add("write", filtrar)
@@ -239,9 +240,11 @@ class PopupAddProduto:
 
                     dados = {
                         "id": prod_id,
+                        "id_banco": str(prod_id),
                         "nome": nome_prod,
                         "preco": preco_formatado,
                         "codigo": cod_final,
+                        "codigo_barras": cod_final,
                         "sku": p_row[3] or cod_final,
                         "marca": p_row[5] or "",
                         "modelo": p_row[6] or "",
@@ -922,16 +925,29 @@ class PopupEditarEtiqueta:
         def salvar():
             d = {k: v.get().strip() for k, v in vs.items()}
             d["dono"] = dados.get("dono", "")
+            d["id"] = dados.get("id")
+            d["sku"] = dados.get("sku")
+            d["codigo_barras"] = d.get("codigo")
             try:
                 qtd_salvar = max(1, int(v_qtd.get().strip()))
             except ValueError:
                 qtd_salvar = 1
+
+            prod_id = dados.get("id") or dados.get("produto_id")
 
             with get_conn() as conn:
                 conn.execute(
                     "UPDATE fila_impressao SET texto_etiqueta=%s, quantidade=%s WHERE id=%s",
                     (json.dumps(d), qtd_salvar, self.fid),
                 )
+                if prod_id and d.get("codigo"):
+                    try:
+                        conn.execute(
+                            "UPDATE produtos_outlet SET codigo_barras=%s WHERE id=%s",
+                            (d["codigo"], int(prod_id))
+                        )
+                    except Exception:
+                        pass
                 conn.commit()
             win.destroy()
             self.callback()

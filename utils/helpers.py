@@ -254,6 +254,17 @@ def gerar_e_persistir_ean13(conn, produto_id: int, ean_atual: str = None) -> str
             conn.commit()
         except Exception:
             pass
+    else:
+        try:
+            from core.database import get_conn
+            with get_conn() as c:
+                c.execute(
+                    "UPDATE produtos_outlet SET codigo_barras = %s WHERE id = %s",
+                    (novo_ean, produto_id)
+                )
+                c.commit()
+        except Exception:
+            pass
 
     return novo_ean
 

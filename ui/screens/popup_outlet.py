@@ -272,10 +272,10 @@ class PopupProdutoEntrada:
                         numeracao, tamanho, preco_original, preco_outlet, valor_sugerido, 
                         estoque, quantidade, status, criado, nome
                     ) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Disponível', %s, %s)
+                    VALUES (%s, %s, NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Disponível', %s, %s)
                     RETURNING id
                 """, (
-                    int(sel[0]), sku, sku, tipo, marca, modelo, grafico, cor, 
+                    int(sel[0]), sku, tipo, marca, modelo, grafico, cor, 
                     numeracao, numeracao, preco_orig, preco_outlet, preco_outlet, 
                     qtd, qtd, agora(), nome_composto
                 ))
@@ -289,6 +289,6 @@ class PopupProdutoEntrada:
                 
             win.destroy()
             self.callback()
-            self.app.toast.show(f"Produto SKU '{sku}' salvo e enviado para a fila de impressão!", "sucesso")
+            self.app.toast.show(f"Produto salvo! EAN-13 '{ean_final}' gerado e enviado para impressão.", "sucesso")
         
         UIBuilder.button(main_fm, "✨ Salvar Produto & Enviar p/ Fila de Impressão", salvar, color=GOLD, fg="#000", width=36).pack(pady=10)

@@ -35,7 +35,7 @@ class PDFPrinter:
 
     def processar_impressao_multi_colunas(self, ids_selecionados: List[int]) -> Tuple[bool, str]:
         """
-        Processa os registros selecionados na fila de impressão e envia à impressora configurada.
+        Processa os registros selecionados na fila de impressão consultando o banco e envia à impressora.
         """
         if not ids_selecionados:
             return False, "Nenhum item selecionado para impressão."
@@ -46,11 +46,17 @@ class PDFPrinter:
         if not nome_impressora:
             return False, "Nenhuma impressora selecionada nas configurações locais."
 
+        from utils.helpers import brl, gerar_e_persistir_ean13, converter_para_ean13
+
         with get_conn() as conn:
-            rows = conn.execute(
-                "SELECT id, texto_etiqueta, quantidade, produto_id FROM fila_impressao WHERE id = ANY(%s)",
-                (list(ids_selecionados),)
-            ).fetchall()
+            rows = conn.execute("""
+                SELECT f.id, f.texto_etiqueta, f.quantidade, f.produto_id,
+                       p.nome, p.marca, p.modelo, p.tamanho, p.preco_outlet, p.sku, p.codigo_barras, c.nome AS cliente_nome
+                FROM fila_impressao f
+                LEFT JOIN produtos_outlet p ON f.produto_id = p.id
+                LEFT JOIN clientes c ON p.cliente_id = c.id
+                WHERE f.id = ANY(%s)
+            """, (list(ids_selecionados),)).fetchall()
 
             if not rows:
                 return False, "Nenhum item válido encontrado na fila."
@@ -58,26 +64,44 @@ class PDFPrinter:
             lista_dados: List[Dict[str, Any]] = []
             for row in rows:
                 try:
-                    dados_prod = json.loads(row[1]) if isinstance(row[1], str) else (row[1] or {})
+                    f_id = row[0]
+                    texto_json = row[1]
+                    qtd = int(row[2] or 1)
+                    prod_id = row[3]
+                    p_nome = row[4]
+                    p_marca = row[5]
+                    p_modelo = row[6]
+                    p_tam = row[7]
+                    p_preco = row[8]
+                    p_sku = row[9]
+                    p_cbar = row[10]
+                    p_dono = row[11]
+
+                    dados_prod = json.loads(texto_json) if isinstance(texto_json, str) else (texto_json or {})
                     if not isinstance(dados_prod, dict):
                         dados_prod = {}
 
-                    item_id = dados_prod.get("id") or dados_prod.get("produto_id") or row[3] or row[0]
+                    item_id = prod_id or dados_prod.get("id") or dados_prod.get("produto_id") or f_id
                     dados_prod["id_banco"] = str(item_id)
 
-                    # Prioriza SKU interno ou código de barras cadastrado
-                    codigo_atual = (
-                        dados_prod.get("sku")
-                        or dados_prod.get("codigo")
-                        or dados_prod.get("codigo_barras")
-                        or dados_prod.get("codigo_ean")
-                    )
-                    if not codigo_atual:
-                        codigo_atual = f"WR-{int(item_id):06d}"
+                    # Garante e utiliza o código EAN-13 gravado no banco de dados
+                    ean_banco = p_cbar or dados_prod.get("codigo_barras") or dados_prod.get("codigo_ean")
+                    if not ean_banco or len("".join(filter(str.isdigit, str(ean_banco)))) != 13:
+                        if prod_id:
+                            ean_banco = gerar_e_persistir_ean13(conn, prod_id, ean_banco)
+                        else:
+                            ean_banco = converter_para_ean13(str(item_id))
 
-                    dados_prod["codigo"] = str(codigo_atual)
+                    dados_prod["codigo"] = str(ean_banco)
+                    dados_prod["codigo_barras"] = str(ean_banco)
+                    dados_prod["sku"] = p_sku or dados_prod.get("sku") or str(ean_banco)
 
-                    qtd = int(row[2] or 1)
+                    if p_nome or p_marca or p_modelo:
+                        nome_fmt = p_nome or f"{p_marca or ''} {p_modelo or ''}".strip()
+                        dados_prod["nome"] = nome_fmt
+                    if p_preco is not None:
+                        dados_prod["preco"] = brl(p_preco)
+
                     for _ in range(qtd):
                         lista_dados.append(dados_prod)
                 except Exception:
@@ -99,6 +123,99 @@ class PDFPrinter:
 
             return True, f"Impresso com sucesso {len(lista_dados)} etiqueta(s)!"
 
+        except Exception as e:
+            return False, f"Erro ao enviar para a impressora: {str(e)}"
+
+    def imprimir_produtos_direto(
+        self,
+        produtos_ids: List[int],
+        quantidades: Optional[Dict[int, int]] = None
+    ) -> Tuple[bool, str]:
+        """
+        Imprime etiquetas diretamente do banco de dados para os IDs de produtos especificados.
+        """
+        if not produtos_ids:
+            return False, "Nenhum produto selecionado para impressão."
+
+        cfgs = carregar_config_local()
+        nome_impressora = cfgs.get("nome_impressora", "").strip()
+
+        if not nome_impressora:
+            return False, "Nenhuma impressora selecionada nas configurações locais."
+
+        from utils.helpers import brl, gerar_e_persistir_ean13, agora
+
+        with get_conn() as conn:
+            rows = conn.execute("""
+                SELECT p.id, p.nome, p.marca, p.modelo, p.tamanho, p.preco_outlet, 
+                       p.sku, p.codigo_barras, c.nome AS cliente_nome, p.quantidade
+                FROM produtos_outlet p
+                LEFT JOIN clientes c ON p.cliente_id = c.id
+                WHERE p.id = ANY(%s)
+                ORDER BY p.id ASC
+            """, (list(produtos_ids),)).fetchall()
+
+            if not rows:
+                return False, "Nenhum produto encontrado no banco de dados."
+
+            lista_dados: List[Dict[str, Any]] = []
+            for row in rows:
+                p_id = row[0]
+                p_nome = row[1]
+                p_marca = row[2] or ""
+                p_modelo = row[3] or ""
+                p_tam = row[4] or ""
+                p_preco = row[5]
+                p_sku = row[6] or ""
+                p_cbar = row[7]
+                p_dono = row[8] or ""
+
+                # Garante e persiste EAN-13 numérico válido de 13 dígitos
+                ean13 = p_cbar
+                if not ean13 or len("".join(filter(str.isdigit, str(ean13)))) != 13:
+                    ean13 = gerar_e_persistir_ean13(conn, p_id, p_cbar)
+
+                nome_prod = p_nome or f"{p_marca} {p_modelo}".strip() or f"Produto #{p_id}"
+                preco_fmt = brl(p_preco) if p_preco is not None else "R$ 0,00"
+
+                dados_item = {
+                    "id": p_id,
+                    "id_banco": str(p_id),
+                    "nome": nome_prod,
+                    "preco": preco_fmt,
+                    "codigo": str(ean13),
+                    "codigo_barras": str(ean13),
+                    "sku": p_sku or str(ean13),
+                    "marca": p_marca,
+                    "modelo": p_modelo,
+                    "tamanho": p_tam,
+                    "dono": p_dono,
+                }
+
+                qtd_copias = 1
+                if quantidades and p_id in quantidades:
+                    qtd_copias = max(1, int(quantidades[p_id]))
+
+                for _ in range(qtd_copias):
+                    lista_dados.append(dados_item)
+
+                # Registra na fila de impressão com status 'Impresso' para histórico
+                try:
+                    conn.execute("""
+                        INSERT INTO fila_impressao (produto_id, texto_etiqueta, quantidade, status, criado)
+                        VALUES (%s, %s, %s, 'Impresso', %s)
+                    """, (p_id, json.dumps(dados_item), qtd_copias, agora()))
+                except Exception:
+                    pass
+
+            conn.commit()
+
+        if not lista_dados:
+            return False, "Nenhum dado formatado para impressão."
+
+        try:
+            self.imprimir_etiquetas_direto(lista_dados, nome_impressora, cfgs)
+            return True, f"Impresso direto do banco: {len(lista_dados)} etiqueta(s) com EAN-13!"
         except Exception as e:
             return False, f"Erro ao enviar para a impressora: {str(e)}"
 
@@ -284,12 +401,12 @@ class PDFPrinter:
                     preco = f"R$ {preco}"
 
             codigo = str(
-                item.get("codigo")
-                or item.get("sku")
-                or item.get("codigo_barras")
+                item.get("codigo_barras")
                 or item.get("codigo_ean")
+                or item.get("codigo")
+                or item.get("sku")
                 or item.get("id_banco")
-                or "WR-000001"
+                or "2000000000010"
             )
 
             elementos_dados = {

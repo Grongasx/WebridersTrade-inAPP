@@ -144,7 +144,22 @@ def init_db():
                 quantidade INT DEFAULT 1
             );
         """)
+        # Índices de performance
         conn.execute("CREATE INDEX IF NOT EXISTS idx_vales_usado_validade ON vales(usado, validade);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_vales_cliente_id ON vales(cliente_id);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_vales_codigo ON vales(codigo);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_produtos_outlet_codigo_barras ON produtos_outlet(codigo_barras);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_produtos_outlet_sku ON produtos_outlet(sku);")
+
+        # Migração: Garante que todos os produtos outlet possuam EAN-13 numérico válido de 13 dígitos
+        cur = conn.cursor()
+        cur.execute("SELECT id, codigo_barras FROM produtos_outlet WHERE codigo_barras IS NULL OR length(codigo_barras) != 13;")
+        prods_sem_ean = cur.fetchall()
+        for p_id, _ in prods_sem_ean:
+            base12 = f"200{str(p_id).zfill(9)}"[:12]
+            soma = sum(int(c) * (1 if i % 2 == 0 else 3) for i, c in enumerate(base12))
+            dv = (10 - (soma % 10)) % 10
+            novo_ean = f"{base12}{dv}"
+            cur.execute("UPDATE produtos_outlet SET codigo_barras = %s WHERE id = %s", (novo_ean, p_id))
+
         conn.commit()
