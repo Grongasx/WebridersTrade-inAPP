@@ -86,22 +86,21 @@ class PopupAddProduto:
             ["center", "w", "center", "center", "w", "center"],
         )
 
-        def filtrar(*_):
-            termo = v_busca.get().strip().lower()
-            for item in tv_prod.get_children():
-                tv_prod.delete(item)
-
+        # Carregamento inteligente em memória com MemoryCache
+        from core.cache import cache
+        todos_prods = cache.get("outlet:produtos_modal")
+        if todos_prods is None:
             with get_conn() as conn:
-                rows = conn.execute("""
+                raw_rows = conn.execute("""
                     SELECT p.id, p.nome, p.marca, p.modelo, p.grafico, p.preco_outlet, 
                            p.sku, p.codigo_barras, c.nome, p.tamanho
                     FROM produtos_outlet p
                     LEFT JOIN clientes c ON p.cliente_id = c.id
                     ORDER BY p.id DESC
-                    LIMIT 200
                 """).fetchall()
 
-            for r in rows:
+            todos_prods = []
+            for r in raw_rows:
                 pid = r[0]
                 nome = r[1] or ""
                 marca = r[2] or ""
@@ -119,11 +118,20 @@ class PopupAddProduto:
                 if not prod_desc:
                     prod_desc = f"Produto #{pid}"
 
-                if termo:
-                    conteudo = f"{pid} {nome} {marca} {modelo} {grafico} {dono} {sku} {ean}".lower()
-                    if termo not in conteudo:
-                        continue
+                conteudo = f"{pid} {nome} {marca} {modelo} {grafico} {dono} {sku} {ean}".lower()
+                todos_prods.append((pid, prod_desc, ean, sku, dono, preco_str, conteudo))
 
+            cache.set("outlet:produtos_modal", todos_prods, ttl=60)
+
+        def filtrar(*_):
+            termo = v_busca.get().strip().lower()
+            for item in tv_prod.get_children():
+                tv_prod.delete(item)
+
+            for item in todos_prods:
+                pid, prod_desc, ean, sku, dono, preco_str, conteudo = item
+                if termo and termo not in conteudo:
+                    continue
                 tv_prod.insert(
                     "", "end", iid=str(pid), values=(pid, prod_desc, ean, sku, dono, preco_str)
                 )

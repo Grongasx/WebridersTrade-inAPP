@@ -5,7 +5,7 @@ Tela Outlet - Gerenciamento de produtos outlet.
 import tkinter as tk
 from tkinter import messagebox
 import time
-from config import BG, BG2, BG3, GOLD, TEXT, TEXT_DIM, SUCCESS, DANGER
+from config import BG, BG2, BG3, ACCENT, GOLD, TEXT, TEXT_DIM, SUCCESS, DANGER
 from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
