@@ -9,6 +9,7 @@ from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL, FONT_CODE
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from utils.helpers import brl, agora, vencido, creditar_cliente
 from ui.screens.popup_cliente import PopupLoadingOverlay
 
@@ -30,16 +31,22 @@ class ValesScreen(BaseScreen):
         self._carregar_vales(focus_search=focus_search)
 
     def _carregar_vales(self, focus_search=False):
-        """Busca a lista completa de vales no banco em segundo plano."""
+        """Busca a lista completa de vales no banco em segundo plano com suporte a cache."""
 
         def _buscar_db():
+            cached = cache.get("vales:list")
+            if cached is not None:
+                return cached
+
             with get_conn() as conn:
-                return conn.execute("""
+                rows = conn.execute("""
                     SELECT v.codigo, v.valor, v.usado, v.validade, v.criado, v.observacao, v.usado_em, c.nome
                     FROM vales v
                     LEFT JOIN clientes c ON c.id = v.cliente_id
                     ORDER BY v.criado DESC
                 """).fetchall()
+                cache.set("vales:list", rows, ttl=60)
+                return rows
 
         def _ao_concluir(rows):
             self._todos_vales = rows
@@ -244,7 +251,11 @@ class PopupSelecionarClienteResgate:
                         return False
                     creditar_cliente(cid, self.valor, "vale", f"Resgate do vale {self.codigo}", conn=conn)
                     conn.commit()
-                    return True
+                cache.invalidate_prefix("vales")
+                cache.invalidate_prefix("dashboard")
+                cache.invalidate_prefix("creditos")
+                cache.invalidate_prefix("clientes")
+                return True
 
             def _ao_resgatar_concluido(sucesso):
                 loading_resgate.fechar()

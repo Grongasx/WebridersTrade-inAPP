@@ -36,7 +36,7 @@ from ui.screens.confirmacao_screen import ConfirmacaoScreen
 from ui.screens.creditos_screen import CreditosScreen
 from ui.screens.outlet_screen import OutletScreen
 from ui.screens.configuracoes_screen import ConfiguracoesScreen
-from ui.screens.exportar_screen import ExportarScreen
+# from ui.screens.exportar_screen import ExportarScreen # Desabilitado temporariamente
 
 
 class App(tk.Tk):
@@ -105,7 +105,7 @@ class App(tk.Tk):
             "outlet": OutletScreen(self, None),
             "etiquetas": ConfiguracoesScreen(self, None),
             "configuracoes": ConfiguracoesScreen(self, None),
-            "exportar": ExportarScreen(self, None),
+            # "exportar": ExportarScreen(self, None), # Desabilitado temporariamente
         }
     
     def _build_layout(self):

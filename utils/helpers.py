@@ -163,6 +163,14 @@ def creditar_cliente(cliente_id, valor, tipo, motivo, conn=None):
             _executar(c)
             c.commit()
 
+    try:
+        from core.cache import cache
+        cache.invalidate_prefix("clientes")
+        cache.invalidate_prefix("creditos")
+        cache.invalidate_prefix("dashboard")
+    except Exception:
+        pass
+
 
 # ═══════════════════════════════════════════
 # Estruturas de produtos e cálculo de SKU

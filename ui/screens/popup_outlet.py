@@ -283,6 +283,11 @@ class PopupProdutoEntrada:
                 pid = cur.fetchone()[0]
                 ean_final = gerar_e_persistir_ean13(conn, pid)
                 conn.commit()
+
+            from core.cache import cache
+            cache.invalidate_prefix("outlet")
+            cache.invalidate_prefix("dashboard")
+            cache.invalidate_prefix("fila")
             
             if hasattr(self.app, "_adicionar_fila_impressao"):
                 self.app._adicionar_fila_impressao(pid)

@@ -23,6 +23,7 @@ from config import (
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from core.config_local import carregar_config_local, salvar_config_local
 from utils.printer import PDFPrinter
 
@@ -41,16 +42,22 @@ class ConfiguracoesScreen(BaseScreen):
         self._carregar_configuracoes()
 
     def _carregar_configuracoes(self):
-        """Busca os itens pendentes da fila de impressão no banco em segundo plano."""
+        """Busca os itens pendentes da fila de impressão no banco em segundo plano com suporte a cache."""
 
         def _buscar_db():
+            cached = cache.get("fila:list")
+            if cached is not None:
+                return cached
+
             with get_conn() as conn:
-                return conn.execute("""
+                rows = conn.execute("""
                     SELECT id, produto_id, texto_etiqueta, quantidade, status 
                     FROM fila_impressao 
                     WHERE status = 'Pendente' 
                     ORDER BY id ASC
                 """).fetchall()
+                cache.set("fila:list", rows, ttl=30)
+                return rows
 
         def _ao_concluir(rows):
             self._itens_fila = rows
@@ -255,6 +262,7 @@ class ConfiguracoesScreen(BaseScreen):
         def _ao_concluir_impressao(resultado):
             sucesso, msg = resultado
             if sucesso:
+                cache.invalidate_prefix("fila")
                 self.app.toast.show(msg, "sucesso")
                 self._carregar_configuracoes()
             else:
@@ -280,6 +288,7 @@ class ConfiguracoesScreen(BaseScreen):
                         "DELETE FROM fila_impressao WHERE id=%s", (item_id,)
                     )
                 conn.commit()
+            cache.invalidate_prefix("fila")
 
         def _ao_remover_sucesso(_):
             self.app.toast.show(f"{len(ids)} item(ns) removido(s) da fila.", "aviso")

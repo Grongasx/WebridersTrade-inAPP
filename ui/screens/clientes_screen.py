@@ -9,6 +9,7 @@ from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL, FONT_MONO, FONT_C
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from utils.helpers import brl, agora, formatar_data
 
 from ui.screens.popup_cliente import PopupClienteDetalhe, PopupClienteEditar
@@ -28,17 +29,23 @@ class ClientesScreen(BaseScreen):
         self._carregar_clientes()
 
     def _carregar_clientes(self):
-        """Busca os clientes no banco de dados em segundo plano."""
+        """Busca os clientes no banco de dados em segundo plano com suporte a cache."""
         
         def _buscar_db():
+            cached = cache.get("clientes:list")
+            if cached is not None:
+                return cached
+
             with get_conn() as conn:
-                return conn.execute("""
+                rows = conn.execute("""
                     SELECT c.id, c.nome, c.email, c.telefone, COUNT(v.id), c.criado
                     FROM clientes c 
                     LEFT JOIN vales v ON v.cliente_id = c.id
                     GROUP BY c.id, c.nome, c.email, c.telefone, c.criado 
                     ORDER BY c.nome
                 """).fetchall()
+                cache.set("clientes:list", rows, ttl=60)
+                return rows
 
         def _ao_concluir(rows):
             self._todos_clientes = rows
@@ -143,6 +150,10 @@ class ClientesScreen(BaseScreen):
                 conn.execute("DELETE FROM vales WHERE cliente_id=%s", (cid,))
                 conn.execute("DELETE FROM clientes WHERE id=%s", (cid,))
                 conn.commit()
+            cache.invalidate_prefix("clientes")
+            cache.invalidate_prefix("dashboard")
+            cache.invalidate_prefix("creditos")
+            cache.invalidate_prefix("vales")
 
         def _ao_excluir_sucesso(_):
             self.app.toast.show(f"Cliente '{nome}' excluído.", "aviso")

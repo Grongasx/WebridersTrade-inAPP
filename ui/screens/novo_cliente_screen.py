@@ -184,6 +184,7 @@ class NovoClienteScreen(BaseScreen):
 
         # 5. Salvar no Banco
         try:
+            from core.cache import cache
             with get_conn() as conn:
                 conn.execute(
                     "INSERT INTO clientes (nome,email,telefone,cpf,criado) VALUES (%s,%s,%s,%s,%s)",
@@ -191,6 +192,10 @@ class NovoClienteScreen(BaseScreen):
                 )
                 conn.commit()
             
+            cache.invalidate_prefix("clientes")
+            cache.invalidate_prefix("dashboard")
+            cache.invalidate_prefix("creditos")
+
             for v in self._vs_cli.values():
                 v.set("")
                 

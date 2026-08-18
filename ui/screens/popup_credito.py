@@ -76,6 +76,10 @@ class PopupLancarCredito:
                         VALUES (%s,%s,%s,%s,%s)
                     """, (self.cid, tipo, val, motivo, agora()))
                     conn.commit()
+                from core.cache import cache
+                cache.invalidate_prefix("creditos")
+                cache.invalidate_prefix("clientes")
+                cache.invalidate_prefix("dashboard")
                 win.destroy()
                 self.callback()
                 self.app.toast.show("Crédito atualizado!", "sucesso")

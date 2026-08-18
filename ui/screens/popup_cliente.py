@@ -238,6 +238,9 @@ class PopupClienteDetalhe:
                 with get_conn() as conn:
                     conn.execute("UPDATE clientes SET nome=%s,email=%s,telefone=%s,cpf=%s WHERE id=%s", (nome, email, tel, cpf, self.cid))
                     conn.commit()
+                from core.cache import cache
+                cache.invalidate_prefix("clientes")
+                cache.invalidate_prefix("dashboard")
 
             def _ao_concluir_salvar(_):
                 loading_salvar.fechar()

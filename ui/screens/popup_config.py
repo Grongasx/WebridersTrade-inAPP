@@ -258,6 +258,10 @@ class PopupAddProduto:
                     """, (prod_id, json.dumps(dados), qtd_final))
                     conn.commit()
 
+                from core.cache import cache
+                cache.invalidate_prefix("fila")
+                cache.invalidate_prefix("outlet")
+
                 win.destroy()
                 self.callback()
                 self.app.toast.show(
@@ -949,6 +953,9 @@ class PopupEditarEtiqueta:
                     except Exception:
                         pass
                 conn.commit()
+            from core.cache import cache
+            cache.invalidate_prefix("fila")
+            cache.invalidate_prefix("outlet")
             win.destroy()
             self.callback()
             self.app.toast.show("Etiqueta atualizada com sucesso!", "sucesso")

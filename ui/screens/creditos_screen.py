@@ -9,6 +9,7 @@ from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from utils.helpers import brl, agora
 from utils.formatters import CurrencyFormatter
 
@@ -27,15 +28,21 @@ class CreditosScreen(BaseScreen):
         self._carregar_creditos()
 
     def _carregar_creditos(self):
-        """Busca os saldos de clientes no banco de dados em segundo plano."""
+        """Busca os saldos de clientes no banco de dados em segundo plano com suporte a cache."""
         
         def _buscar_db():
+            cached = cache.get("creditos:list")
+            if cached is not None:
+                return cached
+
             with get_conn() as conn:
-                return conn.execute("""
+                rows = conn.execute("""
                     SELECT id, nome, cpf, COALESCE(saldo, 0) 
                     FROM clientes 
                     ORDER BY nome
                 """).fetchall()
+                cache.set("creditos:list", rows, ttl=60)
+                return rows
 
         def _ao_concluir(rows):
             self._todos_clientes = rows

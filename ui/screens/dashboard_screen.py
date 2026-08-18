@@ -8,6 +8,7 @@ from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL, FONT_MONO
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from utils.helpers import brl, hoje
 
 
@@ -22,6 +23,10 @@ class DashboardScreen(BaseScreen):
         """Busca os dados no banco em background e atualiza a UI."""
         
         def _buscar_dados_db():
+            cached = cache.get("dashboard:metrics")
+            if cached is not None:
+                return cached
+
             data_hoje = hoje()
             with get_conn() as conn:
                 # Total de clientes e total geral de vales
@@ -74,7 +79,7 @@ class DashboardScreen(BaseScreen):
                     ORDER BY qtd DESC, total DESC LIMIT 5
                 """).fetchall()
 
-            return {
+            res = {
                 "total_cli": total_cli,
                 "total_vales": total_vales,
                 "disponiveis": disponiveis,
@@ -86,6 +91,8 @@ class DashboardScreen(BaseScreen):
                 "recentes": recentes,
                 "top_cli": top_cli
             }
+            cache.set("dashboard:metrics", res, ttl=60)
+            return res
 
         def _ao_concluir(dados):
             self.clear()          # Limpa a tela apenas quando os dados ja estao prontos

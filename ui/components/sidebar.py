@@ -36,7 +36,7 @@ class Sidebar:
             ("creditos",  "💳  Créditos & Saldos",    "creditos"),
             ("outlet",    "🏷  Produtos Outlet",      "outlet"),
             ("vales",     "🎁  Vales Presentes",       "vales"),
-            ("exportar",  "⤓  Exportar Dados",       "exportar"),
+            # ("exportar",  "⤓  Exportar Dados",       "exportar"), # Desabilitado temporariamente
             ("etiquetas", "🖨  Etiquetas & Impressão", "etiquetas"), 
         ]
         

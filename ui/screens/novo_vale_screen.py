@@ -132,4 +132,8 @@ class NovoValeScreen(BaseScreen):
                        (codigo, None, valor, validade, agora(), obs))
             conn.commit()
 
+        from core.cache import cache
+        cache.invalidate_prefix("vales")
+        cache.invalidate_prefix("dashboard")
+
         self.app.show("confirmacao", codigo=codigo, nome_cli=None, valor=valor, validade=validade)

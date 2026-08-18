@@ -10,6 +10,7 @@ from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from utils.helpers import brl, agora, txt_para_float
 from utils.formatters import CurrencyFormatter
 
@@ -28,11 +29,15 @@ class OutletScreen(BaseScreen):
         self._carregar_outlet()
 
     def _carregar_outlet(self):
-        """Busca a lista de produtos outlet no banco em segundo plano."""
+        """Busca a lista de produtos outlet no banco em segundo plano com suporte a cache."""
 
         def _buscar_db():
+            cached = cache.get("outlet:list")
+            if cached is not None:
+                return cached
+
             with get_conn() as conn:
-                return conn.execute("""
+                rows = conn.execute("""
                     SELECT p.id, 
                            COALESCE(p.codigo_barras, '') AS ean, 
                            COALESCE(p.sku, '') AS sku, 
@@ -49,6 +54,8 @@ class OutletScreen(BaseScreen):
                     LEFT JOIN clientes c ON p.cliente_id = c.id 
                     ORDER BY p.id DESC
                 """).fetchall()
+                cache.set("outlet:list", rows, ttl=60)
+                return rows
 
         def _ao_concluir(rows):
             self._todos_produtos = rows
@@ -252,6 +259,10 @@ class OutletScreen(BaseScreen):
                             VALUES (%s,%s,%s,%s,%s)
                         """, (cliente_id, "entrada", val, f"Venda outlet: {nome_prod}", agora()))
                     conn.commit()
+                cache.invalidate_prefix("outlet")
+                cache.invalidate_prefix("dashboard")
+                cache.invalidate_prefix("creditos")
+                cache.invalidate_prefix("clientes")
 
             def _ao_concluir_baixa(_):
                 self.app.toast.show("Baixa realizada com sucesso!", "sucesso")
@@ -277,6 +288,8 @@ class OutletScreen(BaseScreen):
                 with get_conn() as conn:
                     conn.execute("DELETE FROM produtos_outlet WHERE id=%s", (pid,))
                     conn.commit()
+                cache.invalidate_prefix("outlet")
+                cache.invalidate_prefix("dashboard")
 
             def _ao_concluir_excluir(_):
                 self.app.toast.show("Produto removido.", "aviso")
