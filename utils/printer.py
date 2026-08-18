@@ -255,18 +255,49 @@ class PDFPrinter:
 
         hdc = None
         erro_dc = None
+        w_tot_mm = float(cfgs.get("etiq_largura_mm", 108.0))
+        h_tot_mm = float(cfgs.get("etiq_altura_mm", 25.0))
+        cols_por_linha = int(cfgs.get("etiq_por_linha", 3))
 
-        # Tentativa 1: Via win32ui CreateDC e CreatePrinterDC
+        # Configura DEVMODE customizado em memória para forçar 108mm sem alterar o Windows
+        devmode = None
         try:
-            hdc_temp = win32ui.CreateDC()
-            if hdc_temp is not None:
-                hdc_temp.CreatePrinterDC(nome_impressora)
-                hdc = hdc_temp
-        except Exception as e:
-            erro_dc = str(e)
-            hdc = None
+            p_handle = win32print.OpenPrinter(nome_impressora)
+            try:
+                properties = win32print.GetPrinter(p_handle, 2)
+                devmode = properties.get("pDevMode")
+                if devmode:
+                    devmode.PaperSize = 0  # Customizado
+                    devmode.PaperWidth = int(w_tot_mm * 10)   # 1080 em décimos de mm
+                    devmode.PaperLength = int(h_tot_mm * 10)  # 250 em décimos de mm
+                    devmode.Fields |= (win32con.DM_PAPERSIZE | win32con.DM_PAPERWIDTH | win32con.DM_PAPERLENGTH)
+            finally:
+                win32print.ClosePrinter(p_handle)
+        except Exception:
+            devmode = None
 
-        # Tentativa 2: Fallback via Win32 GDI direto (win32gui.CreateDC)
+        # Tentativa 1: Via Win32 GDI direto com DEVMODE customizado em memória
+        if win32gui is not None and devmode is not None:
+            try:
+                raw_hdc = win32gui.CreateDC("WINSPOOL", nome_impressora, devmode)
+                if raw_hdc:
+                    hdc = win32ui.CreateDCFromHandle(raw_hdc)
+            except Exception as e:
+                erro_dc = str(e)
+                hdc = None
+
+        # Tentativa 2: Via win32ui CreateDC e CreatePrinterDC
+        if hdc is None:
+            try:
+                hdc_temp = win32ui.CreateDC()
+                if hdc_temp is not None:
+                    hdc_temp.CreatePrinterDC(nome_impressora)
+                    hdc = hdc_temp
+            except Exception as e:
+                erro_dc = str(e)
+                hdc = None
+
+        # Tentativa 3: Fallback via Win32 GDI genérico
         if hdc is None and win32gui is not None:
             try:
                 raw_hdc = win32gui.CreateDC("WINSPOOL", nome_impressora, cast(Any, None))
@@ -283,22 +314,10 @@ class PDFPrinter:
                 f"Verifique se o spooler do Windows está ativo e se o driver está instalado."
             )
 
-        w_tot_mm = float(cfgs.get("etiq_largura_mm", 76.20))
-        h_tot_mm = float(cfgs.get("etiq_altura_mm", 59.80))
-        cols_por_linha = int(cfgs.get("etiq_por_linha", 3))
-
         dpi_x = hdc.GetDeviceCaps(win32con.LOGPIXELSX) or 203
         dpi_y = hdc.GetDeviceCaps(win32con.LOGPIXELSY) or 203
         px_mm_x = dpi_x / 25.4
         px_mm_y = dpi_y / 25.4
-
-        # Leitura dos offsets físicos de hardware da impressora
-        try:
-            offset_x_px = hdc.GetDeviceCaps(win32con.PHYSICALOFFSETX) or 0
-            offset_y_px = hdc.GetDeviceCaps(win32con.PHYSICALOFFSETY) or 0
-        except Exception:
-            offset_x_px = 0
-            offset_y_px = 0
 
         w_px = int(w_tot_mm * px_mm_x)
         h_px = int(h_tot_mm * px_mm_y)
@@ -317,13 +336,8 @@ class PDFPrinter:
                 hdc.StartPage()
                 dib = cast(Any, ImageWin).Dib(img_carreira)
 
-                # Compensação dos offsets físicos do hardware na renderização
-                dest_rect = (
-                    -offset_x_px,
-                    -offset_y_px,
-                    w_px - offset_x_px,
-                    h_px - offset_y_px
-                )
+                # Renderização direta no topo-esquerdo físico sem deslocamento artificial
+                dest_rect = (0, 0, w_px, h_px)
                 dib.draw(hdc_handle, dest_rect)
                 hdc.EndPage()
 
@@ -362,12 +376,12 @@ class PDFPrinter:
         img = Image.new("RGB", (w_px, h_px), "white")
         draw = ImageDraw.Draw(img)
 
-        w_tot_mm = float(cfgs.get("etiq_largura_mm", 76.20))
-        w_indiv_mm = float(cfgs.get("etiq_indiv_largura_mm", 24.4))
+        w_tot_mm = float(cfgs.get("etiq_largura_mm", 108.0))
+        w_indiv_mm = float(cfgs.get("etiq_indiv_largura_mm", 34.0))
         m_esq_mm = float(cfgs.get("etiq_margem_esq", 0.0))
         m_dir_mm = float(cfgs.get("etiq_margem_dir", 0.0))
         m_top_mm = float(cfgs.get("etiq_margem_top", 0.5))
-        gap_manual_mm = float(cfgs.get("etiq_espaco_colunas_mm", 1.5))
+        gap_manual_mm = float(cfgs.get("etiq_espaco_colunas_mm", 2.0))
         cols = int(cfgs.get("etiq_por_linha", 3))
 
         # CÁLCULO DE PASSO E GAP SEM ERRO ACUMULATIVO:
@@ -382,9 +396,9 @@ class PDFPrinter:
 
         layout_cfg = cfgs.get("layout", {})
         layout_default = {
-            "nome": {"tipo": "texto", "x_mm": 0.5, "y_mm": 1.0, "font_size": 7, "max_w_mm": 22.5},
-            "preco": {"tipo": "texto", "x_mm": 0.5, "y_mm": 11.0, "font_size": 11, "max_w_mm": 22.5},
-            "codigo": {"tipo": "barcode", "x_mm": 0.0, "y_mm": 19.0, "max_w_mm": 23.5, "height_mm": 16.0}
+            "nome": {"tipo": "texto", "x_mm": 1.0, "y_mm": 0.5, "font_size": 7, "max_w_mm": 32.0},
+            "preco": {"tipo": "texto", "x_mm": 1.0, "y_mm": 6.0, "font_size": 11, "max_w_mm": 32.0},
+            "codigo": {"tipo": "barcode", "x_mm": 0.5, "y_mm": 11.5, "max_w_mm": 33.0, "height_mm": 9.5}
         }
 
         for col, item in enumerate(grupo):

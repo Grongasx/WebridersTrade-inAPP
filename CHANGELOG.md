@@ -1,5 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.7.3] - 2026-08-18
+- Expansão forçada de impressão para 108.0 mm via DEVMODE em memória ([utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [config_local.json](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config_local.json), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
+  - Injeção de estrutura `DEVMODE` customizada em memória (`PaperWidth = 1080`, `PaperLength = 250`, `PaperSize = 0`) no Device Context da impressora Windows, expandindo a largura de impressão para 108.0 mm sem modificar as preferências globais do Windows.
+  - Renderização das 3 colunas de 34.0 mm preenchendo toda a cabeça de impressão de 108.0 mm com margem esquerda zerada.
+  - Recompilação do pacote executável e instalador em `dist/`.
+
 ## [1.7.2] - 2026-08-18
 - Padronização de dimensões 76.20 x 59.80 mm e eliminação do gap da extremidade esquerda ([config_local.json](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config_local.json), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
   - Ajuste de `etiq_margem_esq` para `0.0 mm` e `etiq_margem_dir` para `0.0 mm`.
