@@ -414,10 +414,10 @@ class PopupConfigDimensoes:
         e_ih = UIBuilder.entry(f2, var=self.v_ih, width=5)
         e_ih.grid(row=0, column=5)
 
-        # CARD 3: Margens e Espaçamentos
+        # CARD 3: Margens da Fileira Total e Espaçamento
         c3 = UIBuilder.card(col_esq, bg=BG2, px=12, py=8)
         c3.pack(fill="x", pady=(0, 8))
-        UIBuilder.label(c3, "3. Margens & Espaços (mm)", font=FONT_SMALL, bg=BG2, fg=GOLD).pack(anchor="w")
+        UIBuilder.label(c3, "3. Margens da Fileira Total (mm)", font=FONT_SMALL, bg=BG2, fg=GOLD).pack(anchor="w")
         f3 = UIBuilder.frame(c3, bg=BG2)
         f3.pack(fill="x")
         
