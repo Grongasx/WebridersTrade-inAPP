@@ -16,3 +16,12 @@ config_local.json
 __pycache__/
 *.py[cod]
 .vscode/
+
+# PyInstaller, Builds e Instaladores
+dist/
+build/
+*.spec
+Output/
+*.exe
+*.zip
+installers/

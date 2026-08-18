@@ -3,15 +3,27 @@ Módulo de conexão e inicialização do banco de dados PostgreSQL (Neon).
 """
 
 import os
+import sys
 import psycopg
 from contextlib import contextmanager
 from dotenv import load_dotenv
 
-# Carrega as variáveis definidas no arquivo .env
-load_dotenv()
+# Determina o diretório base (pasta do .exe quando empacotado ou raiz do projeto)
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Obtém a string de conexão da chave DATABASE (ou DATABASE_URL) do .env
-DB_URL = os.getenv("DATABASE") or os.getenv("DATABASE_URL")
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+if os.path.exists(ENV_PATH):
+    load_dotenv(ENV_PATH)
+else:
+    load_dotenv()
+
+
+def get_db_url():
+    """Obtém dinamicamente a URL de conexão."""
+    return os.getenv("DATABASE") or os.getenv("DATABASE_URL")
 
 
 @contextmanager
@@ -19,10 +31,15 @@ def get_conn():
     """
     Gerenciador de contexto para obter e fechar a conexão com o banco de dados.
     """
-    if not DB_URL:
+    db_url = get_db_url()
+    if not db_url and os.path.exists(ENV_PATH):
+        load_dotenv(ENV_PATH, override=True)
+        db_url = get_db_url()
+
+    if not db_url:
         raise ValueError("A variável 'DATABASE' não foi encontrada no arquivo .env!")
 
-    conn = psycopg.connect(DB_URL)
+    conn = psycopg.connect(db_url)
     try:
         yield conn
     finally:

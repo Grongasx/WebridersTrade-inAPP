@@ -1,8 +1,14 @@
 import json
 import os
+import sys
 
-# O arquivo será salvo na pasta do projeto
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config_local.json")
+# Determina o diretório base (pasta do .exe quando empacotado ou raiz do projeto)
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+CONFIG_PATH = os.path.join(BASE_DIR, "config_local.json")
 
 CONFIG_PADRAO = {
     "nome_impressora": "",

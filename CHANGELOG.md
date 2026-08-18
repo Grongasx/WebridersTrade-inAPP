@@ -1,5 +1,13 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.7.0] - 2026-08-18
+- Gerador de Instalador automatizado com empacotamento seguro de `.env` e proteção Git ([build_installer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/build_installer.py), [gerar_instalador.bat](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/gerar_instalador.bat), [core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [.gitignore](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.gitignore), [.env.example](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.env.example)):
+  - Criação do script [build_installer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/build_installer.py) e inicializador em lote [gerar_instalador.bat](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/gerar_instalador.bat) para compilação PyInstaller (`--windowed`, `--noconsole`).
+  - Suporte completo a execução congelada (`sys.frozen`), carregando o arquivo `.env` e `config_local.json` dinamicamente a partir da pasta do `.exe`.
+  - Cópia e empacotamento automático do arquivo `.env` e `config_local.json` ativos dentro da pasta distribuível `dist/ValePresenteManager/` e no pacote ZIP de 1 clique.
+  - Geração de script do Inno Setup (`installer.iss`) para compilação de instalador executável `Setup.exe`.
+  - Atualização estrita do [.gitignore](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.gitignore) e criação do [.env.example](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.env.example) para blindagem completa contra vazamento de credenciais em repositórios públicos.
+
 ## [1.6.1] - 2026-08-18
 - Otimização da busca dinâmica na aba de impressão e correção de importação ([ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py), [ui/screens/outlet_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/outlet_screen.py)):
   - Eliminação de consultas SQL repetidas a cada tecla no modal de adicionar produtos para impressão (`PopupAddProduto`), substituindo por carregamento único em memória e filtragem instantânea via `MemoryCache`.
