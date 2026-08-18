@@ -1,5 +1,12 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.7.2] - 2026-08-18
+- Padronização de dimensões 76.20 x 59.80 mm e eliminação do gap da extremidade esquerda ([config_local.json](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config_local.json), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
+  - Ajuste de `etiq_margem_esq` para `0.0 mm` e `etiq_margem_dir` para `0.0 mm`.
+  - Ampliação da largura individual das 3 colunas para `24.4 mm` (`etiq_indiv_largura_mm`) com gap de `1.5 mm` (`etiq_espaco_colunas_mm`), preenchendo com precisão a largura total de `76.20 mm`.
+  - Recompilação automática do pacote executável e instalador ZIP em `dist/`.
+  - Documentação da calibração na seção 1.7 da skill [problem-troubleshooting](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/problem-troubleshooting/SKILL.md).
+
 ## [1.7.0] - 2026-08-18
 - Gerador de Instalador automatizado com empacotamento seguro de `.env` e proteção Git ([build_installer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/build_installer.py), [gerar_instalador.bat](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/gerar_instalador.bat), [core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [.gitignore](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.gitignore), [.env.example](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.env.example)):
   - Criação do script [build_installer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/build_installer.py) e inicializador em lote [gerar_instalador.bat](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/gerar_instalador.bat) para compilação PyInstaller (`--windowed`, `--noconsole`).

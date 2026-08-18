@@ -12,15 +12,16 @@ CONFIG_PATH = os.path.join(BASE_DIR, "config_local.json")
 
 CONFIG_PADRAO = {
     "nome_impressora": "",
-    "etiq_largura_mm": "108",
-    "etiq_altura_mm": "25",
+    "etiq_largura_mm": "76.20",
+    "etiq_altura_mm": "59.80",
     "etiq_por_linha": "3",
-    "etiq_indiv_largura_mm": "34",
-    "etiq_espaco_colunas_mm": "2",
-    "etiq_margem_esq": "2",
-    "etiq_margem_dir": "2",
-    "etiq_margem_top": "2",
-    "etiq_margem_baix": "2"
+    "etiq_indiv_largura_mm": "24.4",
+    "etiq_indiv_altura_mm": "56.0",
+    "etiq_espaco_colunas_mm": "1.5",
+    "etiq_margem_esq": "0.0",
+    "etiq_margem_dir": "0.0",
+    "etiq_margem_top": "0.5",
+    "etiq_margem_baix": "0.5"
 }
 
 def carregar_config_local():

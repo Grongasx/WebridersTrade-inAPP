@@ -283,8 +283,8 @@ class PDFPrinter:
                 f"Verifique se o spooler do Windows está ativo e se o driver está instalado."
             )
 
-        w_tot_mm = float(cfgs.get("etiq_largura_mm", 108))
-        h_tot_mm = float(cfgs.get("etiq_altura_mm", 22))
+        w_tot_mm = float(cfgs.get("etiq_largura_mm", 76.20))
+        h_tot_mm = float(cfgs.get("etiq_altura_mm", 59.80))
         cols_por_linha = int(cfgs.get("etiq_por_linha", 3))
 
         dpi_x = hdc.GetDeviceCaps(win32con.LOGPIXELSX) or 203
@@ -362,12 +362,12 @@ class PDFPrinter:
         img = Image.new("RGB", (w_px, h_px), "white")
         draw = ImageDraw.Draw(img)
 
-        w_tot_mm = float(cfgs.get("etiq_largura_mm", 108))
-        w_indiv_mm = float(cfgs.get("etiq_indiv_largura_mm", 34))
-        m_esq_mm = float(cfgs.get("etiq_margem_esq", 2))
-        m_dir_mm = float(cfgs.get("etiq_margem_dir", 2))
+        w_tot_mm = float(cfgs.get("etiq_largura_mm", 76.20))
+        w_indiv_mm = float(cfgs.get("etiq_indiv_largura_mm", 24.4))
+        m_esq_mm = float(cfgs.get("etiq_margem_esq", 0.0))
+        m_dir_mm = float(cfgs.get("etiq_margem_dir", 0.0))
         m_top_mm = float(cfgs.get("etiq_margem_top", 0.5))
-        gap_manual_mm = float(cfgs.get("etiq_espaco_colunas_mm", 2))
+        gap_manual_mm = float(cfgs.get("etiq_espaco_colunas_mm", 1.5))
         cols = int(cfgs.get("etiq_por_linha", 3))
 
         # CÁLCULO DE PASSO E GAP SEM ERRO ACUMULATIVO:
@@ -382,9 +382,9 @@ class PDFPrinter:
 
         layout_cfg = cfgs.get("layout", {})
         layout_default = {
-            "nome": {"tipo": "texto", "x_mm": 1.0, "y_mm": 0.5, "font_size": 7, "max_w_mm": 32.0},
-            "preco": {"tipo": "texto", "x_mm": 1.0, "y_mm": 5.5, "font_size": 11, "max_w_mm": 32.0},
-            "codigo": {"tipo": "barcode", "x_mm": 1.0, "y_mm": 11.0, "max_w_mm": 32.0, "height_mm": 9.0}
+            "nome": {"tipo": "texto", "x_mm": 0.5, "y_mm": 1.0, "font_size": 7, "max_w_mm": 22.5},
+            "preco": {"tipo": "texto", "x_mm": 0.5, "y_mm": 11.0, "font_size": 11, "max_w_mm": 22.5},
+            "codigo": {"tipo": "barcode", "x_mm": 0.0, "y_mm": 19.0, "max_w_mm": 23.5, "height_mm": 16.0}
         }
 
         for col, item in enumerate(grupo):
