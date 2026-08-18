@@ -1,5 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.7.4] - 2026-08-18
+- Gap entre colunas zerado (`0.0 mm`) e largura contígua de 36.0 mm ([config_local.json](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config_local.json), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
+  - Configuração de `etiq_espaco_colunas_mm = 0.0 mm` e `etiq_indiv_largura_mm = 36.0 mm` (`3 x 36.0 mm = 108.0 mm`), eliminando qualquer espaçamento intermediário entre as colunas de impressão.
+  - Recompilação automática do pacote executável em `dist/`.
+
 ## [1.7.3] - 2026-08-18
 - Expansão forçada de impressão para 108.0 mm via DEVMODE em memória ([utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [config_local.json](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config_local.json), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
   - Injeção de estrutura `DEVMODE` customizada em memória (`PaperWidth = 1080`, `PaperLength = 250`, `PaperSize = 0`) no Device Context da impressora Windows, expandindo a largura de impressão para 108.0 mm sem modificar as preferências globais do Windows.
