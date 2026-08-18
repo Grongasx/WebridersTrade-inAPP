@@ -137,27 +137,19 @@ def init_db():
                 ADD COLUMN IF NOT EXISTS valor_sugerido NUMERIC(10, 2);
         """)
 
-        # 4.1 Tabela Categorias de Produtos (Armazenamento dinâmico de categorias)
+        # 4.1 Tabela Catálogo Hierárquico de Produtos (Cascata Tipo -> Marca -> Modelo)
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS categorias_produto (
+            CREATE TABLE IF NOT EXISTS catalogo_produtos (
                 id BIGSERIAL PRIMARY KEY,
-                nome VARCHAR(100) UNIQUE NOT NULL,
-                criado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                tipo VARCHAR(100) NOT NULL,
+                marca VARCHAR(100) NOT NULL DEFAULT '',
+                modelo VARCHAR(100) NOT NULL DEFAULT '',
+                criado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT uq_tipo_marca_modelo UNIQUE (tipo, marca, modelo)
             );
         """)
-
-        # Migração: Popula categorias_produto com categorias padrão e existentes
-        conn.execute("""
-            INSERT INTO categorias_produto (nome)
-            VALUES ('Shape'), ('Rodas'), ('Trucks'), ('Lixas'), ('Tênis'), ('Vestuário'), ('Acessórios'), ('Hardware'), ('Outros')
-            ON CONFLICT (nome) DO NOTHING;
-        """)
-        conn.execute("""
-            INSERT INTO categorias_produto (nome)
-            SELECT DISTINCT tipo FROM produtos_outlet 
-            WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
-            ON CONFLICT (nome) DO NOTHING;
-        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_catalogo_tipo ON catalogo_produtos(tipo);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_catalogo_tipo_marca ON catalogo_produtos(tipo, marca);")
 
         # 5. Tabela Vendas Outlet
         conn.execute("""
@@ -203,34 +195,131 @@ def init_db():
         conn.commit()
 
 
-def obter_categorias():
-    """Retorna lista ordenada de categorias cadastradas no banco."""
+def obter_tipos():
+    """Retorna lista ordenada de tipos/categorias cadastrados na hierarquia."""
     try:
         with get_conn() as conn:
             rows = conn.execute("""
-                SELECT DISTINCT nome FROM (
-                    SELECT nome FROM categorias_produto
+                SELECT DISTINCT tipo FROM (
+                    SELECT tipo FROM catalogo_produtos WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
                     UNION
-                    SELECT tipo AS nome FROM produtos_outlet WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
-                ) t WHERE TRIM(nome) != '' ORDER BY nome ASC;
+                    SELECT tipo FROM produtos_outlet WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
+                ) t ORDER BY tipo ASC;
             """).fetchall()
             return [r[0] for r in rows if r[0]]
     except Exception:
-        return ["Shape", "Rodas", "Trucks", "Lixas", "Tênis", "Vestuário", "Acessórios", "Hardware", "Outros"]
+        return []
 
 
-def salvar_categoria(nome_cat):
-    """Salva dinamicamente uma nova categoria no banco de dados."""
-    if not nome_cat or not str(nome_cat).strip():
+def obter_categorias():
+    """Alias para obter_tipos mantendo compatibilidade."""
+    return obter_tipos()
+
+
+def obter_marcas_por_tipo(tipo=None):
+    """Retorna marcas associadas a um tipo específico (ou todas caso tipo seja vazio)."""
+    try:
+        with get_conn() as conn:
+            if tipo and str(tipo).strip():
+                t_clean = str(tipo).strip()
+                rows = conn.execute("""
+                    SELECT DISTINCT marca FROM (
+                        SELECT marca FROM catalogo_produtos 
+                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND marca IS NOT NULL AND TRIM(marca) != ''
+                        UNION
+                        SELECT marca FROM produtos_outlet 
+                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND marca IS NOT NULL AND TRIM(marca) != ''
+                    ) t ORDER BY marca ASC;
+                """, (t_clean, t_clean)).fetchall()
+            else:
+                rows = conn.execute("""
+                    SELECT DISTINCT marca FROM (
+                        SELECT marca FROM catalogo_produtos WHERE marca IS NOT NULL AND TRIM(marca) != ''
+                        UNION
+                        SELECT marca FROM produtos_outlet WHERE marca IS NOT NULL AND TRIM(marca) != ''
+                    ) t ORDER BY marca ASC;
+                """).fetchall()
+            return [r[0] for r in rows if r[0]]
+    except Exception:
+        return []
+
+
+def obter_modelos_por_marca(tipo=None, marca=None):
+    """Retorna modelos associados à marca e ao tipo selecionados."""
+    try:
+        with get_conn() as conn:
+            t_clean = str(tipo or "").strip()
+            m_clean = str(marca or "").strip()
+
+            if t_clean and m_clean:
+                rows = conn.execute("""
+                    SELECT DISTINCT modelo FROM (
+                        SELECT modelo FROM catalogo_produtos 
+                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
+                        UNION
+                        SELECT modelo FROM produtos_outlet 
+                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
+                    ) t ORDER BY modelo ASC;
+                """, (t_clean, m_clean, t_clean, m_clean)).fetchall()
+            elif m_clean:
+                rows = conn.execute("""
+                    SELECT DISTINCT modelo FROM (
+                        SELECT modelo FROM catalogo_produtos 
+                        WHERE LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
+                        UNION
+                        SELECT modelo FROM produtos_outlet 
+                        WHERE LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
+                    ) t ORDER BY modelo ASC;
+                """, (m_clean, m_clean)).fetchall()
+            else:
+                rows = conn.execute("""
+                    SELECT DISTINCT modelo FROM (
+                        SELECT modelo FROM catalogo_produtos WHERE modelo IS NOT NULL AND TRIM(modelo) != ''
+                        UNION
+                        SELECT modelo FROM produtos_outlet WHERE modelo IS NOT NULL AND TRIM(modelo) != ''
+                    ) t ORDER BY modelo ASC;
+                """).fetchall()
+            return [r[0] for r in rows if r[0]]
+    except Exception:
+        return []
+
+
+def salvar_hierarquia(tipo, marca, modelo=None):
+    """Salva dinamicamente a relação Tipo -> Marca -> Modelo no banco de dados."""
+    t_clean = str(tipo or "").strip()
+    m_clean = str(marca or "").strip()
+    mod_clean = str(modelo or "").strip()
+
+    if not t_clean:
         return
-    nome_limpo = str(nome_cat).strip()
+
     try:
         with get_conn() as conn:
             conn.execute("""
-                INSERT INTO categorias_produto (nome)
-                VALUES (%s)
-                ON CONFLICT (nome) DO NOTHING;
-            """, (nome_limpo,))
+                INSERT INTO catalogo_produtos (tipo, marca, modelo)
+                VALUES (%s, '', '')
+                ON CONFLICT (tipo, marca, modelo) DO NOTHING;
+            """, (t_clean,))
+
+            if m_clean:
+                conn.execute("""
+                    INSERT INTO catalogo_produtos (tipo, marca, modelo)
+                    VALUES (%s, %s, '')
+                    ON CONFLICT (tipo, marca, modelo) DO NOTHING;
+                """, (t_clean, m_clean))
+
+            if m_clean and mod_clean:
+                conn.execute("""
+                    INSERT INTO catalogo_produtos (tipo, marca, modelo)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (tipo, marca, modelo) DO NOTHING;
+                """, (t_clean, m_clean, mod_clean))
+
             conn.commit()
     except Exception as e:
-        print(f"[ERRO AO SALVAR CATEGORIA]: {e}")
+        print(f"[ERRO AO SALVAR HIERARQUIA]: {e}")
+
+
+def salvar_categoria(nome_cat):
+    """Alias para salvar_hierarquia(tipo, '', '') mantendo compatibilidade."""
+    salvar_hierarquia(nome_cat, "")

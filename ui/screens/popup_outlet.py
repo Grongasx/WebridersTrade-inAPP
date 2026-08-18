@@ -21,7 +21,13 @@ from config import (
     FONT_CODE,
 )
 from ui.components.base import UIBuilder
-from core.database import get_conn, obter_categorias, salvar_categoria
+from core.database import (
+    get_conn,
+    obter_tipos,
+    obter_marcas_por_tipo,
+    obter_modelos_por_marca,
+    salvar_hierarquia,
+)
 from utils.helpers import (
     agora,
     txt_para_float,
@@ -35,7 +41,7 @@ from utils.formatters import CurrencyFormatter
 
 
 class PopupProdutoEntrada:
-    """Popup para dar entrada de produto no outlet com cálculo de SKU automático e categorias dinâmicas."""
+    """Popup para dar entrada de produto no outlet com seleção em cascata Tipo -> Marca -> Modelo."""
     
     def __init__(self, app, callback):
         self.app = app
@@ -96,7 +102,7 @@ class PopupProdutoEntrada:
 
         UIBuilder.label(col_d, "2. Detalhes do Produto & SKU", font=FONT_H2, bg=BG2, fg=GOLD).pack(anchor="w", pady=(0, 8))
 
-        # Variáveis dos atributos - todas iniciam vazias conforme solicitado
+        # Variáveis dos atributos - todas iniciam vazias
         vs = {
             "tipo": tk.StringVar(value=""),
             "marca": tk.StringVar(value=""),
@@ -113,32 +119,34 @@ class PopupProdutoEntrada:
         scroll_fm.pack(fill="both", expand=True)
         canvas, inner_d = UIBuilder.scrolled_canvas(scroll_fm)
 
-        # 1. Categoria / Tipo e Marca
+        # 1. Categoria / Tipo e Marca (Cascata nível 1 -> 2)
         r1 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
         r1.pack(fill="x")
         
         f_tipo = UIBuilder.frame(r1, bg=BG2)
         f_tipo.pack(side="left", fill="x", expand=True, padx=(0, 8))
         UIBuilder.label(f_tipo, "Categoria / Tipo *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        categorias_salvas = obter_categorias()
-        cb_tipo = ttk.Combobox(f_tipo, textvariable=vs["tipo"], values=categorias_salvas, font=FONT_BODY)
+        tipos_salvos = obter_tipos()
+        cb_tipo = ttk.Combobox(f_tipo, textvariable=vs["tipo"], values=tipos_salvos, font=FONT_BODY)
         cb_tipo.pack(fill="x", ipady=3, pady=(2, 0))
 
         f_marca = UIBuilder.frame(r1, bg=BG2)
         f_marca.pack(side="left", fill="x", expand=True, padx=(8, 0))
         UIBuilder.label(f_marca, "Marca *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        marcas_sugeridas = ["Santa Cruz", "Baker", "Independent", "Spitfire", "Nike SB", "Vans", "Element", "Webriders", "Flip", "Plan B", "Girl", "Chocolate", "Thunder", "Bones", "Volcom", "DC", "Outra"]
-        cb_marca = ttk.Combobox(f_marca, textvariable=vs["marca"], values=marcas_sugeridas, font=FONT_BODY)
+        marcas_iniciais = obter_marcas_por_tipo()
+        cb_marca = ttk.Combobox(f_marca, textvariable=vs["marca"], values=marcas_iniciais, font=FONT_BODY)
         cb_marca.pack(fill="x", ipady=3, pady=(2, 0))
 
-        # 2. Modelo e Gráfico (Estampa - Can be Null)
+        # 2. Modelo (Cascata nível 3) e Gráfico (Estampa)
         r2 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
         r2.pack(fill="x")
 
         f_mod = UIBuilder.frame(r2, bg=BG2)
         f_mod.pack(side="left", fill="x", expand=True, padx=(0, 8))
         UIBuilder.label(f_mod, "Modelo / Edição *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f_mod, var=vs["modelo"], width=22).pack(fill="x", ipady=3, pady=(2, 0))
+        modelos_iniciais = obter_modelos_por_marca()
+        cb_mod = ttk.Combobox(f_mod, textvariable=vs["modelo"], values=modelos_iniciais, font=FONT_BODY)
+        cb_mod.pack(fill="x", ipady=3, pady=(2, 0))
 
         f_graf = UIBuilder.frame(r2, bg=BG2)
         f_graf.pack(side="left", fill="x", expand=True, padx=(8, 0))
@@ -162,14 +170,34 @@ class PopupProdutoEntrada:
         cb_num = ttk.Combobox(f_num, textvariable=vs["numeracao"], font=FONT_BODY)
         cb_num.pack(fill="x", ipady=3, pady=(2, 0))
 
-        # Atualiza sugestões de numeração caso o usuário escolha uma categoria conhecida
-        def atualizar_sugestoes_numeracao(*_):
+        # ═══════════════════════════════════════════
+        # Atualizações Reativas em Cascata
+        # ═══════════════════════════════════════════
+        def atualizar_cascata_tipo(*_):
             tipo_sel = vs["tipo"].get().strip()
+            # Atualiza marcas associadas a este tipo
+            marcas_filtradas = obter_marcas_por_tipo(tipo_sel)
+            cb_marca.config(values=marcas_filtradas)
+            
+            # Atualiza modelos associados a este tipo e marca atual
+            marca_sel = vs["marca"].get().strip()
+            modelos_filtrados = obter_modelos_por_marca(tipo_sel, marca_sel)
+            cb_mod.config(values=modelos_filtrados)
+
+            # Sugestões de numeração caso pertença a tipo com medidas conhecidas
             if tipo_sel in NUMERACAO_POR_TIPO:
                 cb_num.config(values=NUMERACAO_POR_TIPO[tipo_sel])
             recalcular_sku_auto()
 
-        cb_tipo.bind("<<ComboboxSelected>>", atualizar_sugestoes_numeracao)
+        def atualizar_cascata_marca(*_):
+            tipo_sel = vs["tipo"].get().strip()
+            marca_sel = vs["marca"].get().strip()
+            modelos_filtrados = obter_modelos_por_marca(tipo_sel, marca_sel)
+            cb_mod.config(values=modelos_filtrados)
+            recalcular_sku_auto()
+
+        cb_tipo.bind("<<ComboboxSelected>>", atualizar_cascata_tipo)
+        cb_marca.bind("<<ComboboxSelected>>", atualizar_cascata_marca)
 
         # 4. Quantidade e Valores
         r4 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
@@ -228,8 +256,10 @@ class PopupProdutoEntrada:
             if vs["sku"].get() != sku_calc:
                 vs["sku"].set(sku_calc)
 
-        # Triggers de cálculo automático do SKU
-        for k in ["tipo", "marca", "modelo", "grafico", "cor", "numeracao"]:
+        # Triggers de cálculo automático do SKU e cascata dinâmica
+        vs["tipo"].trace_add("write", lambda *_: (atualizar_cascata_tipo(), recalcular_sku_auto()))
+        vs["marca"].trace_add("write", lambda *_: (atualizar_cascata_marca(), recalcular_sku_auto()))
+        for k in ["modelo", "grafico", "cor", "numeracao"]:
             vs[k].trace_add("write", lambda *_: recalcular_sku_auto())
 
         recalcular_sku_auto()
@@ -272,8 +302,8 @@ class PopupProdutoEntrada:
             except ValueError:
                 qtd = 1
 
-            # Armazena a categoria escrita para reutilização futura
-            salvar_categoria(tipo)
+            # Armazena a cascata Tipo -> Marca -> Modelo no catálogo
+            salvar_hierarquia(tipo, marca, modelo)
 
             # Nome composto para exibição
             nome_composto = f"{marca} {modelo}" + (f" ({grafico})" if grafico else "")
