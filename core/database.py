@@ -137,6 +137,27 @@ def init_db():
                 ADD COLUMN IF NOT EXISTS valor_sugerido NUMERIC(10, 2);
         """)
 
+        # 4.1 Tabela Categorias de Produtos (Armazenamento dinâmico de categorias)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS categorias_produto (
+                id BIGSERIAL PRIMARY KEY,
+                nome VARCHAR(100) UNIQUE NOT NULL,
+                criado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # Migração: Popula categorias_produto com categorias padrão e existentes
+        conn.execute("""
+            INSERT INTO categorias_produto (nome)
+            VALUES ('Shape'), ('Rodas'), ('Trucks'), ('Lixas'), ('Tênis'), ('Vestuário'), ('Acessórios'), ('Hardware'), ('Outros')
+            ON CONFLICT (nome) DO NOTHING;
+        """)
+        conn.execute("""
+            INSERT INTO categorias_produto (nome)
+            SELECT DISTINCT tipo FROM produtos_outlet 
+            WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
+            ON CONFLICT (nome) DO NOTHING;
+        """)
 
         # 5. Tabela Vendas Outlet
         conn.execute("""
@@ -180,3 +201,36 @@ def init_db():
             cur.execute("UPDATE produtos_outlet SET codigo_barras = %s WHERE id = %s", (novo_ean, p_id))
 
         conn.commit()
+
+
+def obter_categorias():
+    """Retorna lista ordenada de categorias cadastradas no banco."""
+    try:
+        with get_conn() as conn:
+            rows = conn.execute("""
+                SELECT DISTINCT nome FROM (
+                    SELECT nome FROM categorias_produto
+                    UNION
+                    SELECT tipo AS nome FROM produtos_outlet WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
+                ) t WHERE TRIM(nome) != '' ORDER BY nome ASC;
+            """).fetchall()
+            return [r[0] for r in rows if r[0]]
+    except Exception:
+        return ["Shape", "Rodas", "Trucks", "Lixas", "Tênis", "Vestuário", "Acessórios", "Hardware", "Outros"]
+
+
+def salvar_categoria(nome_cat):
+    """Salva dinamicamente uma nova categoria no banco de dados."""
+    if not nome_cat or not str(nome_cat).strip():
+        return
+    nome_limpo = str(nome_cat).strip()
+    try:
+        with get_conn() as conn:
+            conn.execute("""
+                INSERT INTO categorias_produto (nome)
+                VALUES (%s)
+                ON CONFLICT (nome) DO NOTHING;
+            """, (nome_limpo,))
+            conn.commit()
+    except Exception as e:
+        print(f"[ERRO AO SALVAR CATEGORIA]: {e}")

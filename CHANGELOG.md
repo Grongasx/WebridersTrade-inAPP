@@ -1,5 +1,14 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [1.8.0] - 2026-08-18
+- Ícone customizado `tcv.ico`, limpeza de padrões no cadastro de produto e persistência dinâmica de categorias ([build_installer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/build_installer.py), [main.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/main.py), [ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py), [core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py), [utils/helpers.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/helpers.py)):
+  - Definição do ícone executável `.exe` e da janela principal com `assets/ico/tcv.ico` tanto em desenvolvimento quanto no pacote compilado em `dist/`.
+  - Remoção de todos os valores pré-selecionados/hardcoded no formulário de cadastro de produtos (tipo, marca, cor, tamanho, preços).
+  - Campo de tipo/categoria transformado em combobox editável com digitação livre e carregamento de categorias cadastradas no banco.
+  - Armazenamento automático e permanente de novas categorias na tabela `categorias_produto` para reutilização e sugestão em cadastros futuros.
+  - Atualização do cálculo dinâmico de SKU em `calcular_sku` para suportar qualquer categoria customizada.
+  - Geração e compilação do pacote instalador ZIP e executável atualizados em `dist/`.
+
 ## [1.7.6] - 2026-08-18
 - Eliminação do desvio acumulativo nas colunas e geração do pacote final de distribuição ([utils/printer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/printer.py), [core/config_local.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/config_local.py), [config_local.json](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config_local.json), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py)):
   - Posicionamento estrito das 3 colunas individuais em `34.0 mm` com margem esquerda inicial de `2.0 mm` e gap zero, eliminando o estiramento artificial e o desvio da última coluna para fora do papel.

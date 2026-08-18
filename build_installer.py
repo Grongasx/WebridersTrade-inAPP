@@ -73,6 +73,9 @@ def compilar_pyinstaller():
         "babel.numbers",
     ]
 
+    icon_path = os.path.join(BASE_DIR, "assets", "ico", "tcv.ico")
+    assets_dir = os.path.join(BASE_DIR, "assets")
+
     cmd = [
         sys.executable,
         "-m",
@@ -83,6 +86,8 @@ def compilar_pyinstaller():
         "--onedir",
         "--clean",
         "--noconfirm",
+        "--icon", icon_path,
+        "--add-data", f"{assets_dir}{os.pathsep}assets",
         "--collect-all", "psycopg",
         "--collect-all", "barcode",
         "--collect-all", "tkcalendar",
@@ -103,7 +108,7 @@ def compilar_pyinstaller():
 
 
 def empacotar_arquivos_distribuicao():
-    log("Copiando arquivos de configuração (.env e config_local.json) para o pacote...")
+    log("Copiando arquivos de configuração (.env, config_local.json e assets) para o pacote...")
 
     if not os.path.exists(OUTPUT_PACKAGE_DIR):
         raise FileNotFoundError(f"Pasta do executável não encontrada em {OUTPUT_PACKAGE_DIR}")
@@ -120,6 +125,15 @@ def empacotar_arquivos_distribuicao():
     if os.path.exists(cfg_origem):
         shutil.copy2(cfg_origem, cfg_destino)
         log(f"  [OK] config_local.json copiado para {cfg_destino}")
+
+    # Copia pasta assets
+    assets_origem = os.path.join(BASE_DIR, "assets")
+    assets_destino = os.path.join(OUTPUT_PACKAGE_DIR, "assets")
+    if os.path.exists(assets_origem):
+        if os.path.exists(assets_destino):
+            shutil.rmtree(assets_destino)
+        shutil.copytree(assets_origem, assets_destino)
+        log(f"  [OK] assets copiados para {assets_destino}")
 
     # Cria arquivo de instruções para o usuário
     readme_path = os.path.join(OUTPUT_PACKAGE_DIR, "LEIAME_INSTALACAO.txt")
@@ -160,6 +174,7 @@ def criar_zip_distribuicao():
 
 def gerar_script_inno_setup():
     iss_path = os.path.join(DIST_DIR, "installer.iss")
+    icon_path = os.path.join(BASE_DIR, "assets", "ico", "tcv.ico")
     log(f"Gerando script do Inno Setup em {iss_path}...")
 
     iss_content = f"""; Script de Instalação Inno Setup para {APP_TITLE}
@@ -168,6 +183,7 @@ AppName={APP_TITLE}
 AppVersion={APP_VERSION}
 DefaultDirName={{autopf}}\\{APP_NAME}
 DefaultGroupName={APP_TITLE}
+SetupIconFile={icon_path}
 UninstallDisplayIcon={{app}}\\{APP_NAME}.exe
 Compression=lzma2
 SolidCompression=yes
@@ -179,8 +195,8 @@ ArchitecturesInstallIn64BitMode=x64
 Source: "{OUTPUT_PACKAGE_DIR}\\*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{{autoprograms}}\\{APP_TITLE}"; Filename: "{{app}}\\{APP_NAME}.exe"
-Name: "{{autodesktop}}\\{APP_TITLE}"; Filename: "{{app}}\\{APP_NAME}.exe"; Tasks: desktopicon
+Name: "{{autoprograms}}\\{APP_TITLE}"; Filename: "{{app}}\\{APP_NAME}.exe"; IconFilename: "{{app}}\\assets\\ico\\tcv.ico"
+Name: "{{autodesktop}}\\{APP_TITLE}"; Filename: "{{app}}\\{APP_NAME}.exe"; Tasks: desktopicon; IconFilename: "{{app}}\\assets\\ico\\tcv.ico"
 
 [Tasks]
 Name: "desktopicon"; Description: "Criar atalho na Área de Trabalho"; GroupDescription: "Atalhos adicionais:"

@@ -21,7 +21,7 @@ from config import (
     FONT_CODE,
 )
 from ui.components.base import UIBuilder
-from core.database import get_conn
+from core.database import get_conn, obter_categorias, salvar_categoria
 from utils.helpers import (
     agora,
     txt_para_float,
@@ -35,7 +35,7 @@ from utils.formatters import CurrencyFormatter
 
 
 class PopupProdutoEntrada:
-    """Popup para dar entrada de produto no outlet com cálculo de SKU automático."""
+    """Popup para dar entrada de produto no outlet com cálculo de SKU automático e categorias dinâmicas."""
     
     def __init__(self, app, callback):
         self.app = app
@@ -96,16 +96,16 @@ class PopupProdutoEntrada:
 
         UIBuilder.label(col_d, "2. Detalhes do Produto & SKU", font=FONT_H2, bg=BG2, fg=GOLD).pack(anchor="w", pady=(0, 8))
 
-        # Variáveis dos atributos
+        # Variáveis dos atributos - todas iniciam vazias conforme solicitado
         vs = {
-            "tipo": tk.StringVar(value="Shape"),
-            "marca": tk.StringVar(),
-            "modelo": tk.StringVar(),
-            "grafico": tk.StringVar(),
-            "cor": tk.StringVar(value="Preto"),
-            "numeracao": tk.StringVar(value='8.0"'),
+            "tipo": tk.StringVar(value=""),
+            "marca": tk.StringVar(value=""),
+            "modelo": tk.StringVar(value=""),
+            "grafico": tk.StringVar(value=""),
+            "cor": tk.StringVar(value=""),
+            "numeracao": tk.StringVar(value=""),
             "qtd": tk.StringVar(value="1"),
-            "sku": tk.StringVar(),
+            "sku": tk.StringVar(value=""),
         }
 
         # Sub-container com scroll para os campos
@@ -113,14 +113,15 @@ class PopupProdutoEntrada:
         scroll_fm.pack(fill="both", expand=True)
         canvas, inner_d = UIBuilder.scrolled_canvas(scroll_fm)
 
-        # 1. Tipo e Marca
+        # 1. Categoria / Tipo e Marca
         r1 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
         r1.pack(fill="x")
         
         f_tipo = UIBuilder.frame(r1, bg=BG2)
         f_tipo.pack(side="left", fill="x", expand=True, padx=(0, 8))
-        UIBuilder.label(f_tipo, "Tipo de Produto *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        cb_tipo = ttk.Combobox(f_tipo, textvariable=vs["tipo"], values=list(TIPO_PREFIXOS.keys()), state="readonly", font=FONT_BODY)
+        UIBuilder.label(f_tipo, "Categoria / Tipo *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
+        categorias_salvas = obter_categorias()
+        cb_tipo = ttk.Combobox(f_tipo, textvariable=vs["tipo"], values=categorias_salvas, font=FONT_BODY)
         cb_tipo.pack(fill="x", ipady=3, pady=(2, 0))
 
         f_marca = UIBuilder.frame(r1, bg=BG2)
@@ -144,33 +145,31 @@ class PopupProdutoEntrada:
         UIBuilder.label(f_graf, "Gráfico / Estampa (Opcional)", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
         UIBuilder.entry(f_graf, var=vs["grafico"], width=22).pack(fill="x", ipady=3, pady=(2, 0))
 
-        # 3. Cor e Numeração Categorizada por Tipo
+        # 3. Cor e Numeração
         r3 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
         r3.pack(fill="x")
 
         f_cor = UIBuilder.frame(r3, bg=BG2)
         f_cor.pack(side="left", fill="x", expand=True, padx=(0, 8))
-        UIBuilder.label(f_cor, "Cor Dominante *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
+        UIBuilder.label(f_cor, "Cor Dominante", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
         cores_lista = ["Preto", "Branco", "Vermelho", "Azul", "Verde", "Amarelo", "Cinza", "Roxo", "Natural / Madeira", "Multicolor"]
         cb_cor = ttk.Combobox(f_cor, textvariable=vs["cor"], values=cores_lista, font=FONT_BODY)
         cb_cor.pack(fill="x", ipady=3, pady=(2, 0))
 
         f_num = UIBuilder.frame(r3, bg=BG2)
         f_num.pack(side="left", fill="x", expand=True, padx=(8, 0))
-        UIBuilder.label(f_num, "Numeração / Tamanho *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        cb_num = ttk.Combobox(f_num, textvariable=vs["numeracao"], values=NUMERACAO_POR_TIPO["Shape"], state="readonly", font=FONT_BODY)
+        UIBuilder.label(f_num, "Numeração / Tamanho", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
+        cb_num = ttk.Combobox(f_num, textvariable=vs["numeracao"], font=FONT_BODY)
         cb_num.pack(fill="x", ipady=3, pady=(2, 0))
 
-        # Atualiza a numeração quando o Tipo muda
-        def atualizar_opcoes_numeracao(*_):
-            tipo_sel = vs["tipo"].get()
-            opcoes = NUMERACAO_POR_TIPO.get(tipo_sel, ["Único", "Padrão"])
-            cb_num.config(values=opcoes)
-            if opcoes:
-                vs["numeracao"].set(opcoes[0])
+        # Atualiza sugestões de numeração caso o usuário escolha uma categoria conhecida
+        def atualizar_sugestoes_numeracao(*_):
+            tipo_sel = vs["tipo"].get().strip()
+            if tipo_sel in NUMERACAO_POR_TIPO:
+                cb_num.config(values=NUMERACAO_POR_TIPO[tipo_sel])
             recalcular_sku_auto()
 
-        cb_tipo.bind("<<ComboboxSelected>>", atualizar_opcoes_numeracao)
+        cb_tipo.bind("<<ComboboxSelected>>", atualizar_sugestoes_numeracao)
 
         # 4. Quantidade e Valores
         r4 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
@@ -186,7 +185,6 @@ class PopupProdutoEntrada:
         UIBuilder.label(f_porig, "Preço Original (R$)", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
         e_orig = UIBuilder.entry(f_porig, width=14)
         e_orig.pack(fill="x", ipady=3, pady=(2, 0))
-        e_orig.insert(0, "0,00")
         e_orig.bind("<KeyRelease>", lambda _: CurrencyFormatter.formatar_moeda_local(e_orig))
 
         f_pout = UIBuilder.frame(r4, bg=BG2)
@@ -194,7 +192,6 @@ class PopupProdutoEntrada:
         UIBuilder.label(f_pout, "Valor Sugerido Outlet *", font=FONT_SMALL, bg=BG2, fg=GOLD).pack(anchor="w")
         e_out = UIBuilder.entry(f_pout, width=14)
         e_out.pack(fill="x", ipady=3, pady=(2, 0))
-        e_out.insert(0, "0,00")
         e_out.bind("<KeyRelease>", lambda _: CurrencyFormatter.formatar_moeda_local(e_out))
 
         # 5. SKU Calculado em Tempo Real
@@ -209,19 +206,30 @@ class PopupProdutoEntrada:
         e_sku.pack(fill="x", ipady=4, pady=(4, 0))
 
         def recalcular_sku_auto(*_):
+            tipo = vs["tipo"].get().strip()
+            marca = vs["marca"].get().strip()
+            modelo = vs["modelo"].get().strip()
+            grafico = vs["grafico"].get().strip()
+            cor = vs["cor"].get().strip()
+            numeracao = vs["numeracao"].get().strip()
+
+            if not (tipo or marca or modelo):
+                vs["sku"].set("")
+                return
+
             sku_calc = calcular_sku(
-                tipo=vs["tipo"].get(),
-                marca=vs["marca"].get(),
-                modelo=vs["modelo"].get(),
-                grafico=vs["grafico"].get(),
-                cor=vs["cor"].get(),
-                numeracao=vs["numeracao"].get()
+                tipo=tipo,
+                marca=marca,
+                modelo=modelo,
+                grafico=grafico,
+                cor=cor,
+                numeracao=numeracao
             )
             if vs["sku"].get() != sku_calc:
                 vs["sku"].set(sku_calc)
 
         # Triggers de cálculo automático do SKU
-        for k in ["marca", "modelo", "grafico", "cor", "numeracao"]:
+        for k in ["tipo", "marca", "modelo", "grafico", "cor", "numeracao"]:
             vs[k].trace_add("write", lambda *_: recalcular_sku_auto())
 
         recalcular_sku_auto()
@@ -239,10 +247,13 @@ class PopupProdutoEntrada:
             marca = vs["marca"].get().strip()
             modelo = vs["modelo"].get().strip()
             grafico = vs["grafico"].get().strip() or None
-            cor = vs["cor"].get().strip()
-            numeracao = vs["numeracao"].get().strip()
+            cor = vs["cor"].get().strip() or None
+            numeracao = vs["numeracao"].get().strip() or None
             sku = vs["sku"].get().strip()
 
+            if not tipo:
+                self.app.toast.show("Informe a Categoria / Tipo do produto.", "erro")
+                return
             if not marca:
                 self.app.toast.show("Informe a Marca do produto.", "erro")
                 return
@@ -260,6 +271,9 @@ class PopupProdutoEntrada:
                 qtd = int(vs["qtd"].get().strip() or 1)
             except ValueError:
                 qtd = 1
+
+            # Armazena a categoria escrita para reutilização futura
+            salvar_categoria(tipo)
 
             # Nome composto para exibição
             nome_composto = f"{marca} {modelo}" + (f" ({grafico})" if grafico else "")

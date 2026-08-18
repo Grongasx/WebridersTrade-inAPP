@@ -51,6 +51,16 @@ class App(tk.Tk):
         
         # Inicializacao
         init_db()
+        
+        # Definir icone da aplicacao
+        base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        ico_file = os.path.join(base_dir, "assets", "ico", "tcv.ico")
+        if os.path.exists(ico_file):
+            try:
+                self.iconbitmap(ico_file)
+            except Exception:
+                pass
+
         UIBuilder.setup_tree_style(self)
         self.toast = ToastNotification(self)
         self.loading = LoadingPopup(self)
