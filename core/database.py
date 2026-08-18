@@ -195,20 +195,35 @@ def init_db():
         conn.commit()
 
 
-def obter_tipos():
-    """Retorna lista ordenada de tipos/categorias cadastrados na hierarquia."""
+def obter_catalogo_completo():
+    """Retorna lista de todas as triplas (tipo, marca, modelo) da hierarquia com cache em memória."""
+    from core.cache import cache
+    cached = cache.get("catalogo:completo")
+    if cached is not None:
+        return cached
+
     try:
         with get_conn() as conn:
             rows = conn.execute("""
-                SELECT DISTINCT tipo FROM (
-                    SELECT tipo FROM catalogo_produtos WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
+                SELECT tipo, marca, modelo FROM (
+                    SELECT tipo, marca, modelo FROM catalogo_produtos 
+                    WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
                     UNION
-                    SELECT tipo FROM produtos_outlet WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
-                ) t ORDER BY tipo ASC;
+                    SELECT tipo, COALESCE(marca, ''), COALESCE(modelo, '') FROM produtos_outlet 
+                    WHERE tipo IS NOT NULL AND TRIM(tipo) != ''
+                ) t ORDER BY tipo ASC, marca ASC, modelo ASC;
             """).fetchall()
-            return [r[0] for r in rows if r[0]]
+            resultado = [(r[0] or "", r[1] or "", r[2] or "") for r in rows]
+            cache.set("catalogo:completo", resultado, ttl=120)
+            return resultado
     except Exception:
         return []
+
+
+def obter_tipos():
+    """Retorna lista ordenada de tipos/categorias cadastrados na hierarquia a partir do cache."""
+    cat = obter_catalogo_completo()
+    return sorted(list({r[0] for r in cat if r[0] and r[0].strip()}))
 
 
 def obter_categorias():
@@ -217,75 +232,31 @@ def obter_categorias():
 
 
 def obter_marcas_por_tipo(tipo=None):
-    """Retorna marcas associadas a um tipo específico (ou todas caso tipo seja vazio)."""
-    try:
-        with get_conn() as conn:
-            if tipo and str(tipo).strip():
-                t_clean = str(tipo).strip()
-                rows = conn.execute("""
-                    SELECT DISTINCT marca FROM (
-                        SELECT marca FROM catalogo_produtos 
-                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND marca IS NOT NULL AND TRIM(marca) != ''
-                        UNION
-                        SELECT marca FROM produtos_outlet 
-                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND marca IS NOT NULL AND TRIM(marca) != ''
-                    ) t ORDER BY marca ASC;
-                """, (t_clean, t_clean)).fetchall()
-            else:
-                rows = conn.execute("""
-                    SELECT DISTINCT marca FROM (
-                        SELECT marca FROM catalogo_produtos WHERE marca IS NOT NULL AND TRIM(marca) != ''
-                        UNION
-                        SELECT marca FROM produtos_outlet WHERE marca IS NOT NULL AND TRIM(marca) != ''
-                    ) t ORDER BY marca ASC;
-                """).fetchall()
-            return [r[0] for r in rows if r[0]]
-    except Exception:
-        return []
+    """Retorna marcas associadas a um tipo específico a partir do cache."""
+    cat = obter_catalogo_completo()
+    t_clean = (tipo or "").strip().lower()
+    if t_clean:
+        return sorted(list({r[1] for r in cat if r[1] and r[1].strip() and r[0].lower() == t_clean}))
+    return sorted(list({r[1] for r in cat if r[1] and r[1].strip()}))
 
 
 def obter_modelos_por_marca(tipo=None, marca=None):
-    """Retorna modelos associados à marca e ao tipo selecionados."""
-    try:
-        with get_conn() as conn:
-            t_clean = str(tipo or "").strip()
-            m_clean = str(marca or "").strip()
+    """Retorna modelos associados à marca e ao tipo selecionados a partir do cache."""
+    cat = obter_catalogo_completo()
+    t_clean = (tipo or "").strip().lower()
+    m_clean = (marca or "").strip().lower()
 
-            if t_clean and m_clean:
-                rows = conn.execute("""
-                    SELECT DISTINCT modelo FROM (
-                        SELECT modelo FROM catalogo_produtos 
-                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
-                        UNION
-                        SELECT modelo FROM produtos_outlet 
-                        WHERE LOWER(TRIM(tipo)) = LOWER(%s) AND LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
-                    ) t ORDER BY modelo ASC;
-                """, (t_clean, m_clean, t_clean, m_clean)).fetchall()
-            elif m_clean:
-                rows = conn.execute("""
-                    SELECT DISTINCT modelo FROM (
-                        SELECT modelo FROM catalogo_produtos 
-                        WHERE LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
-                        UNION
-                        SELECT modelo FROM produtos_outlet 
-                        WHERE LOWER(TRIM(marca)) = LOWER(%s) AND modelo IS NOT NULL AND TRIM(modelo) != ''
-                    ) t ORDER BY modelo ASC;
-                """, (m_clean, m_clean)).fetchall()
-            else:
-                rows = conn.execute("""
-                    SELECT DISTINCT modelo FROM (
-                        SELECT modelo FROM catalogo_produtos WHERE modelo IS NOT NULL AND TRIM(modelo) != ''
-                        UNION
-                        SELECT modelo FROM produtos_outlet WHERE modelo IS NOT NULL AND TRIM(modelo) != ''
-                    ) t ORDER BY modelo ASC;
-                """).fetchall()
-            return [r[0] for r in rows if r[0]]
-    except Exception:
-        return []
+    if t_clean and m_clean:
+        return sorted(list({r[2] for r in cat if r[2] and r[2].strip() and r[0].lower() == t_clean and r[1].lower() == m_clean}))
+    elif m_clean:
+        return sorted(list({r[2] for r in cat if r[2] and r[2].strip() and r[1].lower() == m_clean}))
+    elif t_clean:
+        return sorted(list({r[2] for r in cat if r[2] and r[2].strip() and r[0].lower() == t_clean}))
+    return sorted(list({r[2] for r in cat if r[2] and r[2].strip()}))
 
 
 def salvar_hierarquia(tipo, marca, modelo=None):
-    """Salva dinamicamente a relação Tipo -> Marca -> Modelo no banco de dados."""
+    """Salva dinamicamente a relação Tipo -> Marca -> Modelo no banco de dados e invalida cache."""
     t_clean = str(tipo or "").strip()
     m_clean = str(marca or "").strip()
     mod_clean = str(modelo or "").strip()
@@ -316,6 +287,9 @@ def salvar_hierarquia(tipo, marca, modelo=None):
                 """, (t_clean, m_clean, mod_clean))
 
             conn.commit()
+
+        from core.cache import cache
+        cache.invalidate_prefix("catalogo")
     except Exception as e:
         print(f"[ERRO AO SALVAR HIERARQUIA]: {e}")
 

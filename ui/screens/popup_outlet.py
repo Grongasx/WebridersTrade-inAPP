@@ -80,14 +80,19 @@ class PopupProdutoEntrada:
         tf_cli.pack(fill="both", expand=True, pady=5)
         tv_cli = UIBuilder.make_tree(tf_cli, ("ID", "Nome", "CPF"), [45, 200, 110], ["center", "w", "center"])
         
+        # Carrega clientes uma única vez na inicialização em memória
+        try:
+            with get_conn() as conn:
+                self._todos_clientes = conn.execute("SELECT id, nome, cpf FROM clientes ORDER BY nome").fetchall()
+        except Exception:
+            self._todos_clientes = []
+
         def filtrar(*_):
             t = v_b.get().strip().lower()
             for r in tv_cli.get_children(): 
                 tv_cli.delete(r)
-            with get_conn() as conn: 
-                rows = conn.execute("SELECT id, nome, cpf FROM clientes ORDER BY nome").fetchall()
-            for r in rows:
-                if t and t not in r[1].lower(): 
+            for r in self._todos_clientes:
+                if t and (t not in r[1].lower() and (not r[2] or t not in r[2].lower())):
                     continue
                 tv_cli.insert("", "end", iid=str(r[0]), values=(r[0], r[1], r[2] or "—"))
         v_b.trace_add("write", filtrar)
@@ -119,6 +124,14 @@ class PopupProdutoEntrada:
         scroll_fm.pack(fill="both", expand=True)
         canvas, inner_d = UIBuilder.scrolled_canvas(scroll_fm)
 
+        # Carrega catálogo completo em memória para filtros instantâneos sem tráfego de rede
+        try:
+            with get_conn() as conn:
+                rows = conn.execute("SELECT tipo, COALESCE(marca, ''), COALESCE(modelo, '') FROM catalogo_produtos UNION SELECT tipo, COALESCE(marca, ''), COALESCE(modelo, '') FROM produtos_outlet").fetchall()
+                self._catalogo_local = [(r[0] or "", r[1] or "", r[2] or "") for r in rows]
+        except Exception:
+            self._catalogo_local = []
+
         # 1. Categoria / Tipo e Marca (Cascata nível 1 -> 2)
         r1 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
         r1.pack(fill="x")
@@ -126,14 +139,14 @@ class PopupProdutoEntrada:
         f_tipo = UIBuilder.frame(r1, bg=BG2)
         f_tipo.pack(side="left", fill="x", expand=True, padx=(0, 8))
         UIBuilder.label(f_tipo, "Categoria / Tipo *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        tipos_salvos = obter_tipos()
+        tipos_salvos = sorted(list({r[0] for r in self._catalogo_local if r[0]}))
         cb_tipo = ttk.Combobox(f_tipo, textvariable=vs["tipo"], values=tipos_salvos, font=FONT_BODY)
         cb_tipo.pack(fill="x", ipady=3, pady=(2, 0))
 
         f_marca = UIBuilder.frame(r1, bg=BG2)
         f_marca.pack(side="left", fill="x", expand=True, padx=(8, 0))
         UIBuilder.label(f_marca, "Marca *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        marcas_iniciais = obter_marcas_por_tipo()
+        marcas_iniciais = sorted(list({r[1] for r in self._catalogo_local if r[1]}))
         cb_marca = ttk.Combobox(f_marca, textvariable=vs["marca"], values=marcas_iniciais, font=FONT_BODY)
         cb_marca.pack(fill="x", ipady=3, pady=(2, 0))
 
@@ -144,7 +157,7 @@ class PopupProdutoEntrada:
         f_mod = UIBuilder.frame(r2, bg=BG2)
         f_mod.pack(side="left", fill="x", expand=True, padx=(0, 8))
         UIBuilder.label(f_mod, "Modelo / Edição *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
-        modelos_iniciais = obter_modelos_por_marca()
+        modelos_iniciais = sorted(list({r[2] for r in self._catalogo_local if r[2]}))
         cb_mod = ttk.Combobox(f_mod, textvariable=vs["modelo"], values=modelos_iniciais, font=FONT_BODY)
         cb_mod.pack(fill="x", ipady=3, pady=(2, 0))
 
@@ -171,33 +184,41 @@ class PopupProdutoEntrada:
         cb_num.pack(fill="x", ipady=3, pady=(2, 0))
 
         # ═══════════════════════════════════════════
-        # Atualizações Reativas em Cascata
+        # Atualizações Reativas em Cascata (100% em Memória Local)
         # ═══════════════════════════════════════════
         def atualizar_cascata_tipo(*_):
-            tipo_sel = vs["tipo"].get().strip()
-            # Atualiza marcas associadas a este tipo
-            marcas_filtradas = obter_marcas_por_tipo(tipo_sel)
+            tipo_sel = vs["tipo"].get().strip().lower()
+            if tipo_sel:
+                marcas_filtradas = sorted(list({r[1] for r in self._catalogo_local if r[1] and r[0].lower() == tipo_sel}))
+                modelos_filtrados = sorted(list({r[2] for r in self._catalogo_local if r[2] and r[0].lower() == tipo_sel}))
+            else:
+                marcas_filtradas = sorted(list({r[1] for r in self._catalogo_local if r[1]}))
+                modelos_filtrados = sorted(list({r[2] for r in self._catalogo_local if r[2]}))
+
             cb_marca.config(values=marcas_filtradas)
-            
-            # Atualiza modelos associados a este tipo e marca atual
-            marca_sel = vs["marca"].get().strip()
-            modelos_filtrados = obter_modelos_por_marca(tipo_sel, marca_sel)
             cb_mod.config(values=modelos_filtrados)
 
             # Sugestões de numeração caso pertença a tipo com medidas conhecidas
-            if tipo_sel in NUMERACAO_POR_TIPO:
-                cb_num.config(values=NUMERACAO_POR_TIPO[tipo_sel])
-            recalcular_sku_auto()
+            orig_tipo = vs["tipo"].get().strip()
+            if orig_tipo in NUMERACAO_POR_TIPO:
+                cb_num.config(values=NUMERACAO_POR_TIPO[orig_tipo])
 
         def atualizar_cascata_marca(*_):
-            tipo_sel = vs["tipo"].get().strip()
-            marca_sel = vs["marca"].get().strip()
-            modelos_filtrados = obter_modelos_por_marca(tipo_sel, marca_sel)
-            cb_mod.config(values=modelos_filtrados)
-            recalcular_sku_auto()
+            tipo_sel = vs["tipo"].get().strip().lower()
+            marca_sel = vs["marca"].get().strip().lower()
+            if tipo_sel and marca_sel:
+                modelos_filtrados = sorted(list({r[2] for r in self._catalogo_local if r[2] and r[0].lower() == tipo_sel and r[1].lower() == marca_sel}))
+            elif marca_sel:
+                modelos_filtrados = sorted(list({r[2] for r in self._catalogo_local if r[2] and r[1].lower() == marca_sel}))
+            elif tipo_sel:
+                modelos_filtrados = sorted(list({r[2] for r in self._catalogo_local if r[2] and r[0].lower() == tipo_sel}))
+            else:
+                modelos_filtrados = sorted(list({r[2] for r in self._catalogo_local if r[2]}))
 
-        cb_tipo.bind("<<ComboboxSelected>>", atualizar_cascata_tipo)
-        cb_marca.bind("<<ComboboxSelected>>", atualizar_cascata_marca)
+            cb_mod.config(values=modelos_filtrados)
+
+        cb_tipo.bind("<<ComboboxSelected>>", lambda *_: (atualizar_cascata_tipo(), recalcular_sku_auto()))
+        cb_marca.bind("<<ComboboxSelected>>", lambda *_: (atualizar_cascata_marca(), recalcular_sku_auto()))
 
         # 4. Quantidade e Valores
         r4 = UIBuilder.frame(inner_d, bg=BG2, pady=4)
@@ -256,7 +277,7 @@ class PopupProdutoEntrada:
             if vs["sku"].get() != sku_calc:
                 vs["sku"].set(sku_calc)
 
-        # Triggers de cálculo automático do SKU e cascata dinâmica
+        # Triggers de cálculo automático do SKU e cascata dinâmica (100% síncronos e instantâneos)
         vs["tipo"].trace_add("write", lambda *_: (atualizar_cascata_tipo(), recalcular_sku_auto()))
         vs["marca"].trace_add("write", lambda *_: (atualizar_cascata_marca(), recalcular_sku_auto()))
         for k in ["modelo", "grafico", "cor", "numeracao"]:
