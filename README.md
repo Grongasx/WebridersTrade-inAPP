@@ -62,12 +62,6 @@ O **WebRiders TCV** (Trade-in, Créditos & Vales) é uma aplicação desktop de 
 
 ---
 
-## 📊 Diagrama do Banco de Dados (ERD)
-
-<p align="center">
-  <img src="assets/img/database_er_diagram.jpg" alt="Diagrama de Entidade-Relacionamento do Banco de Dados" width="100%">
-</p>
-
 ### Estrutura e Relacionamentos (Mermaid)
 
 ```mermaid
