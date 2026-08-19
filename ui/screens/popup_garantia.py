@@ -443,6 +443,15 @@ class PopupDetalhesGarantia:
 
         UIBuilder.label(card_log, "📦  Controle Logístico & Códigos de Rastreamento", font=FONT_H2, bg=BG3, fg=GOLD).pack(anchor="w", pady=(0, 8))
 
+        from ui.screens.popup_rastreio import PopupRastreioCorreios
+
+        def rastrear_campo(var_obj):
+            cod = var_obj.get().strip()
+            if cod:
+                PopupRastreioCorreios(self.app, cod)
+            else:
+                self.app.toast.show("Preencha o código para rastrear!", "aviso")
+
         self.vl = {
             "rev_cli": tk.StringVar(value=d[16] or ""),
             "rast_cli_loja": tk.StringVar(value=d[17] or ""),
@@ -457,15 +466,22 @@ class PopupDetalhesGarantia:
         # Linha 1: Cliente -> Loja (Reversa e Rastreio)
         l1 = UIBuilder.frame(card_log, bg=BG3, pady=3)
         l1.pack(fill="x")
+        
         f1_a = UIBuilder.frame(l1, bg=BG3)
         f1_a.pack(side="left", fill="x", expand=True, padx=(0, 6))
         UIBuilder.label(f1_a, "1. Cód. Postagem Reversa (Cliente):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f1_a, var=self.vl["rev_cli"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        row_1a = UIBuilder.frame(f1_a, bg=BG3)
+        row_1a.pack(fill="x", pady=(2, 0))
+        UIBuilder.entry(row_1a, var=self.vl["rev_cli"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
+        tk.Button(row_1a, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rev_cli"])).pack(side="left", padx=(4, 0))
 
         f1_b = UIBuilder.frame(l1, bg=BG3)
         f1_b.pack(side="left", fill="x", expand=True, padx=(6, 0))
         UIBuilder.label(f1_b, "2. Rastreio Correios (Cliente ➔ Loja):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f1_b, var=self.vl["rast_cli_loja"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        row_1b = UIBuilder.frame(f1_b, bg=BG3)
+        row_1b.pack(fill="x", pady=(2, 0))
+        UIBuilder.entry(row_1b, var=self.vl["rast_cli_loja"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
+        tk.Button(row_1b, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_cli_loja"])).pack(side="left", padx=(4, 0))
 
         # Linha 2: Fornecedor (Nome e Protocolo RMA)
         l2 = UIBuilder.frame(card_log, bg=BG3, pady=3)
@@ -486,12 +502,18 @@ class PopupDetalhesGarantia:
         f3_a = UIBuilder.frame(l3, bg=BG3)
         f3_a.pack(side="left", fill="x", expand=True, padx=(0, 6))
         UIBuilder.label(f3_a, "5. Cód. Reversa Fornecedor:", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f3_a, var=self.vl["rev_forn"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        row_3a = UIBuilder.frame(f3_a, bg=BG3)
+        row_3a.pack(fill="x", pady=(2, 0))
+        UIBuilder.entry(row_3a, var=self.vl["rev_forn"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
+        tk.Button(row_3a, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rev_forn"])).pack(side="left", padx=(4, 0))
 
         f3_b = UIBuilder.frame(l3, bg=BG3)
         f3_b.pack(side="left", fill="x", expand=True, padx=(6, 0))
         UIBuilder.label(f3_b, "6. Rastreio (Loja ➔ Fornecedor):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f3_b, var=self.vl["rast_loja_forn"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        row_3b = UIBuilder.frame(f3_b, bg=BG3)
+        row_3b.pack(fill="x", pady=(2, 0))
+        UIBuilder.entry(row_3b, var=self.vl["rast_loja_forn"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
+        tk.Button(row_3b, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_loja_forn"])).pack(side="left", padx=(4, 0))
 
         # Linha 4: Retorno e Expedição Final
         l4 = UIBuilder.frame(card_log, bg=BG3, pady=3)
@@ -499,12 +521,18 @@ class PopupDetalhesGarantia:
         f4_a = UIBuilder.frame(l4, bg=BG3)
         f4_a.pack(side="left", fill="x", expand=True, padx=(0, 6))
         UIBuilder.label(f4_a, "7. Rastreio Retorno (Fornecedor ➔ Loja):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f4_a, var=self.vl["rast_forn_loja"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        row_4a = UIBuilder.frame(f4_a, bg=BG3)
+        row_4a.pack(fill="x", pady=(2, 0))
+        UIBuilder.entry(row_4a, var=self.vl["rast_forn_loja"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
+        tk.Button(row_4a, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_forn_loja"])).pack(side="left", padx=(4, 0))
 
         f4_b = UIBuilder.frame(l4, bg=BG3)
         f4_b.pack(side="left", fill="x", expand=True, padx=(6, 0))
         UIBuilder.label(f4_b, "8. Rastreio Final (Loja ➔ Cliente):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f4_b, var=self.vl["rast_loja_cli"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        row_4b = UIBuilder.frame(f4_b, bg=BG3)
+        row_4b.pack(fill="x", pady=(2, 0))
+        UIBuilder.entry(row_4b, var=self.vl["rast_loja_cli"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
+        tk.Button(row_4b, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_loja_cli"])).pack(side="left", padx=(4, 0))
 
         # 4. Observações Internas
         UIBuilder.label(inner, "📝  Observações Internas & Laudo Técnico:", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(6, 2))

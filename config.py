@@ -33,7 +33,7 @@ FONT_CODE  = ("Consolas", 14, "bold")
 # Nome e Versão da Aplicação
 # ═══════════════════════════════════════════
 APP_TITLE   = "WebRiders TCV"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 
 # ═══════════════════════════════════════════
 # Caminho do banco de dados

@@ -1,6 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
-## [2.0.0] - 2026-08-19
+## [2.1.0] - 2026-08-19
+- Integração completa de Rastreamento de Encomendas dos Correios e Timeline de Movimentações ([utils/correios.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/correios.py), [ui/screens/popup_rastreio.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_rastreio.py), [ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):
+  - Criação do módulo `utils.correios` com validação de código padrão SRO (13 caracteres), sanitização, consulta em APIs públicas e atalho direto para o portal oficial dos Correios.
+  - Implementação do modal `PopupRastreioCorreios` com exibição de status dinâmico (🟢 *Entregue*, 🚚 *Em Trânsito*, 📮 *Postado*) e Linha do Tempo (Timeline) vertical com datas, horários, unidades e cidades de trânsito.
+  - Inclusão de botões de rastreamento rápido `🔍` ao lado de cada um dos campos de códigos de rastreio e reversas no formulário de detalhes da garantia.
+
 - Módulo completo de Controle de Garantias & RMA com Workflow Kanban, Drag-and-Drop, Card Fantasma e Rastreamento Logístico ([core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py), [ui/screens/garantias_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/garantias_screen.py), [ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [ui/components/sidebar.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/components/sidebar.py), [main.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/main.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):
   - Criação da tabela `garantias` no Neon PostgreSQL com protocolo sequencial único `GAR-YYYY-XXXX`, campos de atributos completos do produto e controle logístico multidirecional.
   - Implementação do quadro Kanban interativo com 6 colunas de workflow profissional (`Solicitação Cliente & Reversa`, `Cliente ➔ Loja`, `Acionamento Fornecedor / RMA`, `Loja ➔ Fornecedor`, `Fornecedor ➔ Loja`, `Loja ➔ Cliente / Expedição`).
