@@ -174,12 +174,51 @@ class PopupRastreioCorreios:
             return
 
         if not res.get("sucesso"):
-            erro_msg = res.get("erro", "Não foi possível carregar o rastreamento.")
-            self.lbl_status_geral.config(text="⚠️ Informações Não Encontradas", fg=WARNING)
+            erro_msg = res.get("erro", "Abra a consulta oficial no portal dos Correios.")
+            self.lbl_status_geral.config(text="🌐 Consulta Oficial dos Correios", fg=GOLD)
             self.lbl_detalhe_geral.config(
-                text=f"{erro_msg}\nClique em 'Abrir no Site' para consultar diretamente no portal oficial.",
+                text=f"Objeto: {self.codigo}\n{erro_msg}",
                 fg=TEXT_DIM
             )
+
+            # Botão de destaque para abrir portal oficial
+            card_action = UIBuilder.card(self.inner_timeline, bg=BG3, px=20, py=20)
+            card_action.pack(fill="x", pady=20, padx=10)
+
+            UIBuilder.label(
+                card_action,
+                "📦 Rastreamento Direto no Portal Oficial",
+                font=("Segoe UI", 12, "bold"),
+                bg=BG3,
+                fg=GOLD
+            ).pack(pady=(0, 6))
+
+            UIBuilder.label(
+                card_action,
+                "Os Correios protegem as consultas em tempo real. Clique no botão abaixo para visualizar o trajeto completo:",
+                font=FONT_SMALL,
+                bg=BG3,
+                fg=TEXT,
+                wraplength=460,
+                justify="center"
+            ).pack(pady=(0, 14))
+
+            btn_open_big = tk.Button(
+                card_action,
+                text=f"🚀 Abrir no Portal dos Correios ({self.codigo})",
+                font=("Segoe UI", 11, "bold"),
+                bg=GOLD,
+                fg="#000000",
+                activebackground="#E5971A",
+                activeforeground="#000000",
+                relief="flat",
+                bd=0,
+                padx=20,
+                pady=10,
+                cursor="hand2",
+                command=lambda: abrir_site_correios(self.codigo)
+            )
+            btn_open_big.pack()
             return
 
         status_geral = res.get("status_geral", "Em Processamento")
