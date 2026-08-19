@@ -66,7 +66,7 @@ def _formatar_documento(doc: str) -> List[str]:
 def _obter_token_cws() -> Tuple[Optional[str], Optional[str]]:
     """
     Gera ou reaproveita o token Bearer da API oficial dos Correios (CWS).
-    Utiliza as credenciais CORREIOS_USUARIO e CORREIOS_CODIGO_ACESSO do .env.
+    Suporta chaves diretas CWS (iniciadas com cws-) ou geração de token dinâmico.
     """
     global _TOKEN_CACHE
 
@@ -75,8 +75,12 @@ def _obter_token_cws() -> Tuple[Optional[str], Optional[str]]:
     cartao_postagem = (os.getenv("CORREIOS_CARTAO_POSTAGEM") or "").strip().strip('"').strip("'")
     contrato = (os.getenv("CORREIOS_CONTRATO") or "").strip().strip('"').strip("'")
 
-    if not usuario or not codigo_acesso:
-        return None, "Credenciais CORREIOS_USUARIO e CORREIOS_CODIGO_ACESSO não configuradas no .env."
+    if not codigo_acesso:
+        return None, "Chave de acesso CORREIOS_CODIGO_ACESSO não configurada no .env."
+
+    # Chave CWS direta emitida pelo portal (cws-ch1_...) ou JWT Bearer
+    if codigo_acesso.startswith("cws-") or codigo_acesso.startswith("eyJ"):
+        return codigo_acesso, None
 
     # Reaproveita token válido em cache
     if _TOKEN_CACHE["token"] and _TOKEN_CACHE["expira_em"]:
@@ -136,7 +140,7 @@ def _obter_token_cws() -> Tuple[Optional[str], Optional[str]]:
             _TOKEN_CACHE["ultimo_erro"] = erro_msg
             return None, erro_msg
 
-    erro_msg = f"HTTP 401: Não foi possível autenticar o usuário '{usuario}'. Verifique as credenciais no portal CWS dos Correios."
+    erro_msg = f"HTTP 401: Não foi possível autenticar o usuário '{usuario}'."
     _TOKEN_CACHE["ultimo_erro"] = erro_msg
     return None, erro_msg
 
@@ -173,14 +177,19 @@ def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
                     }
                 )
 
-                with urllib.request.urlopen(req_sro, timeout=8) as response:
+                with urllib.request.urlopen(req_sro, timeout=10) as response:
                     if response.status == 200:
-                        data = json.loads(response.read().decode("utf-8"))
+                        raw_bytes = response.read()
+                        data = json.loads(raw_bytes.decode("utf-8", errors="replace"))
                         objetos = data.get("objetos", [])
                         if objetos:
                             obj = objetos[0]
                             eventos_raw = obj.get("eventos", [])
                             eventos_formatados = []
+
+                            categoria_postal = obj.get("tipoPostal", {}).get("categoria", "")
+                            descricao_postal = obj.get("tipoPostal", {}).get("descricao", "")
+                            servico_str = f"Correios ({descricao_postal or categoria_postal or 'SRO'})"
 
                             for ev in eventos_raw:
                                 descricao = ev.get("descricao", "")
@@ -233,7 +242,7 @@ def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
                                 return {
                                     "codigo": cod,
                                     "sucesso": True,
-                                    "servico": "Correios Oficial (SRO - Rastro)",
+                                    "servico": servico_str,
                                     "quantidade": len(eventos_formatados),
                                     "status_geral": status_geral,
                                     "ultimo_local": ultimo.get("local", ""),
@@ -241,12 +250,18 @@ def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
                                     "entregue": entregue,
                                     "eventos": eventos_formatados
                                 }
+                            else:
+                                return {
+                                    "codigo": cod,
+                                    "sucesso": False,
+                                    "erro": f"Objeto {cod} aguardando postagem ou primeiras movimentações no sistema dos Correios."
+                                }
             except urllib.error.HTTPError as e:
-                if e.code == 403:
+                if e.code == 404:
                     return {
                         "codigo": cod,
                         "sucesso": False,
-                        "erro": "API 87 (SRO - Rastro) não autorizada para este usuário no portal CWS. Habilite o serviço 'SRO - Rastro' em Gestão de Acesso a APIs ou use o botão abaixo para consultar diretamente no portal oficial."
+                        "erro": f"Objeto {cod} não foi encontrado na base de dados dos Correios."
                     }
 
     # 2. Fallback de API Pública LinkTrack
