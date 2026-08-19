@@ -1,6 +1,12 @@
 # Histórico de Versões - Vale Presente Manager
 
-## [1.8.0] - 2026-08-18
+## [1.9.0] - 2026-08-19
+- Sistema de atualização automática com botão superior estilo Discord e integração GitHub Releases ([utils/updater.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/updater.py), [ui/components/topbar.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/components/topbar.py), [ui/screens/update_modal.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/update_modal.py), [ui/screens/configuracoes_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/configuracoes_screen.py), [main.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/main.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):
+  - Criação do módulo `utils.updater` com checagem assíncrona na API do GitHub Releases (`Grongasx/WebridersTrade-inAPP`), comparação semver e download em streaming.
+  - Implementação da `TopBar` com indicador de conexão e botão de atualização dinâmico estilo Discord (verde vibrante `#22C55E` com hover `#16A34A`), visível exclusivamente quando há versão mais recente.
+  - Criação do modal `UpdateModal` com exibição de changelog/notas da versão, barra de progresso em tempo real e inicialização automática do instalador.
+  - Adição de botão de checagem manual de atualizações na tela de Configurações do Sistema.
+
 - Estrutura hierárquica em cascata Tipo -> Marca -> Modelo, digitação instantânea em memória, ícone customizado `tcv.ico` e limpeza integral do banco ([build_installer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/build_installer.py), [main.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/main.py), [ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py), [core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py), [utils/helpers.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/helpers.py)):
   - Otimização de performance extrema no cadastro de produtos: carregamento do catálogo e clientes 100% em memória local, eliminando requisições de rede a cada tecla digitada (0ms de latência / digitação ultra-fluida).
   - Criação da tabela `catalogo_produtos` para gerenciar relacionamentos em cascata Tipo $\rightarrow$ Marca $\rightarrow$ Modelo com índices de busca otimizados e cache em `MemoryCache`.

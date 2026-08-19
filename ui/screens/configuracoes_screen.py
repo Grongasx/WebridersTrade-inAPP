@@ -167,6 +167,34 @@ class ConfiguracoesScreen(BaseScreen):
             width=38,
         ).pack(pady=5)
 
+        UIBuilder.separator(col_esq).pack(fill="x", pady=(15, 10))
+
+        UIBuilder.label(
+            col_esq,
+            "🔄  Atualizações do Sistema",
+            font=FONT_H2,
+            bg=BG2,
+            fg=GOLD,
+        ).pack(anchor="w", pady=(0, 6))
+
+        from config import APP_VERSION
+        UIBuilder.label(
+            col_esq,
+            f"Versão Instalada: v{APP_VERSION}",
+            font=FONT_SMALL,
+            bg=BG2,
+            fg=TEXT_DIM,
+        ).pack(anchor="w", pady=(0, 8))
+
+        UIBuilder.button(
+            col_esq,
+            "⚡ Verificar Atualizações",
+            self.app.checar_atualizacao_manual,
+            color="#22C55E",
+            fg="#FFFFFF",
+            width=38,
+        ).pack(pady=2)
+
         # Coluna Direita - Fila de Impressão (Mantida no Neon DB)
         col_dir = UIBuilder.card(main_fm, bg=BG2, px=18, py=14)
         col_dir.pack(side="left", fill="both", expand=True, padx=(10, 0))
