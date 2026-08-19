@@ -70,6 +70,12 @@ def _obter_token_cws() -> Tuple[Optional[str], Optional[str]]:
     """
     global _TOKEN_CACHE
 
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(override=True)
+    except Exception:
+        pass
+
     usuario = (os.getenv("CORREIOS_USUARIO") or "").strip().strip('"').strip("'")
     codigo_acesso = (os.getenv("CORREIOS_CODIGO_ACESSO") or "").strip().strip('"').strip("'")
     cartao_postagem = (os.getenv("CORREIOS_CARTAO_POSTAGEM") or "").strip().strip('"').strip("'")
