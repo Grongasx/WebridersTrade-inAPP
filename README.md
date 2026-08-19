@@ -43,7 +43,7 @@ O **WebRiders TCV** (Trade-in, Créditos & Vales) é uma aplicação desktop de 
 - Layout de 3 colunas de 34x22mm por etiqueta (largura total 108mm) sem acúmulo de erro de arredondamento de pixels.
 - Fila de impressão persistida no banco com suporte a impressão em lote e envio direto.
 
-### 7. 🚀 Atualizações Automáticas Estilo Discord
+### 7. 🚀 Atualizações Automáticas via GitRelease
 - Verificação silenciosa de novas versões publicadas no GitHub Releases (`Grongasx/WebridersTrade-inAPP`).
 - Botão de notificação integrado na barra superior em verde vibrante (`📥 Atualização vX.Y.Z`).
 - Modal integrado para visualização do changelog, download com barra de progresso em tempo real e reinicialização automatizada.
