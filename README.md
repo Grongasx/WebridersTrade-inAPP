@@ -62,6 +62,109 @@ O **WebRiders TCV** (Trade-in, Créditos & Vales) é uma aplicação desktop de 
 
 ---
 
+## 📊 Diagrama do Banco de Dados (ERD)
+
+<p align="center">
+  <img src="assets/img/database_er_diagram.jpg" alt="Diagrama de Entidade-Relacionamento do Banco de Dados" width="100%">
+</p>
+
+### Estrutura e Relacionamentos (Mermaid)
+
+```mermaid
+erDiagram
+    CLIENTES ||--o{ VALES : "possui (1:N)"
+    CLIENTES ||--o{ HISTORICO_CREDITO : "movimenta (1:N)"
+    CLIENTES ||--o{ PRODUTOS_OUTLET : "consigna / trade-in (1:N)"
+    CLIENTES ||--o{ VENDAS_OUTLET : "compra (1:N)"
+    
+    PRODUTOS_OUTLET ||--o{ VENDAS_OUTLET : "item vendido (1:N)"
+    PRODUTOS_OUTLET ||--o{ FILA_IMPRESSAO : "etiqueta térmica (1:N)"
+    CATALOGO_PRODUTOS ||..o{ PRODUTOS_OUTLET : "classificação hierárquica (N:M)"
+
+    CLIENTES {
+        bigserial id PK
+        varchar nome
+        varchar cpf
+        varchar telefone
+        varchar email
+        numeric saldo
+        timestamp criado
+    }
+
+    VALES {
+        bigserial id PK
+        varchar codigo UK
+        bigint cliente_id FK
+        numeric valor
+        int usado
+        date validade
+        timestamp criado
+        timestamp usado_em
+        text observacao
+    }
+
+    HISTORICO_CREDITO {
+        bigserial id PK
+        bigint cliente_id FK
+        numeric valor
+        varchar tipo
+        text descricao
+        text motivo
+        timestamp criado
+    }
+
+    PRODUTOS_OUTLET {
+        bigserial id PK
+        varchar nome
+        varchar codigo_barras UK
+        varchar sku UK
+        bigint cliente_id FK
+        varchar tipo
+        varchar marca
+        varchar modelo
+        varchar grafico
+        varchar cor
+        varchar numeracao
+        varchar tamanho
+        numeric preco_original
+        numeric preco_outlet
+        numeric valor_sugerido
+        int quantidade
+        int estoque
+        text defeito
+        varchar status
+        timestamp criado
+    }
+
+    CATALOGO_PRODUTOS {
+        bigserial id PK
+        varchar tipo
+        varchar marca
+        varchar modelo
+        timestamp criado
+    }
+
+    VENDAS_OUTLET {
+        bigserial id PK
+        bigint cliente_id FK
+        bigint produto_id FK
+        int quantidade
+        numeric preco_pago
+        timestamp criado
+    }
+
+    FILA_IMPRESSAO {
+        bigserial id PK
+        bigint produto_id FK
+        text texto_etiqueta
+        varchar status
+        int quantidade
+        timestamp criado
+    }
+```
+
+---
+
 ## 📁 Estrutura de Diretórios
 
 ```
