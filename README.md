@@ -48,6 +48,11 @@ O **WebRiders TCV** (Trade-in, Créditos & Vales) é uma aplicação desktop de 
 - Botão de notificação integrado na barra superior em verde vibrante (`📥 Atualização vX.Y.Z`).
 - Modal integrado para visualização do changelog, download com barra de progresso em tempo real e reinicialização automatizada.
 
+### 8. 🛡️ Controle de Garantias & RMA (Workflow Kanban)
+- Quadro Kanban interativo com 6 etapas de fluxo profissional e suporte a drag-and-drop de cards.
+- Gestão e rastreamento logístico: Códigos de postagem reversa (Correios), protocolos de garantia com fabricantes/fornecedores e rastreamento em tempo real (Cliente ➔ Loja ➔ Fornecedor ➔ Loja ➔ Cliente).
+- Cadastro minucioso do produto em garantia (Tipo, Marca, Modelo, Numeração, Serial/IMEI, Nota Fiscal e Laudo Técnico).
+
 ---
 
 ## 🛠️ Arquitetura e Tecnologias

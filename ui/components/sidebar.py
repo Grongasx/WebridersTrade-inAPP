@@ -35,6 +35,7 @@ class Sidebar:
             ("clientes",  "👥  Clientes",             "clientes"),
             ("creditos",  "💳  Créditos & Saldos",    "creditos"),
             ("outlet",    "🏷  Produtos Outlet",      "outlet"),
+            ("garantias", "🛡  Garantias & RMA",      "garantias"),
             ("vales",     "🎁  Vales Presentes",       "vales"),
             # ("exportar",  "⤓  Exportar Dados",       "exportar"), # Desabilitado temporariamente
             ("etiquetas", "🖨  Etiquetas & Impressão", "etiquetas"), 

@@ -174,12 +174,79 @@ def init_db():
                 quantidade INT DEFAULT 1
             );
         """)
+
+        # 7. Tabela Garantias & RMA
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS garantias (
+                id BIGSERIAL PRIMARY KEY,
+                protocolo VARCHAR(50) UNIQUE NOT NULL,
+                cliente_id BIGINT REFERENCES clientes(id) ON DELETE SET NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'solicitacao_cliente',
+                tipo_produto VARCHAR(100),
+                marca VARCHAR(100),
+                modelo VARCHAR(100),
+                grafico VARCHAR(255),
+                cor VARCHAR(100),
+                numeracao VARCHAR(50),
+                tamanho VARCHAR(50),
+                numero_serie VARCHAR(100),
+                nota_fiscal VARCHAR(100),
+                valor_produto NUMERIC(10, 2) DEFAULT 0.00,
+                defeito_relatado TEXT,
+                fornecedor_nome VARCHAR(255),
+                protocolo_fornecedor VARCHAR(100),
+                codigo_reversa_cliente VARCHAR(100),
+                rastreio_cliente_loja VARCHAR(100),
+                codigo_reversa_fornecedor VARCHAR(100),
+                rastreio_loja_fornecedor VARCHAR(100),
+                rastreio_fornecedor_loja VARCHAR(100),
+                rastreio_loja_cliente VARCHAR(100),
+                observacoes TEXT,
+                criado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                atualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                concluido_em TIMESTAMP
+            );
+        """)
+
+        # Migração defensiva para colunas em garantias
+        conn.execute("""
+            ALTER TABLE garantias
+                ADD COLUMN IF NOT EXISTS cliente_id BIGINT REFERENCES clientes(id) ON DELETE SET NULL,
+                ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'solicitacao_cliente',
+                ADD COLUMN IF NOT EXISTS tipo_produto VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS marca VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS modelo VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS grafico VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS cor VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS numeracao VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS tamanho VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS numero_serie VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS nota_fiscal VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS valor_produto NUMERIC(10, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS defeito_relatado TEXT,
+                ADD COLUMN IF NOT EXISTS fornecedor_nome VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS protocolo_fornecedor VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS codigo_reversa_cliente VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS rastreio_cliente_loja VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS codigo_reversa_fornecedor VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS rastreio_loja_fornecedor VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS rastreio_fornecedor_loja VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS rastreio_loja_cliente VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS observacoes TEXT,
+                ADD COLUMN IF NOT EXISTS criado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS atualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP;
+        """)
+
         # Índices de performance
         conn.execute("CREATE INDEX IF NOT EXISTS idx_vales_usado_validade ON vales(usado, validade);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_vales_cliente_id ON vales(cliente_id);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_vales_codigo ON vales(codigo);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_produtos_outlet_codigo_barras ON produtos_outlet(codigo_barras);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_produtos_outlet_sku ON produtos_outlet(sku);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_garantias_status ON garantias(status);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_garantias_cliente ON garantias(cliente_id);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_garantias_protocolo ON garantias(protocolo);")
 
         # Migração: Garante que todos os produtos outlet possuam EAN-13 numérico válido de 13 dígitos
         cur = conn.cursor()
@@ -296,4 +363,21 @@ def salvar_hierarquia(tipo, marca, modelo=None):
 
 def salvar_categoria(nome_cat):
     """Alias para salvar_hierarquia(tipo, '', '') mantendo compatibilidade."""
-    salvar_hierarquia(nome_cat, "")
+    salvar_hierarquia(nome_cat, "")
+
+
+def gerar_protocolo_garantia(conn=None):
+    """Gera um protocolo único de garantia no formato GAR-YYYY-XXXX."""
+    import datetime
+    ano = datetime.datetime.now().year
+
+    def _exec(c):
+        row = c.execute("SELECT COUNT(*) FROM garantias WHERE protocolo LIKE %s", (f"GAR-{ano}-%",)).fetchone()
+        count = (row[0] if row else 0) + 1
+        return f"GAR-{ano}-{str(count).zfill(4)}"
+
+    if conn:
+        return _exec(conn)
+    with get_conn() as conn_local:
+        return _exec(conn_local)
+

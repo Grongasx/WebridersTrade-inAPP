@@ -36,6 +36,7 @@ from ui.screens.novo_vale_screen import NovoValeScreen
 from ui.screens.confirmacao_screen import ConfirmacaoScreen
 from ui.screens.creditos_screen import CreditosScreen
 from ui.screens.outlet_screen import OutletScreen
+from ui.screens.garantias_screen import GarantiasScreen
 from ui.screens.configuracoes_screen import ConfiguracoesScreen
 from ui.screens.update_modal import UpdateModal
 from utils.updater import verificar_nova_versao
@@ -120,6 +121,7 @@ class App(tk.Tk):
             "confirmacao": ConfirmacaoScreen(self, None),
             "creditos": CreditosScreen(self, None),
             "outlet": OutletScreen(self, None),
+            "garantias": GarantiasScreen(self, None),
             "etiquetas": ConfiguracoesScreen(self, None),
             "configuracoes": ConfiguracoesScreen(self, None),
             # "exportar": ExportarScreen(self, None), # Desabilitado temporariamente
