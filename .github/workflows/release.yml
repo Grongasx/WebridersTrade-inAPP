@@ -1,0 +1,68 @@
+name: Build & Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows Installer & Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install psycopg[binary] pillow pywin32 python-barcode tkcalendar python-dotenv babel pyinstaller
+
+      - name: Prepare Environment File (.env)
+        shell: pwsh
+        env:
+          DATABASE_SECRET: ${{ secrets.DATABASE_URL }}
+        run: |
+          if ($env:DATABASE_SECRET) {
+            Set-Content -Path ".env" -Value "DATABASE=`"$($env:DATABASE_SECRET)`""
+          } elseif (Test-Path ".env.example") {
+            Copy-Item ".env.example" ".env"
+          } else {
+            Set-Content -Path ".env" -Value "DATABASE=`"postgresql://user:pass@ep-fake.neon.tech/neondb?sslmode=require`""
+          }
+
+      - name: Build Executable & Inno Setup Package
+        run: python build_installer.py
+
+      - name: Upload Build Artifacts (CI Retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ValePresenteManager-Dist
+          path: |
+            dist/*.exe
+            dist/*.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.exe
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
