@@ -73,6 +73,7 @@ def _obter_token_cws() -> Tuple[Optional[str], Optional[str]]:
     usuario = (os.getenv("CORREIOS_USUARIO") or "").strip().strip('"').strip("'")
     codigo_acesso = (os.getenv("CORREIOS_CODIGO_ACESSO") or "").strip().strip('"').strip("'")
     cartao_postagem = (os.getenv("CORREIOS_CARTAO_POSTAGEM") or "").strip().strip('"').strip("'")
+    contrato = (os.getenv("CORREIOS_CONTRATO") or "").strip().strip('"').strip("'")
 
     if not usuario or not codigo_acesso:
         return None, "Credenciais CORREIOS_USUARIO e CORREIOS_CODIGO_ACESSO não configuradas no .env."
@@ -96,6 +97,9 @@ def _obter_token_cws() -> Tuple[Optional[str], Optional[str]]:
         if cartao_postagem:
             url_token = "https://api.correios.com.br/token/v1/autentica/cartaopostagem"
             body_data = json.dumps({"numero": cartao_postagem}).encode("utf-8")
+        elif contrato:
+            url_token = "https://api.correios.com.br/token/v1/autentica/contrato"
+            body_data = json.dumps({"numero": contrato}).encode("utf-8")
         else:
             url_token = "https://api.correios.com.br/token/v1/autentica"
             body_data = b"{}"
@@ -139,7 +143,7 @@ def _obter_token_cws() -> Tuple[Optional[str], Optional[str]]:
 
 def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
     """
-    Consulta o rastreamento do objeto postal na API oficial dos Correios (SRO).
+    Consulta o rastreamento do objeto postal na API oficial dos Correios (SRO - Rastro 87).
     Retorna dicionário estruturado para exibição no popup de timeline.
     """
     cod = limpar_codigo_rastreio(codigo)
@@ -150,13 +154,12 @@ def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
             "erro": "Código de rastreamento não informado."
         }
 
-    # 1. Tenta consulta pela API Oficial CWS dos Correios com Token Bearer
+    # 1. Tenta consulta pela API Oficial CWS dos Correios (API 87: SRO - Rastro)
     token, erro_token = _obter_token_cws()
     if token:
-        # Testa os endpoints de SRO dos Correios
         endpoints_sro = [
-            f"https://api.correios.com.br/srorastreador/v1/objetos/{cod}?resultado=T",
-            f"https://api.correios.com.br/sro/v1/objetos/{cod}"
+            f"https://api.correios.com.br/srorastro/v1/objetos/{cod}",
+            f"https://api.correios.com.br/srorastro/v1/objetos/{cod}?resultado=T"
         ]
 
         for url_sro in endpoints_sro:
@@ -214,13 +217,13 @@ def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
                                         detalhe = f"Em trânsito para {dest_str}"
 
                                 eventos_formatados.append({
-                                "data": data_fmt,
-                                "hora": hora_fmt,
-                                "status": descricao,
-                                "local": local_str,
-                                "destino": dest_str,
-                                "detalhes": detalhe
-                            })
+                                    "data": data_fmt,
+                                    "hora": hora_fmt,
+                                    "status": descricao,
+                                    "local": local_str,
+                                    "destino": dest_str,
+                                    "detalhes": detalhe
+                                })
 
                             if eventos_formatados:
                                 ultimo = eventos_formatados[0]
@@ -230,7 +233,7 @@ def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
                                 return {
                                     "codigo": cod,
                                     "sucesso": True,
-                                    "servico": "Correios Oficial (CWS)",
+                                    "servico": "Correios Oficial (SRO - Rastro)",
                                     "quantidade": len(eventos_formatados),
                                     "status_geral": status_geral,
                                     "ultimo_local": ultimo.get("local", ""),
@@ -238,8 +241,13 @@ def consultar_rastreio_correios(codigo: str) -> Dict[str, Any]:
                                     "entregue": entregue,
                                     "eventos": eventos_formatados
                                 }
-            except Exception:
-                pass
+            except urllib.error.HTTPError as e:
+                if e.code == 403:
+                    return {
+                        "codigo": cod,
+                        "sucesso": False,
+                        "erro": "API 87 (SRO - Rastro) não autorizada para este usuário no portal CWS. Habilite o serviço 'SRO - Rastro' em Gestão de Acesso a APIs ou use o botão abaixo para consultar diretamente no portal oficial."
+                    }
 
     # 2. Fallback de API Pública LinkTrack
     try:
