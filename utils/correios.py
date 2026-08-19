@@ -27,7 +27,7 @@ def validar_codigo_correios(codigo: str) -> bool:
 def abrir_site_correios(codigo: str):
     """Abre a página oficial de rastreamento dos Correios no navegador padrão."""
     cod = limpar_codigo_rastreio(codigo)
-    url = f"https://rastreamento.correios.com.br/app/index.php?codigo={cod}"
+    url = f"https://rastreamento.correios.com.br/app/index.php?objetos={cod}"
     webbrowser.open(url)
 
 
