@@ -1,10 +1,13 @@
 """
 Modulo de gerenciamento de atualizacoes automaticas via GitHub Releases.
+Suporta atualizacao direta in-place da build em dist/ (hot update) preservando configs.
 """
 
 import os
 import sys
 import json
+import shutil
+import zipfile
 import urllib.request
 import urllib.error
 import subprocess
@@ -35,7 +38,7 @@ def parse_version(v_str: str) -> tuple:
 def verificar_nova_versao(versao_atual: str = APP_VERSION) -> Optional[Dict[str, Any]]:
     """
     Consulta o GitHub Releases para verificar se existe uma versao mais recente que a atual.
-    Retorna dict com detalhes da release se houver atualizacao, ou None se ja estiver na mais recente.
+    Prioriza os pacotes de build (.zip) para atualizacao direta in-place na pasta dist.
     """
     try:
         req = urllib.request.Request(
@@ -60,16 +63,16 @@ def verificar_nova_versao(versao_atual: str = APP_VERSION) -> Optional[Dict[str,
             asset_name = None
             asset_size = 0
 
-            # Preferencia para instalador .exe
+            # 1. Prioridade Maxima: Pacote ZIP da build (*build*.zip)
             for asset in assets:
                 nome = asset.get("name", "")
-                if nome.lower().endswith(".exe"):
+                if "build" in nome.lower() and nome.lower().endswith(".zip"):
                     asset_download_url = asset.get("browser_download_url")
                     asset_name = nome
                     asset_size = asset.get("size", 0)
                     break
 
-            # Fallback para .zip
+            # 2. Segunda Prioridade: Qualquer pacote .zip de distribuicao
             if not asset_download_url:
                 for asset in assets:
                     nome = asset.get("name", "")
@@ -79,7 +82,17 @@ def verificar_nova_versao(versao_atual: str = APP_VERSION) -> Optional[Dict[str,
                         asset_size = asset.get("size", 0)
                         break
 
-            # Fallback para zipball do release
+            # 3. Terceira Prioridade: Executavel direto .exe
+            if not asset_download_url:
+                for asset in assets:
+                    nome = asset.get("name", "")
+                    if nome.lower().endswith(".exe"):
+                        asset_download_url = asset.get("browser_download_url")
+                        asset_name = nome
+                        asset_size = asset.get("size", 0)
+                        break
+
+            # 4. Fallback: zipball do release
             if not asset_download_url:
                 asset_download_url = data.get("zipball_url")
                 asset_name = f"update_{tag_name}.zip"
@@ -114,14 +127,14 @@ def baixar_atualizacao(
     Retorna o caminho local do arquivo baixado.
     """
     pasta_temp = tempfile.gettempdir()
-    caminho_destino = os.path.join(pasta_temp, asset_name or "update_setup.exe")
+    caminho_destino = os.path.join(pasta_temp, asset_name or "update_build.zip")
 
     req = urllib.request.Request(
         download_url,
         headers={"User-Agent": "ValePresenteManager-Updater"}
     )
 
-    with urllib.request.urlopen(req, timeout=30) as response:
+    with urllib.request.urlopen(req, timeout=45) as response:
         total_size = int(response.headers.get("content-length", 0))
         bytes_baixados = 0
         bloco = 1024 * 64  # 64 KB
@@ -141,16 +154,97 @@ def baixar_atualizacao(
     return caminho_destino
 
 
-def executar_instalador_e_sair(caminho_instalador: str):
-    """
-    Executa o instalador baixado e fecha o processo atual.
-    """
-    if not os.path.exists(caminho_instalador):
-        raise FileNotFoundError(f"Arquivo não encontrado: {caminho_instalador}")
+def obter_diretorio_aplicacao() -> str:
+    """Retorna a pasta da build atual (dist/ValePresenteManager ou pasta do .exe)."""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    
+    # Em desenvolvimento, verifica se existe pasta dist/ValePresenteManager
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dist_app = os.path.join(base_dir, "dist", "ValePresenteManager")
+    if os.path.exists(dist_app):
+        return dist_app
+    return base_dir
 
-    if caminho_instalador.lower().endswith(".exe"):
-        subprocess.Popen([caminho_instalador], shell=True)
-    else:
-        os.startfile(caminho_instalador)
 
+def aplicar_atualizacao_e_reiniciar(caminho_arquivo: str):
+    """
+    Aplica a atualizacao da build no dist/pasta do app de forma in-place
+    e reinicia a aplicacao automaticamente, preservando .env e config_local.json.
+    """
+    if not os.path.exists(caminho_arquivo):
+        raise FileNotFoundError(f"Arquivo não encontrado: {caminho_arquivo}")
+
+    pasta_app = obter_diretorio_aplicacao()
+    exe_name = "ValePresenteManager.exe"
+    exe_path = os.path.join(pasta_app, exe_name)
+
+    # Se for um arquivo ZIP (.zip)
+    if caminho_arquivo.lower().endswith(".zip"):
+        pasta_temp = tempfile.gettempdir()
+        pasta_stage = os.path.join(pasta_temp, "vpm_build_update_stage")
+        if os.path.exists(pasta_stage):
+            try:
+                shutil.rmtree(pasta_stage)
+            except Exception:
+                pass
+        os.makedirs(pasta_stage, exist_ok=True)
+
+        # Extrai o ZIP no stage
+        with zipfile.ZipFile(caminho_arquivo, "r") as zip_ref:
+            zip_ref.extractall(pasta_stage)
+
+        # Verifica se o zip extraiu com pasta aninhada (ex: ValePresenteManager/...)
+        origem_copia = pasta_stage
+        subitens = [os.path.join(pasta_stage, x) for x in os.listdir(pasta_stage)]
+        if len(subitens) == 1 and os.path.isdir(subitens[0]):
+            origem_copia = subitens[0]
+
+        # Script de aplicacao in-place com robocopy (preserva .env e config_local.json)
+        bat_path = os.path.join(pasta_temp, "vpm_update_in_place.bat")
+        with open(bat_path, "w", encoding="utf-8") as f:
+            f.write(f"""@echo off
+timeout /t 2 /nobreak >nul
+robocopy "{origem_copia}" "{pasta_app}" /E /XF .env config_local.json /R:3 /W:1 >nul
+if exist "{exe_path}" (
+    start "" "{exe_path}"
+)
+del "{caminho_arquivo}" >nul 2>&1
+rmdir /s /q "{pasta_stage}" >nul 2>&1
+del "%~f0" >nul 2>&1
+exit
+""")
+        creationflags = subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+        subprocess.Popen(["cmd.exe", "/c", bat_path], creationflags=creationflags)
+        sys.exit(0)
+
+    # Se for um executavel direto (.exe)
+    if caminho_arquivo.lower().endswith(".exe"):
+        if "setup" in os.path.basename(caminho_arquivo).lower():
+            subprocess.Popen([caminho_arquivo], shell=True)
+            sys.exit(0)
+        else:
+            pasta_temp = tempfile.gettempdir()
+            bat_path = os.path.join(pasta_temp, "vpm_update_in_place.bat")
+            with open(bat_path, "w", encoding="utf-8") as f:
+                f.write(f"""@echo off
+timeout /t 2 /nobreak >nul
+copy /y "{caminho_arquivo}" "{exe_path}" >nul
+if exist "{exe_path}" (
+    start "" "{exe_path}"
+)
+del "{caminho_arquivo}" >nul 2>&1
+del "%~f0" >nul 2>&1
+exit
+""")
+            creationflags = subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+            subprocess.Popen(["cmd.exe", "/c", bat_path], creationflags=creationflags)
+            sys.exit(0)
+
+    # Fallback
+    os.startfile(caminho_arquivo)
     sys.exit(0)
+
+
+# Alias de retrocompatibilidade
+executar_instalador_e_sair = aplicar_atualizacao_e_reiniciar

@@ -14,6 +14,10 @@
   - Campo opcional para registro de notas de histórico do chamado com carimbo de data/hora automático.
   - Suporte a cancelamento seguro (reversão do card para a coluna de origem sem alterar dados no banco) e confirmação otimista com persistência assíncrona no Neon DB.
   - Redesign ergonômico dos botões de ação e modais (`UIBuilder.button`, `PopupMoverEtapaGarantia`, `PopupDetalhesGarantia`, `PopupRastreioCorreios`, `PopupAddProduto`, `PopupCliente`, `UpdateModal`): padding vertical e horizontal expandido (`padx=16`, `pady=10`, `ipady=4-6`), eliminando botões finos e garantindo alta facilidade de clique.
+  - Atualização automática direta da build em `dist/` (Hot Update In-Place) ([utils/updater.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/updater.py), [build_installer.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/build_installer.py), [ui/screens/update_modal.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/update_modal.py)):
+    - Priorização do pacote ZIP da build (`*_build.zip`) nas releases do GitHub em vez de baixar instaladores completos.
+    - Aplicação da atualização diretamente na pasta do executável (`dist/ValePresenteManager`), preservando arquivos de configuração locais (`.env` e `config_local.json`).
+    - Reinicialização instantânea da aplicação sem necessidade de executar assistentes de instalação adicionais.
 
 ## [2.1.0] - 2026-08-19
 - Integração completa de Rastreamento de Encomendas dos Correios e Timeline de Movimentações ([utils/correios.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/correios.py), [ui/screens/popup_rastreio.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_rastreio.py), [ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):

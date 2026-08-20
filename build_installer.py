@@ -157,6 +157,21 @@ CONFIGURAÇÕES:
 
 
 def criar_zip_distribuicao():
+    # 1. Pacote ZIP da Build para Atualização Direta (In-Place Hot Update)
+    build_zip_nome = f"{APP_NAME}_v{APP_VERSION}_build.zip"
+    build_zip_path = os.path.join(DIST_DIR, build_zip_nome)
+    log(f"Gerando pacote ZIP da build para atualização direta: {build_zip_nome}...")
+
+    with zipfile.ZipFile(build_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(OUTPUT_PACKAGE_DIR):
+            for file in files:
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, OUTPUT_PACKAGE_DIR)
+                zipf.write(file_path, rel_path)
+
+    log(f"  [OK] Pacote da build gerado em: {build_zip_path}")
+
+    # 2. Pacote ZIP do Instalador Completo
     zip_nome = f"{APP_NAME}_v{APP_VERSION}_Instalador_Completo.zip"
     zip_path = os.path.join(DIST_DIR, zip_nome)
     log(f"Gerando pacote ZIP para distribuição: {zip_nome}...")
@@ -168,8 +183,8 @@ def criar_zip_distribuicao():
                 rel_path = os.path.relpath(file_path, DIST_DIR)
                 zipf.write(file_path, rel_path)
 
-    log(f"[OK] Pacote ZIP gerado em: {zip_path}")
-    return zip_path
+    log(f"  [OK] Pacote ZIP gerado em: {zip_path}")
+    return build_zip_path
 
 
 def gerar_script_inno_setup():

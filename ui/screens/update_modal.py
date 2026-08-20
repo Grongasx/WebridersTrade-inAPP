@@ -276,10 +276,10 @@ class UpdateModal(tk.Frame):
                 else:
                     self._atualizar_barra_progresso(100)
                     self.lbl_progress_status.config(
-                        text="Download concluído! Iniciando instalador e reiniciando sistema...",
+                        text="Download concluído! Aplicando atualização na build e reiniciando...",
                         fg=SUCCESS
                     )
-                    # Aguarda 1 segundo e executa o instalador
+                    # Aguarda 1 segundo e aplica a atualizacao in-place
                     self.root.after(1200, lambda: executar_instalador_e_sair(caminho_instalador))
 
             self.root.after(0, finalizar)
