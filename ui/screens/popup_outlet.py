@@ -361,4 +361,4 @@ class PopupProdutoEntrada:
             self.callback()
             self.app.toast.show(f"Produto salvo! EAN-13 '{ean_final}' gerado e enviado para impressão.", "sucesso")
         
-        UIBuilder.button(main_fm, "✨ Salvar Produto & Enviar p/ Fila de Impressão", salvar, color=GOLD, fg="#000", width=36).pack(pady=10)
+        UIBuilder.button(main_fm, "✨ Salvar Produto & Enviar p/ Fila de Impressão", salvar, color=GOLD, fg="#000", width=40).pack(pady=14, ipady=6)

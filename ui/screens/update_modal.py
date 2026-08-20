@@ -146,19 +146,19 @@ class UpdateModal(tk.Frame):
         self.btn_cancelar = tk.Button(
             self.btn_frame,
             text="Lembrar Depois",
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 10, "bold"),
             bg=BG3,
             fg=TEXT_DIM,
             activebackground=BG,
             activeforeground=TEXT,
             relief="flat",
             bd=0,
-            padx=16,
-            pady=8,
+            padx=18,
+            pady=10,
             cursor="hand2",
             command=self.fechar
         )
-        self.btn_cancelar.pack(side="left")
+        self.btn_cancelar.pack(side="left", ipady=4)
 
         self.btn_atualizar = tk.Button(
             self.btn_frame,
@@ -170,12 +170,12 @@ class UpdateModal(tk.Frame):
             activeforeground="#FFFFFF",
             relief="flat",
             bd=0,
-            padx=20,
-            pady=8,
+            padx=22,
+            pady=10,
             cursor="hand2",
             command=self._iniciar_download
         )
-        self.btn_atualizar.pack(side="right")
+        self.btn_atualizar.pack(side="right", ipady=4)
 
     def abrir(self, update_info: dict):
         """Abre o modal preenchendo as informacoes da atualizacao."""

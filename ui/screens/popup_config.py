@@ -284,11 +284,11 @@ class PopupAddProduto:
 
         UIBuilder.button(
             bot_bar, "✔️ Adicionar à Fila", confirmar, color=SUCCESS, fg="#000", width=18
-        ).pack(side="right", padx=(5, 0))
+        ).pack(side="right", padx=(5, 0), ipady=5)
 
         UIBuilder.button(
             bot_bar, "❌ Cancelar", win.destroy, color=BG3, width=12
-        ).pack(side="right")
+        ).pack(side="right", ipady=5)
 
 
 PopupAddPorId = PopupAddProduto
@@ -526,9 +526,9 @@ class PopupConfigDimensoes:
 
         self._renderizar_canvas()
 
-        btn_bar = UIBuilder.frame(self.win, bg=BG, padx=20, pady=10)
+        btn_bar = UIBuilder.frame(self.win, bg=BG, padx=20, pady=12)
         btn_bar.pack(fill="x")
-        UIBuilder.button(btn_bar, "💾 Salvar Medidas e Layout", self._salvar_tudo, color=SUCCESS, width=26).pack(side="right")
+        UIBuilder.button(btn_bar, "💾 Salvar Medidas e Layout", self._salvar_tudo, color=SUCCESS, width=26).pack(side="right", ipady=5)
 
     def _atualizar_dimensoes_canvas(self):
         try:
@@ -968,4 +968,4 @@ class PopupEditarEtiqueta:
             self.callback()
             self.app.toast.show("Etiqueta atualizada com sucesso!", "sucesso")
 
-        UIBuilder.button(fm, "💾 Atualizar", salvar, color=SUCCESS, width=20).pack(pady=10)
+        UIBuilder.button(fm, "💾 Atualizar", salvar, color=SUCCESS, width=22).pack(pady=14, ipady=5)

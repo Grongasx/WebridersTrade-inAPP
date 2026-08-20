@@ -55,19 +55,19 @@ class PopupRastreioCorreios:
             btn_copy = tk.Button(
                 f_code,
                 text="📋 Copiar",
-                font=("Segoe UI", 8),
+                font=("Segoe UI", 9, "bold"),
                 bg=BG3,
-                fg=TEXT_DIM,
+                fg=TEXT,
                 activebackground=BG2,
-                activeforeground=TEXT,
+                activeforeground=GOLD,
                 relief="flat",
                 bd=0,
-                padx=6,
-                pady=1,
+                padx=10,
+                pady=4,
                 cursor="hand2",
                 command=lambda: self.app._copiar_codigo_clipboard(self.codigo)
             )
-            btn_copy.pack(side="left", padx=8)
+            btn_copy.pack(side="left", padx=8, ipady=2)
 
         # Botão Abrir no Site dos Correios
         btn_site = tk.Button(
@@ -80,12 +80,12 @@ class PopupRastreioCorreios:
             activeforeground=GOLD,
             relief="flat",
             bd=0,
-            padx=12,
-            pady=4,
+            padx=14,
+            pady=6,
             cursor="hand2",
             command=lambda: abrir_site_correios(self.codigo)
         )
-        btn_site.pack(side="right", anchor="ne")
+        btn_site.pack(side="right", anchor="ne", ipady=2)
 
         UIBuilder.separator(self.main_fm).pack(fill="x", pady=(8, 10))
 
@@ -127,24 +127,24 @@ class PopupRastreioCorreios:
         # Rodapé de Ações
         # ═══════════════════════════════════════════
         b_bar = UIBuilder.frame(self.main_fm, bg=BG2)
-        b_bar.pack(fill="x", pady=(10, 0))
+        b_bar.pack(fill="x", pady=(14, 0))
 
         self.btn_refresh = UIBuilder.button(
             b_bar,
             "🔄 Atualizar Status",
             self._consultar_em_background,
             color=BG3,
-            width=18
+            width=20
         )
-        self.btn_refresh.pack(side="left")
+        self.btn_refresh.pack(side="left", ipady=5)
 
         UIBuilder.button(
             b_bar,
             "✕ Fechar",
             self.win.destroy,
             color=BG3,
-            width=12
-        ).pack(side="right")
+            width=14
+        ).pack(side="right", ipady=5)
 
     def _consultar_em_background(self):
         """Dispara a requisição assíncrona para não travar a interface gráfica."""
@@ -218,7 +218,7 @@ class PopupRastreioCorreios:
                 cursor="hand2",
                 command=lambda: abrir_site_correios(self.codigo)
             )
-            btn_open_big.pack()
+            btn_open_big.pack(pady=4, ipady=4)
             return
 
         status_geral = res.get("status_geral", "Em Processamento")

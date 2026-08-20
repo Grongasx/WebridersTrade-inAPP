@@ -48,7 +48,7 @@ class PopupConsultaVale:
         e = tk.Entry(row_busca, textvariable=self._cod_var, font=("Consolas",16,"bold"), bg=BG3, fg=GOLD, insertbackground=GOLD, relief="flat", bd=0, width=22, justify="center")
         e.pack(side="left", ipady=11, padx=(0,12))
         e.bind("<Return>", lambda _: self._consultar())
-        UIBuilder.button(row_busca, "🔍 Pesquisar", self._consultar, color=ACCENT, width=14).pack(side="left")
+        UIBuilder.button(row_busca, "🔍 Pesquisar", self._consultar, color=ACCENT, width=16).pack(side="left", ipady=5)
         self._resultado_frame.pack(fill="x", padx=40, pady=10)
 
     def _consultar(self):
@@ -93,4 +93,4 @@ class PopupConsultaVale:
                     conn.commit()
                 self.app.toast.show("Vale resgatado com sucesso!", "sucesso")
                 self._consultar()
-            UIBuilder.button(rf, "✔ Resgatar Vale", resgatar, color=SUCCESS, fg="#000", width=24).pack(pady=15)
+            UIBuilder.button(rf, "✔ Resgatar Vale", resgatar, color=SUCCESS, fg="#000", width=24).pack(pady=15, ipady=5)

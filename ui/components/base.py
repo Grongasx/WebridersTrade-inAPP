@@ -194,8 +194,8 @@ class UIBuilder:
     
     @staticmethod
     def button(parent, text, cmd, color=ACCENT, fg=TEXT, width=16, **kw):
-        px = kw.pop('padx', 12)
-        py = kw.pop('pady', 8)
+        px = kw.pop('padx', 16)
+        py = kw.pop('pady', 10)
         return tk.Button(parent, text=text, command=cmd, font=("Segoe UI", 10, "bold"), bg=color, fg=fg, activebackground=color, activeforeground=fg, relief="flat", bd=0, cursor="hand2", padx=px, pady=py, width=width, **kw)
     
     @staticmethod

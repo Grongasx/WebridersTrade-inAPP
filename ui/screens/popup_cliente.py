@@ -129,8 +129,8 @@ class PopupClienteDetalhe:
 
         row_btns = UIBuilder.frame(h, bg=BG2)
         row_btns.pack(anchor="e")
-        UIBuilder.button(row_btns, "✏️ Editar", lambda: self._trocar_secao("editar"), color=BG3, width=12).pack(side="left", padx=4)
-        UIBuilder.button(row_btns, "🎁 Resgatar Vale", lambda: self._trocar_secao("resgatar"), color=ACCENT, fg=TEXT, width=14).pack(side="left", padx=4)
+        UIBuilder.button(row_btns, "✏️ Editar", lambda: self._trocar_secao("editar"), color=BG3, width=12).pack(side="left", padx=4, ipady=3)
+        UIBuilder.button(row_btns, "🎁 Resgatar Vale", lambda: self._trocar_secao("resgatar"), color=ACCENT, fg=TEXT, width=14).pack(side="left", padx=4, ipady=3)
 
         UIBuilder.separator(self.win).pack(fill="x")
         UIBuilder.label(self.win, f"🎟️  Vales Resgatados ({len(vales)})", font=FONT_H2, padx=24, pady=8).pack(anchor="w")
@@ -261,8 +261,8 @@ class PopupClienteDetalhe:
             )
 
         self.win.bind("<Return>", lambda _: salvar())
-        UIBuilder.button(brow, "✅ Salvar Alterações", salvar, width=18).pack(side="left")
-        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="left", padx=8)
+        UIBuilder.button(brow, "✅ Salvar Alterações", salvar, width=18).pack(side="left", ipady=5)
+        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="left", padx=8, ipady=5)
 
     # ═══════════════════════════════════════════
     # SEÇÃO 3: Resgate de Vale Presente
@@ -390,8 +390,8 @@ class PopupClienteDetalhe:
                 show_global_loading=False
             )
 
-        UIBuilder.button(brow, "✅ Confirmar Resgate", confirmar, color=ACCENT, fg=TEXT, width=18).pack(side="left")
-        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="left", padx=8)
+        UIBuilder.button(brow, "✅ Confirmar Resgate", confirmar, color=ACCENT, fg=TEXT, width=18).pack(side="left", ipady=5)
+        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="left", padx=8, ipady=5)
 
     # ═══════════════════════════════════════════
     # SEÇÃO 4: Detalhes de um Vale Específico
@@ -426,7 +426,7 @@ class PopupClienteDetalhe:
         brow = UIBuilder.frame(self.win, padx=24, pady=16)
         brow.pack(fill="x", side="bottom")
 
-        UIBuilder.button(brow, "📋 Copiar Código", lambda: self.app._copiar_codigo_clipboard(v[0]), color=BG3, width=16).pack(side="left")
+        UIBuilder.button(brow, "📋 Copiar Código", lambda: self.app._copiar_codigo_clipboard(v[0]), color=BG3, width=16).pack(side="left", ipady=5)
 
         if not v[2]:
             def dar_baixa():
@@ -451,9 +451,9 @@ class PopupClienteDetalhe:
                         show_global_loading=False
                     )
 
-            UIBuilder.button(brow, "✅ Dar Baixa", dar_baixa, color=SUCCESS, width=14).pack(side="left", padx=8)
+            UIBuilder.button(brow, "✅ Dar Baixa", dar_baixa, color=SUCCESS, width=14).pack(side="left", padx=8, ipady=5)
 
-        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="right")
+        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="right", ipady=5)
 
     # ═══════════════════════════════════════════
     # NAVEGAÇÃO E NAVEGADORES AUXILIARES

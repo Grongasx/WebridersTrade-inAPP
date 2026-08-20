@@ -239,10 +239,10 @@ class PopupNovaGarantia:
         # Rodapé de Ações
         # ═══════════════════════════════════════════
         b_bar = UIBuilder.frame(main_fm, bg=BG2)
-        b_bar.pack(fill="x", pady=(12, 0))
+        b_bar.pack(fill="x", pady=(14, 0))
 
-        UIBuilder.button(b_bar, "✕ Cancelar", self.win.destroy, color=BG3, width=14).pack(side="left")
-        UIBuilder.button(b_bar, "🛡️ Abrir Chamado de Garantia", self._salvar, color="#22C55E", width=26).pack(side="right")
+        UIBuilder.button(b_bar, "✕ Cancelar", self.win.destroy, color=BG3, width=14).pack(side="left", ipady=5)
+        UIBuilder.button(b_bar, "🛡️ Abrir Chamado de Garantia", self._salvar, color="#22C55E", width=26).pack(side="right", ipady=5)
 
     def _salvar(self):
         sel_cli = self.tv_cli.selection()
@@ -419,7 +419,7 @@ class PopupDetalhesGarantia:
         UIBuilder.label(c_row, f"Telefone: {d[29] or '—'}\nE-mail: {d[30] or '—'}", font=FONT_BODY, bg=BG3, fg=TEXT).pack(side="left", padx=(0, 20))
 
         if d[29]:
-            UIBuilder.button(c_row, "📋 Copiar Tel", lambda: self.app._copiar_codigo_clipboard(d[29]), color=BG2, width=12).pack(side="right", padx=4)
+            UIBuilder.button(c_row, "📋 Copiar Tel", lambda: self.app._copiar_codigo_clipboard(d[29]), color=BG2, width=12).pack(side="right", padx=4, ipady=3)
 
         # 2. Cartão de Detalhes do Produto
         card_prod = UIBuilder.card(inner, bg=BG3, px=16, py=12)
@@ -472,16 +472,16 @@ class PopupDetalhesGarantia:
         UIBuilder.label(f1_a, "1. Cód. Postagem Reversa (Cliente):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
         row_1a = UIBuilder.frame(f1_a, bg=BG3)
         row_1a.pack(fill="x", pady=(2, 0))
-        UIBuilder.entry(row_1a, var=self.vl["rev_cli"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
-        tk.Button(row_1a, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rev_cli"])).pack(side="left", padx=(4, 0))
+        UIBuilder.entry(row_1a, var=self.vl["rev_cli"], width=16).pack(side="left", fill="x", expand=True, ipady=3)
+        tk.Button(row_1a, text="🔍 Rastrear", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=10, pady=5, cursor="hand2", command=lambda: rastrear_campo(self.vl["rev_cli"])).pack(side="left", padx=(6, 0), ipady=2)
 
         f1_b = UIBuilder.frame(l1, bg=BG3)
         f1_b.pack(side="left", fill="x", expand=True, padx=(6, 0))
         UIBuilder.label(f1_b, "2. Rastreio Correios (Cliente ➔ Loja):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
         row_1b = UIBuilder.frame(f1_b, bg=BG3)
         row_1b.pack(fill="x", pady=(2, 0))
-        UIBuilder.entry(row_1b, var=self.vl["rast_cli_loja"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
-        tk.Button(row_1b, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_cli_loja"])).pack(side="left", padx=(4, 0))
+        UIBuilder.entry(row_1b, var=self.vl["rast_cli_loja"], width=16).pack(side="left", fill="x", expand=True, ipady=3)
+        tk.Button(row_1b, text="🔍 Rastrear", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=10, pady=5, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_cli_loja"])).pack(side="left", padx=(6, 0), ipady=2)
 
         # Linha 2: Fornecedor (Nome e Protocolo RMA)
         l2 = UIBuilder.frame(card_log, bg=BG3, pady=3)
@@ -489,12 +489,12 @@ class PopupDetalhesGarantia:
         f2_a = UIBuilder.frame(l2, bg=BG3)
         f2_a.pack(side="left", fill="x", expand=True, padx=(0, 6))
         UIBuilder.label(f2_a, "3. Fabricante / Fornecedor:", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f2_a, var=self.vl["forn_nome"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        UIBuilder.entry(f2_a, var=self.vl["forn_nome"], width=20).pack(fill="x", ipady=3, pady=(2, 0))
 
         f2_b = UIBuilder.frame(l2, bg=BG3)
         f2_b.pack(side="left", fill="x", expand=True, padx=(6, 0))
         UIBuilder.label(f2_b, "4. Protocolo RMA Fornecedor:", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
-        UIBuilder.entry(f2_b, var=self.vl["forn_proto"], width=20).pack(fill="x", ipady=2, pady=(2, 0))
+        UIBuilder.entry(f2_b, var=self.vl["forn_proto"], width=20).pack(fill="x", ipady=3, pady=(2, 0))
 
         # Linha 3: Loja -> Fornecedor (Reversa Fornecedor e Rastreio)
         l3 = UIBuilder.frame(card_log, bg=BG3, pady=3)
@@ -504,16 +504,16 @@ class PopupDetalhesGarantia:
         UIBuilder.label(f3_a, "5. Cód. Reversa Fornecedor:", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
         row_3a = UIBuilder.frame(f3_a, bg=BG3)
         row_3a.pack(fill="x", pady=(2, 0))
-        UIBuilder.entry(row_3a, var=self.vl["rev_forn"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
-        tk.Button(row_3a, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rev_forn"])).pack(side="left", padx=(4, 0))
+        UIBuilder.entry(row_3a, var=self.vl["rev_forn"], width=16).pack(side="left", fill="x", expand=True, ipady=3)
+        tk.Button(row_3a, text="🔍 Rastrear", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=10, pady=5, cursor="hand2", command=lambda: rastrear_campo(self.vl["rev_forn"])).pack(side="left", padx=(6, 0), ipady=2)
 
         f3_b = UIBuilder.frame(l3, bg=BG3)
         f3_b.pack(side="left", fill="x", expand=True, padx=(6, 0))
         UIBuilder.label(f3_b, "6. Rastreio (Loja ➔ Fornecedor):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
         row_3b = UIBuilder.frame(f3_b, bg=BG3)
         row_3b.pack(fill="x", pady=(2, 0))
-        UIBuilder.entry(row_3b, var=self.vl["rast_loja_forn"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
-        tk.Button(row_3b, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_loja_forn"])).pack(side="left", padx=(4, 0))
+        UIBuilder.entry(row_3b, var=self.vl["rast_loja_forn"], width=16).pack(side="left", fill="x", expand=True, ipady=3)
+        tk.Button(row_3b, text="🔍 Rastrear", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=10, pady=5, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_loja_forn"])).pack(side="left", padx=(6, 0), ipady=2)
 
         # Linha 4: Retorno e Expedição Final
         l4 = UIBuilder.frame(card_log, bg=BG3, pady=3)
@@ -523,16 +523,16 @@ class PopupDetalhesGarantia:
         UIBuilder.label(f4_a, "7. Rastreio Retorno (Fornecedor ➔ Loja):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
         row_4a = UIBuilder.frame(f4_a, bg=BG3)
         row_4a.pack(fill="x", pady=(2, 0))
-        UIBuilder.entry(row_4a, var=self.vl["rast_forn_loja"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
-        tk.Button(row_4a, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_forn_loja"])).pack(side="left", padx=(4, 0))
+        UIBuilder.entry(row_4a, var=self.vl["rast_forn_loja"], width=16).pack(side="left", fill="x", expand=True, ipady=3)
+        tk.Button(row_4a, text="🔍 Rastrear", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=10, pady=5, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_forn_loja"])).pack(side="left", padx=(6, 0), ipady=2)
 
         f4_b = UIBuilder.frame(l4, bg=BG3)
         f4_b.pack(side="left", fill="x", expand=True, padx=(6, 0))
         UIBuilder.label(f4_b, "8. Rastreio Final (Loja ➔ Cliente):", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
         row_4b = UIBuilder.frame(f4_b, bg=BG3)
         row_4b.pack(fill="x", pady=(2, 0))
-        UIBuilder.entry(row_4b, var=self.vl["rast_loja_cli"], width=16).pack(side="left", fill="x", expand=True, ipady=2)
-        tk.Button(row_4b, text="🔍", font=("Segoe UI", 9), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=6, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_loja_cli"])).pack(side="left", padx=(4, 0))
+        UIBuilder.entry(row_4b, var=self.vl["rast_loja_cli"], width=16).pack(side="left", fill="x", expand=True, ipady=3)
+        tk.Button(row_4b, text="🔍 Rastrear", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD, activebackground=BG, activeforeground=GOLD, relief="flat", bd=0, padx=10, pady=5, cursor="hand2", command=lambda: rastrear_campo(self.vl["rast_loja_cli"])).pack(side="left", padx=(6, 0), ipady=2)
 
         # 4. Observações Internas
         UIBuilder.label(inner, "📝  Observações Internas & Laudo Técnico:", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(6, 2))
@@ -544,12 +544,12 @@ class PopupDetalhesGarantia:
         # Rodapé de Ações
         # ═══════════════════════════════════════════
         b_bar = UIBuilder.frame(main_fm, bg=BG2)
-        b_bar.pack(fill="x", pady=(10, 0))
+        b_bar.pack(fill="x", pady=(14, 0))
 
-        UIBuilder.button(b_bar, "🗑️ Excluir Chamado", self._excluir, color=DANGER, width=16).pack(side="left")
-        UIBuilder.button(b_bar, "✕ Fechar", self.win.destroy, color=BG3, width=12).pack(side="left", padx=8)
+        UIBuilder.button(b_bar, "🗑️ Excluir Chamado", self._excluir, color=DANGER, width=18).pack(side="left", ipady=5)
+        UIBuilder.button(b_bar, "✕ Fechar", self.win.destroy, color=BG3, width=12).pack(side="left", padx=8, ipady=5)
 
-        UIBuilder.button(b_bar, "💾 Salvar Alterações", self._salvar_edicao, color="#22C55E", width=20).pack(side="right")
+        UIBuilder.button(b_bar, "💾 Salvar Alterações", self._salvar_edicao, color="#22C55E", width=22).pack(side="right", ipady=5)
 
     def _salvar_edicao(self):
         novo_status = self.v_status.get()
@@ -775,8 +775,8 @@ class PopupMoverEtapaGarantia:
 
         self.win = tk.Toplevel(self.app)
         self.win.title(f"Avançar Etapa — Protocolo {proto}")
-        self.win.geometry("560x490")
-        self.win.minsize(520, 420)
+        self.win.geometry("580x530")
+        self.win.minsize(540, 460)
         self.win.configure(bg=BG)
         self.win.resizable(False, False)
         self.win.grab_set()
@@ -784,8 +784,8 @@ class PopupMoverEtapaGarantia:
         # Centraliza sobre a janela principal
         self.win.update_idletasks()
         try:
-            x = self.app.winfo_x() + (self.app.winfo_width() // 2) - (560 // 2)
-            y = self.app.winfo_y() + (self.app.winfo_height() // 2) - (490 // 2)
+            x = self.app.winfo_x() + (self.app.winfo_width() // 2) - (580 // 2)
+            y = self.app.winfo_y() + (self.app.winfo_height() // 2) - (530 // 2)
             self.win.geometry(f"+{max(0, x)}+{max(0, y)}")
         except Exception:
             pass
@@ -877,19 +877,20 @@ class PopupMoverEtapaGarantia:
 
                 btn_test = tk.Button(
                     f_input,
-                    text="🔍 Testar",
-                    font=("Segoe UI", 8, "bold"),
+                    text="🔍 Testar Rastreio",
+                    font=("Segoe UI", 9, "bold"),
                     bg=BG3,
                     fg=GOLD,
                     activebackground=BG,
                     activeforeground=GOLD,
                     relief="flat",
                     bd=0,
-                    padx=8,
+                    padx=12,
+                    pady=6,
                     cursor="hand2",
                     command=_consultar
                 )
-                btn_test.pack(side="left", padx=(6, 0))
+                btn_test.pack(side="left", padx=(8, 0), ipady=3)
 
         # Texto de ajuda da etapa
         ajuda_txt = info_destino.get("ajuda", "")
@@ -915,23 +916,23 @@ class PopupMoverEtapaGarantia:
         # Rodapé com Botões
         # ═══════════════════════════════════════════
         b_bar = UIBuilder.frame(main_fm, bg=BG2)
-        b_bar.pack(fill="x", side="bottom", pady=(6, 0))
+        b_bar.pack(fill="x", side="bottom", pady=(10, 0))
 
         UIBuilder.button(
             b_bar,
             "✕ Cancelar",
             self._cancelar,
             color=BG3,
-            width=12
-        ).pack(side="left")
+            width=14
+        ).pack(side="left", ipady=5)
 
         UIBuilder.button(
             b_bar,
             "✓ Confirmar e Mover",
             self._confirmar,
             color="#22C55E",
-            width=20
-        ).pack(side="right")
+            width=22
+        ).pack(side="right", ipady=5)
 
         # Foco inicial no primeiro campo
         if primeiro_entry:

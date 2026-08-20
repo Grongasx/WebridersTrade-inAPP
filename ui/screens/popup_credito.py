@@ -90,7 +90,7 @@ class PopupLancarCredito:
         e_val.bind("<Return>", lambda _: salvar())
         
         # Botão de confirmação renderizado no rodapé
-        UIBuilder.button(brow, "Confirmar", salvar, color=SUCCESS).pack(side="left")
+        UIBuilder.button(brow, "Confirmar", salvar, color=SUCCESS, width=18).pack(side="left", ipady=5)
 
 
 class PopupHistoricoCredito:

@@ -10,9 +10,10 @@
     - *Loja ➔ Fornecedor*: Código de Rastreio de Envio (Loja ➔ Fornecedor).
     - *Fornecedor ➔ Loja*: Código de Rastreio de Retorno (Fornecedor ➔ Loja).
     - *Loja ➔ Cliente*: Código de Rastreio Final da Expedição (Loja ➔ Cliente).
-  - Botão integrado de consulta rápida `🔍 Testar` abrindo a Timeline dos Correios em tempo real via `PopupRastreioCorreios`.
+  - Botão integrado de consulta rápida `🔍 Testar Rastreio` com timeline dos Correios em tempo real via `PopupRastreioCorreios`.
   - Campo opcional para registro de notas de histórico do chamado com carimbo de data/hora automático.
   - Suporte a cancelamento seguro (reversão do card para a coluna de origem sem alterar dados no banco) e confirmação otimista com persistência assíncrona no Neon DB.
+  - Redesign ergonômico dos botões de ação e modais (`UIBuilder.button`, `PopupMoverEtapaGarantia`, `PopupDetalhesGarantia`, `PopupRastreioCorreios`, `PopupAddProduto`, `PopupCliente`, `UpdateModal`): padding vertical e horizontal expandido (`padx=16`, `pady=10`, `ipady=4-6`), eliminando botões finos e garantindo alta facilidade de clique.
 
 ## [2.1.0] - 2026-08-19
 - Integração completa de Rastreamento de Encomendas dos Correios e Timeline de Movimentações ([utils/correios.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/correios.py), [ui/screens/popup_rastreio.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_rastreio.py), [ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):
