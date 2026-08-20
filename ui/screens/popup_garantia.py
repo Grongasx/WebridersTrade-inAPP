@@ -623,3 +623,345 @@ class PopupDetalhesGarantia:
             callback_sucesso=_ao_concluir,
             mensagem="Excluindo chamado..."
         )
+
+
+MAPA_ETAPAS_CAMPOS = {
+    "solicitacao_cliente": {
+        "titulo": "1. Solicitação Cliente & Reversa",
+        "cor": "#3B82F6",
+        "icone": "📝",
+        "campos": [
+            {
+                "chave": "codigo_reversa_cliente",
+                "label": "Código de Postagem Reversa (Cliente):",
+                "placeholder": "Ex: 123456789 ou Código PAC Reverso",
+                "tipo": "reversa"
+            }
+        ],
+        "ajuda": "Código de postagem reversa gerado para o cliente enviar o produto à loja."
+    },
+    "aguardando_produto_cliente": {
+        "titulo": "2. Cliente ➔ Loja (Trânsito)",
+        "cor": "#F59E0B",
+        "icone": "🚚",
+        "campos": [
+            {
+                "chave": "rastreio_cliente_loja",
+                "label": "Código de Rastreio Correios (Cliente ➔ Loja):",
+                "placeholder": "Ex: AA123456789BR",
+                "tipo": "correios"
+            }
+        ],
+        "ajuda": "Código de rastreamento do pacote enviado pelo cliente para a loja."
+    },
+    "solicitacao_fornecedor": {
+        "titulo": "3. Acionamento Fornecedor / RMA",
+        "cor": "#8B5CF6",
+        "icone": "🏭",
+        "campos": [
+            {
+                "chave": "fornecedor_nome",
+                "label": "Nome do Fabricante / Fornecedor:",
+                "placeholder": "Ex: Fox Racing, Alpinestars...",
+                "tipo": "texto"
+            },
+            {
+                "chave": "protocolo_fornecedor",
+                "label": "Protocolo RMA do Fornecedor:",
+                "placeholder": "Ex: RMA-2026-9871",
+                "tipo": "texto"
+            },
+            {
+                "chave": "codigo_reversa_fornecedor",
+                "label": "Cód. Reversa do Fornecedor (se houver):",
+                "placeholder": "Ex: 987654321",
+                "tipo": "reversa"
+            }
+        ],
+        "ajuda": "Dados de acionamento do processo junto à fábrica ou distribuidor."
+    },
+    "enviando_fornecedor": {
+        "titulo": "4. Loja ➔ Fornecedor (Análise)",
+        "cor": "#EC4899",
+        "icone": "📦",
+        "campos": [
+            {
+                "chave": "rastreio_loja_fornecedor",
+                "label": "Código de Rastreio (Loja ➔ Fornecedor):",
+                "placeholder": "Ex: AA123456789BR",
+                "tipo": "correios"
+            }
+        ],
+        "ajuda": "Código de rastreamento do envio da loja para a fábrica/fornecedor."
+    },
+    "fornecedor_loja": {
+        "titulo": "5. Fornecedor ➔ Loja (Retorno)",
+        "cor": "#06B6D4",
+        "icone": "🔄",
+        "campos": [
+            {
+                "chave": "rastreio_fornecedor_loja",
+                "label": "Código de Rastreio Retorno (Fornecedor ➔ Loja):",
+                "placeholder": "Ex: AA123456789BR",
+                "tipo": "correios"
+            }
+        ],
+        "ajuda": "Código de rastreamento do produto reparado/trocado vindo do fornecedor."
+    },
+    "loja_cliente": {
+        "titulo": "6. Loja ➔ Cliente (Expedição)",
+        "cor": "#22C55E",
+        "icone": "🎉",
+        "campos": [
+            {
+                "chave": "rastreio_loja_cliente",
+                "label": "Código de Rastreio Final (Loja ➔ Cliente):",
+                "placeholder": "Ex: AA123456789BR",
+                "tipo": "correios"
+            }
+        ],
+        "ajuda": "Código de rastreamento da expedição final com o produto devolvido ao cliente."
+    }
+}
+
+
+class PopupMoverEtapaGarantia:
+    """
+    Modal de confirmação e captura contextual dos códigos de rastreamento / reversa / RMA
+    ao mover um card entre etapas do Kanban de Garantias.
+    """
+
+    def __init__(self, app, item_data, status_origem, status_destino, callback_confirmar, callback_cancelar=None):
+        self.app = app
+        self.item_data = item_data
+        self.status_origem = status_origem
+        self.status_destino = status_destino
+        self.callback_confirmar = callback_confirmar
+        self.callback_cancelar = callback_cancelar
+        self._variaveis = {}
+        self.confirmado = False
+        self._build_ui()
+
+    def _obter_campo(self, chave):
+        if isinstance(self.item_data, dict):
+            return self.item_data.get(chave, "")
+        idx_map = {
+            "id": 0, "protocolo": 1, "status": 2, "tipo_produto": 3, "marca": 4, "modelo": 5,
+            "grafico": 6, "cor": 7, "numeracao": 8, "tamanho": 9, "numero_serie": 10,
+            "nota_fiscal": 11, "valor_produto": 12, "defeito_relatado": 13, "fornecedor_nome": 14,
+            "protocolo_fornecedor": 15, "codigo_reversa_cliente": 16, "rastreio_cliente_loja": 17,
+            "codigo_reversa_fornecedor": 18, "rastreio_loja_fornecedor": 19, "rastreio_fornecedor_loja": 20,
+            "rastreio_loja_cliente": 21, "observacoes": 22, "criado": 23, "atualizado": 24,
+            "concluido_em": 25, "cli_id": 26, "cli_nome": 27, "cli_tel": 28
+        }
+        if isinstance(self.item_data, (list, tuple)):
+            idx = idx_map.get(chave)
+            if idx is not None and idx < len(self.item_data):
+                return self.item_data[idx] or ""
+        return ""
+
+    def _build_ui(self):
+        info_origem = MAPA_ETAPAS_CAMPOS.get(self.status_origem, {
+            "titulo": self.status_origem, "cor": TEXT_DIM, "icone": "📍"
+        })
+        info_destino = MAPA_ETAPAS_CAMPOS.get(self.status_destino, {
+            "titulo": self.status_destino, "cor": GOLD, "icone": "🎯", "campos": [], "ajuda": ""
+        })
+
+        proto = self._obter_campo("protocolo") or "Garantia"
+        marca = self._obter_campo("marca") or ""
+        modelo = self._obter_campo("modelo") or ""
+        cli_nome = self._obter_campo("cli_nome") or "Sem Cliente"
+
+        self.win = tk.Toplevel(self.app)
+        self.win.title(f"Avançar Etapa — Protocolo {proto}")
+        self.win.geometry("560x490")
+        self.win.minsize(520, 420)
+        self.win.configure(bg=BG)
+        self.win.resizable(False, False)
+        self.win.grab_set()
+
+        # Centraliza sobre a janela principal
+        self.win.update_idletasks()
+        try:
+            x = self.app.winfo_x() + (self.app.winfo_width() // 2) - (560 // 2)
+            y = self.app.winfo_y() + (self.app.winfo_height() // 2) - (490 // 2)
+            self.win.geometry(f"+{max(0, x)}+{max(0, y)}")
+        except Exception:
+            pass
+
+        main_fm = UIBuilder.card(self.win, bg=BG2, px=20, py=16)
+        main_fm.pack(fill="both", expand=True, padx=14, pady=14)
+
+        # ═══════════════════════════════════════════
+        # Header do Modal: Protocolo + Produto
+        # ═══════════════════════════════════════════
+        hdr = UIBuilder.frame(main_fm, bg=BG2)
+        hdr.pack(fill="x", pady=(0, 10))
+
+        UIBuilder.label(hdr, f"🛡️  Mover Chamado: {proto}", font=("Segoe UI Black", 14, "bold"), bg=BG2, fg=GOLD).pack(anchor="w")
+        UIBuilder.label(hdr, f"Produto: {marca} {modelo}  •  Cliente: {cli_nome[:25]}", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
+
+        UIBuilder.separator(main_fm, bg=BG3).pack(fill="x", pady=(4, 10))
+
+        # ═══════════════════════════════════════════
+        # Transição de Etapa Visual (Origem ➔ Destino)
+        # ═══════════════════════════════════════════
+        f_transicao = UIBuilder.card(main_fm, bg=BG3, px=12, py=10)
+        f_transicao.pack(fill="x", pady=(0, 12))
+
+        # Origem
+        lbl_origem = tk.Label(
+            f_transicao,
+            text=f"{info_origem['icone']} {info_origem['titulo']}",
+            font=("Segoe UI", 9, "bold"),
+            bg=BG3,
+            fg=info_origem.get("cor", TEXT_DIM)
+        )
+        lbl_origem.pack(side="left")
+
+        # Seta
+        tk.Label(f_transicao, text="  ➔  ", font=("Segoe UI", 11, "bold"), bg=BG3, fg=GOLD).pack(side="left")
+
+        # Destino
+        lbl_dest = tk.Label(
+            f_transicao,
+            text=f"{info_destino['icone']} {info_destino['titulo']}",
+            font=("Segoe UI", 9, "bold"),
+            bg=BG3,
+            fg=info_destino.get("cor", GOLD)
+        )
+        lbl_dest.pack(side="left")
+
+        # ═══════════════════════════════════════════
+        # Campos Dinâmicos da Etapa de Destino
+        # ═══════════════════════════════════════════
+        campos = info_destino.get("campos", [])
+        f_campos = UIBuilder.frame(main_fm, bg=BG2)
+        f_campos.pack(fill="x", pady=(0, 6))
+
+        primeiro_entry = None
+        from ui.screens.popup_rastreio import PopupRastreioCorreios
+
+        for cmp_info in campos:
+            chave = cmp_info["chave"]
+            label_txt = cmp_info["label"]
+            tipo_cmp = cmp_info.get("tipo", "texto")
+            val_atual = self._obter_campo(chave)
+
+            var = tk.StringVar(value=str(val_atual) if val_atual is not None else "")
+            self._variaveis[chave] = var
+
+            f_linha = UIBuilder.frame(f_campos, bg=BG2, pady=4)
+            f_linha.pack(fill="x")
+
+            UIBuilder.label(f_linha, label_txt, font=("Segoe UI", 9, "bold"), bg=BG2, fg=TEXT).pack(anchor="w")
+
+            f_input = UIBuilder.frame(f_linha, bg=BG2)
+            f_input.pack(fill="x", pady=(2, 0))
+
+            ent = UIBuilder.entry(f_input, var=var, width=28)
+            ent.pack(side="left", fill="x", expand=True, ipady=3)
+
+            if primeiro_entry is None:
+                primeiro_entry = ent
+
+            # Botão de Teste de Rastreio (se for campo de correios ou reversa)
+            if tipo_cmp in ("correios", "reversa"):
+                def _consultar(v=var):
+                    c = v.get().strip()
+                    if c:
+                        PopupRastreioCorreios(self.app, c)
+                    else:
+                        self.app.toast.show("Preencha o código para rastrear!", "aviso")
+
+                btn_test = tk.Button(
+                    f_input,
+                    text="🔍 Testar",
+                    font=("Segoe UI", 8, "bold"),
+                    bg=BG3,
+                    fg=GOLD,
+                    activebackground=BG,
+                    activeforeground=GOLD,
+                    relief="flat",
+                    bd=0,
+                    padx=8,
+                    cursor="hand2",
+                    command=_consultar
+                )
+                btn_test.pack(side="left", padx=(6, 0))
+
+        # Texto de ajuda da etapa
+        ajuda_txt = info_destino.get("ajuda", "")
+        if ajuda_txt:
+            UIBuilder.label(
+                main_fm,
+                f"💡 {ajuda_txt}",
+                font=FONT_SMALL,
+                bg=BG2,
+                fg=TEXT_DIM,
+                wraplength=480,
+                justify="left"
+            ).pack(anchor="w", pady=(2, 8))
+
+        # ═══════════════════════════════════════════
+        # Campo Opcional: Adicionar Nota de Ocorrência
+        # ═══════════════════════════════════════════
+        UIBuilder.label(main_fm, "📝 Nota / Atualização de Histórico (Opcional):", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(2, 2))
+        self.txt_nota = tk.Text(main_fm, bg=BG3, fg=TEXT, font=FONT_SMALL, height=2, relief="flat", bd=3, wrap="word")
+        self.txt_nota.pack(fill="x", pady=(0, 10))
+
+        # ═══════════════════════════════════════════
+        # Rodapé com Botões
+        # ═══════════════════════════════════════════
+        b_bar = UIBuilder.frame(main_fm, bg=BG2)
+        b_bar.pack(fill="x", side="bottom", pady=(6, 0))
+
+        UIBuilder.button(
+            b_bar,
+            "✕ Cancelar",
+            self._cancelar,
+            color=BG3,
+            width=12
+        ).pack(side="left")
+
+        UIBuilder.button(
+            b_bar,
+            "✓ Confirmar e Mover",
+            self._confirmar,
+            color="#22C55E",
+            width=20
+        ).pack(side="right")
+
+        # Foco inicial no primeiro campo
+        if primeiro_entry:
+            self.win.after(100, primeiro_entry.focus_set)
+
+        # Atalhos de Teclado
+        self.win.bind("<Return>", lambda _: self._confirmar())
+        self.win.bind("<Escape>", lambda _: self._cancelar())
+        self.win.protocol("WM_DELETE_WINDOW", self._cancelar)
+
+    def _confirmar(self):
+        dados_atualizados = {}
+        for chave, var in self._variaveis.items():
+            dados_atualizados[chave] = var.get().strip()
+
+        nota = self.txt_nota.get("1.0", tk.END).strip()
+        if nota:
+            obs_existente = self._obter_campo("observacoes") or ""
+            data_hora = agora().strftime("%d/%m/%Y %H:%M")
+            nova_obs = f"{obs_existente}\n[{data_hora} - {self.status_destino}]: {nota}".strip()
+            dados_atualizados["observacoes"] = nova_obs
+
+        self.confirmado = True
+        self.win.destroy()
+        if self.callback_confirmar:
+            self.callback_confirmar(dados_atualizados)
+
+    def _cancelar(self):
+        self.confirmado = False
+        self.win.destroy()
+        if self.callback_cancelar:
+            self.callback_cancelar()
+

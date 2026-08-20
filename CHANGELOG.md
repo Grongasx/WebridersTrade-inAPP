@@ -1,5 +1,19 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [2.2.0] - 2026-08-20
+- Fluxo de Diálogo Contextual de Rastreamento e Validação na Transição de Colunas do Kanban ([ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [ui/screens/garantias_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/garantias_screen.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):
+  - Implementação do modal `PopupMoverEtapaGarantia` acionado automaticamente ao arrastar e soltar cards entre colunas no quadro Kanban.
+  - Solicitação contextualizada dos códigos exigidos por etapa:
+    - *Solicitação Cliente & Reversa*: Código de Postagem Reversa do Cliente.
+    - *Cliente ➔ Loja*: Código de Rastreio Correios (Cliente ➔ Loja).
+    - *Acionamento Fornecedor / RMA*: Nome do Fabricante/Fornecedor, Protocolo RMA e Reversa Fornecedor.
+    - *Loja ➔ Fornecedor*: Código de Rastreio de Envio (Loja ➔ Fornecedor).
+    - *Fornecedor ➔ Loja*: Código de Rastreio de Retorno (Fornecedor ➔ Loja).
+    - *Loja ➔ Cliente*: Código de Rastreio Final da Expedição (Loja ➔ Cliente).
+  - Botão integrado de consulta rápida `🔍 Testar` abrindo a Timeline dos Correios em tempo real via `PopupRastreioCorreios`.
+  - Campo opcional para registro de notas de histórico do chamado com carimbo de data/hora automático.
+  - Suporte a cancelamento seguro (reversão do card para a coluna de origem sem alterar dados no banco) e confirmação otimista com persistência assíncrona no Neon DB.
+
 ## [2.1.0] - 2026-08-19
 - Integração completa de Rastreamento de Encomendas dos Correios e Timeline de Movimentações ([utils/correios.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/correios.py), [ui/screens/popup_rastreio.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_rastreio.py), [ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):
   - Criação do módulo `utils.correios` com validação de código padrão SRO (13 caracteres), sanitização, consulta em APIs públicas e atalho direto para o portal oficial dos Correios.

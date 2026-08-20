@@ -10,7 +10,10 @@ from config import (
 )
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
-from ui.screens.popup_garantia import PopupNovaGarantia, PopupDetalhesGarantia, ETAPAS_GARANTIA
+from ui.screens.popup_garantia import (
+    PopupNovaGarantia, PopupDetalhesGarantia, PopupMoverEtapaGarantia,
+    ETAPAS_GARANTIA, MAPA_ETAPAS_CAMPOS
+)
 from core.database import get_conn
 from core.cache import cache
 from utils.helpers import agora
@@ -60,7 +63,7 @@ class GarantiasScreen(BaseScreen):
                            g.valor_produto, g.defeito_relatado, g.fornecedor_nome, g.protocolo_fornecedor,
                            g.codigo_reversa_cliente, g.rastreio_cliente_loja, g.codigo_reversa_fornecedor,
                            g.rastreio_loja_fornecedor, g.rastreio_fornecedor_loja, g.rastreio_loja_cliente,
-                           g.observacoes, g.criado, g.atualizado,
+                           g.observacoes, g.criado, g.atualizado, g.concluido_em,
                            c.id as cli_id, c.nome as cli_nome, c.telefone as cli_tel
                     FROM garantias g
                     LEFT JOIN clientes c ON g.cliente_id = c.id
@@ -91,7 +94,7 @@ class GarantiasScreen(BaseScreen):
                            g.valor_produto, g.defeito_relatado, g.fornecedor_nome, g.protocolo_fornecedor,
                            g.codigo_reversa_cliente, g.rastreio_cliente_loja, g.codigo_reversa_fornecedor,
                            g.rastreio_loja_fornecedor, g.rastreio_fornecedor_loja, g.rastreio_loja_cliente,
-                           g.observacoes, g.criado, g.atualizado,
+                           g.observacoes, g.criado, g.atualizado, g.concluido_em,
                            c.id as cli_id, c.nome as cli_nome, c.telefone as cli_tel
                     FROM garantias g
                     LEFT JOIN clientes c ON g.cliente_id = c.id
@@ -242,7 +245,7 @@ class GarantiasScreen(BaseScreen):
             rast_cli = g[17] or ""
             rast_forn = g[19] or g[20] or ""
             rast_final = g[21] or ""
-            cli_nome = g[26] or "Sem Cliente"
+            cli_nome = g[27] or "Sem Cliente"
             serial = g[10] or ""
 
             # Filtro de busca
@@ -402,7 +405,14 @@ class GarantiasScreen(BaseScreen):
                         break
 
                 if nova_etapa and nova_etapa != status_origem:
-                    self._mover_garantia(garantia_id, nova_etapa)
+                    PopupMoverEtapaGarantia(
+                        app=self.app,
+                        item_data=item_data,
+                        status_origem=status_origem,
+                        status_destino=nova_etapa,
+                        callback_confirmar=lambda campos: self._salvar_mudanca_etapa(garantia_id, nova_etapa, campos),
+                        callback_cancelar=self._renderizar_kanban
+                    )
             else:
                 # Foi um clique simples -> Abre os detalhes da garantia
                 self._abrir_detalhes(garantia_id)
@@ -442,7 +452,7 @@ class GarantiasScreen(BaseScreen):
         proto = item[1] or ""
         marca = item[4] or ""
         modelo = item[5] or ""
-        cli_nome = item[26] or "Sem Cliente"
+        cli_nome = item[27] if len(item) > 27 and item[27] else "Sem Cliente"
 
         tk.Label(g_box, text=f"🛡️ {proto}", font=("Segoe UI", 9, "bold"), bg=BG2, fg=GOLD).pack(anchor="w")
         tk.Label(g_box, text=f"{marca} {modelo}", font=("Segoe UI", 9, "bold"), bg=BG2, fg=TEXT).pack(anchor="w")
@@ -451,9 +461,12 @@ class GarantiasScreen(BaseScreen):
         ghost.geometry(f"+{x + 12}+{y + 12}")
         self._drag_data["ghost"] = ghost
 
-    def _mover_garantia(self, garantia_id, novo_status):
-        """Atualização otimista imediata em memória + persistência assíncrona no Neon DB."""
-        # Atualização Otimista Instantânea (0ms de resposta visual)
+    def _salvar_mudanca_etapa(self, garantia_id, novo_status, campos_extras=None):
+        """Atualização otimista imediata em memória + persistência assíncrona segura no Neon DB."""
+        campos_extras = campos_extras or {}
+        concluido = agora() if novo_status == "loja_cliente" else None
+
+        # Atualização Otimista Instantânea em memória (0ms de latência visual)
         nova_lista = []
         for row in self._garantias:
             if row[0] == garantia_id:
@@ -461,7 +474,23 @@ class GarantiasScreen(BaseScreen):
                 row_list[2] = novo_status
                 row_list[24] = agora()
                 if novo_status == "loja_cliente":
-                    row_list[25] = agora()
+                    row_list[25] = concluido
+
+                idx_map = {
+                    "codigo_reversa_cliente": 16,
+                    "rastreio_cliente_loja": 17,
+                    "codigo_reversa_fornecedor": 18,
+                    "rastreio_loja_fornecedor": 19,
+                    "rastreio_fornecedor_loja": 20,
+                    "rastreio_loja_cliente": 21,
+                    "fornecedor_nome": 14,
+                    "protocolo_fornecedor": 15,
+                    "observacoes": 22
+                }
+                for k, v in campos_extras.items():
+                    if k in idx_map and idx_map[k] < len(row_list):
+                        row_list[idx_map[k]] = v
+
                 nova_lista.append(tuple(row_list))
             else:
                 nova_lista.append(row)
@@ -472,19 +501,29 @@ class GarantiasScreen(BaseScreen):
 
         # Persistência assíncrona no PostgreSQL
         def _task_db():
-            concluido = agora() if novo_status == "loja_cliente" else None
             with get_conn() as conn:
-                conn.execute("""
-                    UPDATE garantias SET
-                        status = %s,
-                        atualizado = %s,
-                        concluido_em = COALESCE(%s, concluido_em)
-                    WHERE id = %s
-                """, (novo_status, agora(), concluido, garantia_id))
+                set_clauses = ["status = %s", "atualizado = %s", "concluido_em = COALESCE(%s, concluido_em)"]
+                params = [novo_status, agora(), concluido]
+
+                campos_permitidos = {
+                    "codigo_reversa_cliente", "rastreio_cliente_loja", "fornecedor_nome",
+                    "protocolo_fornecedor", "codigo_reversa_fornecedor", "rastreio_loja_fornecedor",
+                    "rastreio_fornecedor_loja", "rastreio_loja_cliente", "observacoes"
+                }
+
+                for k, v in campos_extras.items():
+                    if k in campos_permitidos:
+                        set_clauses.append(f"{k} = %s")
+                        params.append(v)
+
+                params.append(garantia_id)
+                sql = f"UPDATE garantias SET {', '.join(set_clauses)} WHERE id = %s"
+                conn.execute(sql, tuple(params))
                 conn.commit()
+                cache.invalidate_prefix("garantias")
 
         def _ao_persistir(_):
-            self.app.toast.show("Garantia movida com sucesso!", "sucesso")
+            self.app.toast.show("Garantia movida e rastreio atualizado!", "sucesso")
 
         self.app.executar_async(
             funcao_task=_task_db,
