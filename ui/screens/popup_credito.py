@@ -26,7 +26,7 @@ class PopupLancarCredito:
         
         win = tk.Toplevel(self.app)
         win.title("Lançar Crédito")
-        win.geometry("460x460")
+        UIBuilder.centralizar_janela(win, 480, 480, parent=self.app)
         win.configure(bg=BG)
         win.grab_set()
         
@@ -107,7 +107,7 @@ class PopupHistoricoCredito:
         
         win = tk.Toplevel(self.app)
         win.title(f"Histórico — {nome}")
-        win.geometry("650x420")
+        UIBuilder.centralizar_janela(win, 660, 440, parent=self.app)
         win.configure(bg=BG)
         
         UIBuilder.label(win, f"📜 Histórico: {nome}", font=FONT_H2, padx=20, pady=12).pack(anchor="w")
@@ -136,7 +136,7 @@ class PopupProdutosCliente:
         self._build()
     
     def _build(self):
-        with get_conn() as conn:
+        with get_conn() as conn: 
             nome_cli = conn.execute("SELECT nome FROM clientes WHERE id=%s", (self.cid,)).fetchone()[0]
             produtos = conn.execute("""
                 SELECT id, codigo_barras, nome, marca, tamanho, preco_outlet, estoque, status 
@@ -145,7 +145,7 @@ class PopupProdutosCliente:
         
         win = tk.Toplevel(self.app)
         win.title(f"Produtos de {nome_cli}")
-        win.geometry("880x460")
+        UIBuilder.centralizar_janela(win, 900, 480, parent=self.app)
         win.configure(bg=BG)
         
         UIBuilder.label(win, f"📦 Produtos Outlet — {nome_cli}", font=FONT_H2, padx=20, pady=12, fg=GOLD).pack(anchor="w")

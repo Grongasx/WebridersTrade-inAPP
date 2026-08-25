@@ -157,7 +157,7 @@ class OutletScreen(BaseScreen):
 
         win = tk.Toplevel(self.app)
         win.title("Imprimir Etiqueta Direto do Banco")
-        win.geometry("420x240")
+        UIBuilder.centralizar_janela(win, 440, 260, parent=self.app)
         win.configure(bg=BG)
         win.grab_set()
 

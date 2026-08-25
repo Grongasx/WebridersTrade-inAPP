@@ -1,6 +1,10 @@
 # Histórico de Versões - Vale Presente Manager
 
 ## [2.2.1] - 2026-08-25
+- Responsividade Global e Inicialização Otimizada para 1920x1080p ([main.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/main.py), [ui/components/base.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/components/base.py)):
+  - Cálculo dinâmico de resolução de tela na inicialização do aplicativo: janela principal dimensionada em proporção ideal para 1920x1080p (`1420x860`), perfeitamente centralizada e com margens seguras para a barra de tarefas.
+  - Implementação do método `UIBuilder.centralizar_janela()` que calcula geometria, limites e centralização automática em relação à tela ou à janela mãe (`parent`), impedindo overflow ou cortes visuais.
+  - Padronização de todos os popups e diálogos do sistema com centralização e limites responsivos.
 - Finalização de Garantia e Histórico Global ([ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [ui/screens/garantias_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/garantias_screen.py)):
   - Adicionado botão `🏁 Finalizar Garantia` no modal `PopupDetalhesGarantia`, abrindo o novo modal `PopupFinalizarGarantia`.
   - Suporte completo a desfechos de garantia com opções `✅ Finalizada / Concluída com Sucesso` e `🚫 Cancelada / Encerrada sem Troca`, seleção de motivos predefinidos e parecer final detalhado.

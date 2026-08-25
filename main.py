@@ -53,8 +53,27 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(f"{APP_TITLE} — {APP_VERSION}")
-        self.geometry("1200x720")
-        self.minsize(900, 600)
+        
+        # Configuração de Tamanho e Centralização Responsiva para 1920x1080 e outros monitores
+        self.update_idletasks()
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        
+        if sw >= 1920 and sh >= 1080:
+            w, h = 1420, 860
+        elif sw >= 1600:
+            w, h = 1300, 800
+        elif sw >= 1366:
+            w, h = 1200, 720
+        else:
+            w = max(980, int(sw * 0.92))
+            h = max(620, int(sh * 0.88))
+            
+        x = max(0, (sw - w) // 2)
+        y = max(0, (sh - h) // 2 - 25)
+        
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        self.minsize(1024, 640)
         self.configure(bg=BG)
         
         # Inicializacao

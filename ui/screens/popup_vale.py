@@ -19,7 +19,7 @@ class PopupValeDetalhe:
     def _build(self):
         win = tk.Toplevel(self.app)
         win.title("Detalhes do Vale")
-        win.geometry("460x520")
+        UIBuilder.centralizar_janela(win, 480, 520, parent=self.app)
         win.configure(bg=BG)
         win.transient(self.app)
         win.grab_set()

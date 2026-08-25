@@ -177,7 +177,7 @@ class PopupSelecionarClienteResgate:
     def _build(self):
         win = tk.Toplevel(self.app)
         win.title("Resgatar Vale")
-        win.geometry("440x460")
+        UIBuilder.centralizar_janela(win, 460, 480, parent=self.app)
         win.configure(bg=BG)
         win.grab_set()
 

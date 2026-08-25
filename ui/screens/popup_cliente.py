@@ -52,7 +52,7 @@ class PopupClienteDetalhe:
     def _build_container(self):
         self.win = tk.Toplevel(self.app)
         self.win.title("Cliente")
-        self.win.geometry("680x560")
+        UIBuilder.centralizar_janela(self.win, 700, 580, parent=self.app)
         self.win.configure(bg=BG)
         self.win.grab_set()
 

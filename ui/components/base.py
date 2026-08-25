@@ -218,6 +218,38 @@ class UIBuilder:
         return r
     
     @staticmethod
+    def centralizar_janela(win, w=None, h=None, parent=None):
+        """Centraliza uma janela na tela ou em relação à janela mãe (parent), respeitando limites de resolução."""
+        win.update_idletasks()
+        if w is None:
+            w = win.winfo_reqwidth()
+        if h is None:
+            h = win.winfo_reqheight()
+
+        sw = win.winfo_screenwidth()
+        sh = win.winfo_screenheight()
+
+        # Limites defensivos para nunca estourar a tela
+        w = min(w, sw - 40)
+        h = min(h, sh - 80)
+
+        if parent and parent.winfo_exists():
+            px = parent.winfo_rootx()
+            py = parent.winfo_rooty()
+            pw = parent.winfo_width()
+            ph = parent.winfo_height()
+            x = px + (pw - w) // 2
+            y = py + (ph - h) // 2
+        else:
+            x = (sw - w) // 2
+            y = (sh - h) // 2 - 25
+
+        x = max(10, min(x, sw - w - 10))
+        y = max(10, min(y, sh - h - 40))
+
+        win.geometry(f"{w}x{h}+{x}+{y}")
+    
+    @staticmethod
     def setup_tree_style(root=None):
         s = ttk.Style()
         s.theme_use("default")

@@ -20,7 +20,7 @@ class PopupConsultaVale:
     def _build(self):
         win = tk.Toplevel(self.app)
         win.title("Consultar Vale")
-        win.geometry("650x680")
+        UIBuilder.centralizar_janela(win, 660, 680, parent=self.app)
         win.configure(bg=BG)
         win.transient(self.app)
         win.grab_set()

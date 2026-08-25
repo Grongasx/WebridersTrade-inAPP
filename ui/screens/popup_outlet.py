@@ -53,7 +53,7 @@ class PopupProdutoEntrada:
     def _build(self):
         win = tk.Toplevel(self.app)
         win.title("Entrada de Produto Outlet — SKU & Atributos")
-        win.geometry("1020x680")
+        UIBuilder.centralizar_janela(win, 1040, 700, parent=self.app)
         win.configure(bg=BG)
         win.grab_set()
 
@@ -404,7 +404,7 @@ class PopupProdutoEditar:
 
         win = tk.Toplevel(self.app)
         win.title(f"Editar Produto Outlet — ID #{pid}")
-        win.geometry("1040x700")
+        UIBuilder.centralizar_janela(win, 1040, 700, parent=self.app)
         win.configure(bg=BG)
         win.grab_set()
 
@@ -740,7 +740,7 @@ class PopupProdutoDetalhes:
     def _build_container(self):
         self.win = tk.Toplevel(self.app)
         self.win.title(f"Detalhes do Produto — ID #{self.pid}")
-        self.win.geometry("780x640")
+        UIBuilder.centralizar_janela(self.win, 800, 660, parent=self.app)
         self.win.configure(bg=BG)
         self.win.grab_set()
 
@@ -961,7 +961,7 @@ class PopupBaixaProduto:
 
         win = tk.Toplevel(self.app)
         win.title(f"Baixa de Produto — ID #{pid}")
-        win.geometry("520x460")
+        UIBuilder.centralizar_janela(win, 540, 480, parent=self.app)
         win.configure(bg=BG)
         win.resizable(False, False)
         win.grab_set()

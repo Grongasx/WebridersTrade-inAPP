@@ -42,7 +42,7 @@ class PopupNovaGarantia:
     def _build(self):
         self.win = tk.Toplevel(self.app)
         self.win.title("Abertura de Chamado de Garantia & RMA")
-        self.win.geometry("1060x720")
+        UIBuilder.centralizar_janela(self.win, 1080, 730, parent=self.app)
         self.win.minsize(960, 640)
         self.win.configure(bg=BG)
         self.win.grab_set()
@@ -357,7 +357,7 @@ class PopupDetalhesGarantia:
         d = self.dados
         self.win = tk.Toplevel(self.app)
         self.win.title(f"Garantia {d[1]} — {d[4]} {d[5]}")
-        self.win.geometry("980x740")
+        UIBuilder.centralizar_janela(self.win, 1000, 750, parent=self.app)
         self.win.minsize(880, 620)
         self.win.configure(bg=BG)
         self.win.grab_set()
@@ -824,20 +824,10 @@ class PopupMoverEtapaGarantia:
 
         self.win = tk.Toplevel(self.app)
         self.win.title(f"Avançar Etapa — Protocolo {proto}")
-        self.win.geometry("580x530")
-        self.win.minsize(540, 460)
+        UIBuilder.centralizar_janela(self.win, 600, 540, parent=self.app)
         self.win.configure(bg=BG)
         self.win.resizable(False, False)
         self.win.grab_set()
-
-        # Centraliza sobre a janela principal
-        self.win.update_idletasks()
-        try:
-            x = self.app.winfo_x() + (self.app.winfo_width() // 2) - (580 // 2)
-            y = self.app.winfo_y() + (self.app.winfo_height() // 2) - (530 // 2)
-            self.win.geometry(f"+{max(0, x)}+{max(0, y)}")
-        except Exception:
-            pass
 
         main_fm = UIBuilder.card(self.win, bg=BG2, px=20, py=16)
         main_fm.pack(fill="both", expand=True, padx=14, pady=14)
@@ -1029,7 +1019,7 @@ class PopupFinalizarGarantia:
     def _build(self):
         self.win = tk.Toplevel(self.app)
         self.win.title(f"Finalizar Processo de Garantia — {self.protocolo}")
-        self.win.geometry("560x510")
+        UIBuilder.centralizar_janela(self.win, 580, 520, parent=self.app)
         self.win.configure(bg=BG)
         self.win.resizable(False, False)
         self.win.grab_set()
@@ -1152,7 +1142,7 @@ class PopupHistoricoGarantias:
     def _build(self):
         self.win = tk.Toplevel(self.app)
         self.win.title("📜 Histórico Global de Garantias — Finalizadas & Canceladas")
-        self.win.geometry("1140x690")
+        UIBuilder.centralizar_janela(self.win, 1160, 700, parent=self.app)
         self.win.minsize(980, 560)
         self.win.configure(bg=BG)
         self.win.grab_set()

@@ -26,7 +26,7 @@ class PopupRastreioCorreios:
     def _build_janela(self):
         self.win = tk.Toplevel(self.app)
         self.win.title(f"Rastreamento Correios — {self.codigo}")
-        self.win.geometry("640x620")
+        UIBuilder.centralizar_janela(self.win, 660, 640, parent=self.app)
         self.win.minsize(580, 480)
         self.win.configure(bg=BG)
         self.win.grab_set()

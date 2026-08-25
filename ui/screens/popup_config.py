@@ -42,7 +42,7 @@ class PopupAddProduto:
     def _build(self):
         win = tk.Toplevel(self.app)
         win.title("Adicionar Produto à Fila de Impressão")
-        win.geometry("720x580")
+        UIBuilder.centralizar_janela(win, 740, 600, parent=self.app)
         win.minsize(620, 480)
         win.configure(bg=BG)
         win.grab_set()
@@ -353,7 +353,7 @@ class PopupConfigDimensoes:
     def _build(self):
         self.win = tk.Toplevel(self.app)
         self.win.title("⚙️ Configuração & Designer Visual da Etiqueta")
-        self.win.geometry("1020x780")
+        UIBuilder.centralizar_janela(self.win, 1040, 780, parent=self.app)
         self.win.configure(bg=BG)
         self.win.grab_set()
 
@@ -853,7 +853,7 @@ class PopupEditarEtiqueta:
 
         win = tk.Toplevel(self.app)
         win.title("Editar Etiqueta")
-        win.geometry("450x520")
+        UIBuilder.centralizar_janela(win, 480, 540, parent=self.app)
         win.configure(bg=BG)
         win.grab_set()
 
