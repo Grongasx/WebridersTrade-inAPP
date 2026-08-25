@@ -8,8 +8,8 @@
     2. *Vales Presente*: total disponível, resgatados, taxa de conversão (%) e vencidos.
     3. *Estoque Outlet*: contagem de peças disponíveis, avaliação financeira do estoque e baixas.
     4. *Garantias & RMA*: total de chamados em andamento no Kanban e concluídos no histórico.
-  - Gráfico Donut Vetorial Interativo com ciclo de vida dos vales e taxa central de resgate.
-  - Gráfico em Barra Horizontal (Funil) para acompanhamento das 6 etapas do Pipeline de Garantias.
+  - Gráfico Donut Vetorial com renderização em alta fidelidade via PIL (supersampling 3x + Lanczos), eliminando bugs de arcos nativos e garantindo renderização suave do ciclo de vida dos vales e taxa central de resgate.
+  - Gráfico em Barra Horizontal (Funil) para acompanhamento das 6 etapas do Pipeline de Garantias com inicialização reativa imediata.
   - Panorama visual do estoque e vendas do Outlet com barras segmentadas de proporção.
   - Feed de Atividades Recentes com seletor dinâmico em abas (`🎟️ Vales`, `🛡️ Garantias`, `🏷️ Outlet`).
   - Ranking Top 5 Clientes com maior saldo e fidelidade.

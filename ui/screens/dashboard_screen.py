@@ -5,6 +5,7 @@ Gráficos vetoriais, KPIs em tempo real, pipeline de garantias, ciclo de vida de
 
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageDraw, ImageTk
 from config import (
     BG, BG2, BG3, GOLD, ACCENT, TEXT, TEXT_DIM, SUCCESS, WARNING, DANGER,
     FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL, FONT_MONO, FONT_CODE
@@ -393,7 +394,7 @@ class DashboardScreen(BaseScreen):
         UIBuilder.label(kc, subinfo, font=("Segoe UI", 8), bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(2, 0))
 
     def _draw_donut_chart(self, parent, disponiveis, usados, vencidos, taxa_conv):
-        """Desenha gráfico Donut em vetor com porcentagem central e legenda."""
+        """Desenha gráfico Donut com renderização vetorial anti-aliasing via PIL e overlay de texto."""
         f_chart = UIBuilder.frame(parent, bg=BG2)
         f_chart.pack(fill="x", pady=4)
 
@@ -402,33 +403,65 @@ class DashboardScreen(BaseScreen):
         cv.pack(side="left", padx=(6, 14))
 
         total = disponiveis + usados + vencidos
-        pad = 10
-        cx, cy = canvas_w // 2, canvas_h // 2
-        r_out = (canvas_w - 2 * pad) // 2
-        r_in = r_out - 18
+
+        # Renderização do Donut via PIL com supersampling 3x para bordas perfeitamente lisas
+        scale = 3
+        dim = canvas_w * scale
+        img = Image.new("RGBA", (dim, dim), (24, 24, 28, 255))  # Cor de fundo BG2
+        draw = ImageDraw.Draw(img)
+
+        pad = 8 * scale
+        cx, cy = dim // 2, dim // 2
+        r_out_box = [pad, pad, dim - pad, dim - pad]
+        r_in = (dim // 2) - pad - (20 * scale)
 
         if total == 0:
-            cv.create_oval(pad, pad, canvas_w - pad, canvas_h - pad, fill=BG3, outline="")
-            cv.create_oval(cx - r_in, cy - r_in, cx + r_in, cy + r_in, fill=BG2, outline="")
-            cv.create_text(cx, cy - 6, text="0", fill=TEXT_DIM, font=("Segoe UI Black", 14, "bold"))
-            cv.create_text(cx, cy + 10, text="Sem vales", fill=TEXT_DIM, font=FONT_SMALL)
+            draw.ellipse(r_out_box, fill=(36, 36, 42, 255))  # BG3
+            draw.ellipse([cx - r_in, cy - r_in, cx + r_in, cy + r_in], fill=(24, 24, 28, 255))  # BG2
         else:
             slices = [
-                (disponiveis, "#22C55E"),  # Verde
-                (usados, "#3B82F6"),       # Azul
-                (vencidos, "#FF1E27")      # Vermelho
+                (disponiveis, (34, 197, 94, 255)),   # Verde #22C55E
+                (usados, (59, 130, 246, 255)),        # Azul #3B82F6
+                (vencidos, (255, 30, 39, 255))        # Vermelho #FF1E27
             ]
-            start_angle = 90
-            for val, color in slices:
-                if val <= 0:
-                    continue
-                extent = (val / total) * 360.0
-                cv.create_arc(pad, pad, canvas_w - pad, canvas_h - pad, start=start_angle, extent=extent, fill=color, outline=BG2, width=2)
-                start_angle += extent
 
-            cv.create_oval(cx - r_in, cy - r_in, cx + r_in, cy + r_in, fill=BG2, outline="")
-            cv.create_text(cx, cy - 6, text=f"{taxa_conv}%", fill=TEXT, font=("Segoe UI Black", 14, "bold"))
-            cv.create_text(cx, cy + 10, text="Resgatados", fill=TEXT_DIM, font=("Segoe UI", 7, "bold"))
+            ativas = [(val, col) for val, col in slices if val > 0]
+            if len(ativas) == 1:
+                # 100% de uma única fatia
+                draw.ellipse(r_out_box, fill=ativas[0][1])
+            else:
+                curr_angle = -90.0  # Início no topo (12 horas)
+                for val, col in slices:
+                    if val <= 0:
+                        continue
+                    angle_extent = (val / total) * 360.0
+                    draw.pieslice(
+                        r_out_box,
+                        start=curr_angle,
+                        end=curr_angle + angle_extent,
+                        fill=col,
+                        outline=(24, 24, 28, 255),
+                        width=2 * scale
+                    )
+                    curr_angle += angle_extent
+
+            # Centro oco do Donut
+            draw.ellipse([cx - r_in, cy - r_in, cx + r_in, cy + r_in], fill=(24, 24, 28, 255))
+
+        # Redimensionamento suave via LANCZOS
+        img_resized = img.resize((canvas_w, canvas_h), Image.Resampling.LANCZOS)
+        self._donut_img = ImageTk.PhotoImage(img_resized)
+
+        # Desenha Donut na tela
+        cv.create_image(canvas_w // 2, canvas_h // 2, image=self._donut_img)
+
+        # Textos Centrais com fontes TrueType
+        if total == 0:
+            cv.create_text(canvas_w // 2, canvas_h // 2 - 6, text="0", fill=TEXT_DIM, font=("Segoe UI Black", 14, "bold"))
+            cv.create_text(canvas_w // 2, canvas_h // 2 + 10, text="Sem vales", fill=TEXT_DIM, font=("Segoe UI", 7, "bold"))
+        else:
+            cv.create_text(canvas_w // 2, canvas_h // 2 - 6, text=f"{taxa_conv}%", fill=TEXT, font=("Segoe UI Black", 14, "bold"))
+            cv.create_text(canvas_w // 2, canvas_h // 2 + 10, text="Resgatados", fill=TEXT_DIM, font=("Segoe UI", 7, "bold"))
 
         # Legenda lateral
         leg = UIBuilder.frame(f_chart, bg=BG2)
@@ -468,17 +501,21 @@ class DashboardScreen(BaseScreen):
             UIBuilder.label(h_sub, nome, font=("Segoe UI", 8, "bold"), bg=BG2, fg=TEXT).pack(side="left")
             UIBuilder.label(h_sub, f"{qtd}", font=("Segoe UI", 8, "bold"), bg=BG2, fg=cor).pack(side="right")
 
-            cv = tk.Canvas(row, height=6, bg=BG3, highlightthickness=0)
+            cv = tk.Canvas(row, height=8, bg=BG3, highlightthickness=0)
             cv.pack(fill="x", pady=(1, 3))
             
-            def _desenhar_barra(event, c=cv, p=pct, col=cor):
-                w = max(4, int(event.width * p)) if p > 0 else 0
+            def _desenhar_barra(event=None, c=cv, p=pct, col=cor):
+                w_tot = event.width if event else c.winfo_width()
+                if w_tot <= 1:
+                    w_tot = 340
+                w = max(4, int(w_tot * p)) if p > 0 else 0
                 c.delete("all")
-                c.create_rectangle(0, 0, event.width, 6, fill=BG3, width=0)
+                c.create_rectangle(0, 0, w_tot, 8, fill=BG3, width=0)
                 if w > 0:
-                    c.create_rectangle(0, 0, w, 6, fill=col, width=0)
+                    c.create_rectangle(0, 0, w, 8, fill=col, width=0)
 
             cv.bind("<Configure>", _desenhar_barra)
+            _desenhar_barra()
 
     def _draw_outlet_overview(self, parent, outlet_disp, outlet_baixados, val_estoque, val_vendido):
         """Renderiza cartões com avaliação e barra segmentada do Outlet."""
@@ -507,13 +544,17 @@ class DashboardScreen(BaseScreen):
         if total > 0:
             cv = tk.Canvas(f_out, height=8, bg=BG3, highlightthickness=0)
             cv.pack(fill="x", pady=(4, 0))
-            def _desenhar_seg(event, c=cv, p=pct_disp):
-                w = int(event.width * p)
+            def _desenhar_seg(event=None, c=cv, p=pct_disp):
+                w_tot = event.width if event else c.winfo_width()
+                if w_tot <= 1:
+                    w_tot = 340
+                w = int(w_tot * p)
                 c.delete("all")
-                c.create_rectangle(0, 0, event.width, 8, fill=BG3, width=0)
+                c.create_rectangle(0, 0, w_tot, 8, fill=BG3, width=0)
                 if w > 0:
                     c.create_rectangle(0, 0, w, 8, fill=SUCCESS, width=0)
             cv.bind("<Configure>", _desenhar_seg)
+            _desenhar_seg()
 
     def _trocar_feed(self, tipo):
         self._feed_ativo = tipo
