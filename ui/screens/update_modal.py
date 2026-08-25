@@ -111,7 +111,7 @@ class UpdateModal(tk.Frame):
         )
         self.txt_notes.pack(side="left", fill="both", expand=True)
 
-        scroll = tk.Scrollbar(notes_container, orient="vertical", command=self.txt_notes.yview)
+        scroll = ttk.Scrollbar(notes_container, orient="vertical", command=self.txt_notes.yview)
         scroll.pack(side="right", fill="y")
         self.txt_notes.config(yscrollcommand=scroll.set)
 

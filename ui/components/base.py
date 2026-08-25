@@ -146,7 +146,7 @@ class ScrollableFrame(tk.Frame):
         bg_color = parent.cget("bg")
         self.configure(bg=bg_color)
         self.canvas = tk.Canvas(self, bg=bg_color, highlightthickness=0)
-        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
         self.scrollable_frame = tk.Frame(self, bg=bg_color)
         self.scrollable_frame.bind("<Configure>", lambda e: self.after(20, self._ajustar_barra))
@@ -226,6 +226,35 @@ class UIBuilder:
         s.configure("Dark.Treeview", background=BG2, foreground=TEXT, fieldbackground=BG2, font=FONT_BODY, rowheight=34)
         s.configure("Dark.Treeview.Heading", background=BG3, foreground=GOLD, font=("Segoe UI", 10, "bold"), relief="flat")
         s.map("Dark.Treeview", background=[("selected", BG3)], foreground=[("selected", TEXT)])
+
+        # Estilização completa das Scrollbars (Vertical e Horizontal) no tema WEBRIDERS CLUB
+        s.configure("Vertical.TScrollbar",
+                    background=BG3,
+                    troughcolor=BG,
+                    bordercolor=BG,
+                    darkcolor=BG2,
+                    lightcolor=BG2,
+                    arrowcolor=TEXT_DIM,
+                    relief="flat",
+                    arrowsize=11,
+                    width=10)
+        s.map("Vertical.TScrollbar",
+              background=[("active", ACCENT), ("pressed", GOLD), ("!disabled", BG3)],
+              arrowcolor=[("active", ACCENT), ("pressed", GOLD), ("!disabled", TEXT_DIM)])
+
+        s.configure("Horizontal.TScrollbar",
+                    background=BG3,
+                    troughcolor=BG,
+                    bordercolor=BG,
+                    darkcolor=BG2,
+                    lightcolor=BG2,
+                    arrowcolor=TEXT_DIM,
+                    relief="flat",
+                    arrowsize=11,
+                    width=10)
+        s.map("Horizontal.TScrollbar",
+              background=[("active", ACCENT), ("pressed", GOLD), ("!disabled", BG3)],
+              arrowcolor=[("active", ACCENT), ("pressed", GOLD), ("!disabled", TEXT_DIM)])
 
         # Estilização completa do Combobox no tema WEBRIDERS CLUB
         s.configure("TCombobox", 

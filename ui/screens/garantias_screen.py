@@ -183,7 +183,7 @@ class GarantiasScreen(BaseScreen):
             scroll_area.pack(fill="both", expand=True)
 
             canvas = tk.Canvas(scroll_area, bg=BG2, highlightthickness=0)
-            vsb = tk.Scrollbar(scroll_area, orient="vertical", command=canvas.yview, width=8, bg=BG2, troughcolor=BG2, relief="flat", bd=0)
+            vsb = ttk.Scrollbar(scroll_area, orient="vertical", command=canvas.yview)
             canvas.configure(yscrollcommand=vsb.set)
 
             canvas.pack(side="left", fill="both", expand=True)

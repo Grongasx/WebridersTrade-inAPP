@@ -679,6 +679,8 @@ class PopupProdutoEditar:
             except ValueError:
                 qtd = 1
 
+            estoque_val = 0 if status_novo == "Baixado" else qtd
+
             salvar_hierarquia(tipo, marca, modelo)
             nome_composto = f"{marca} {modelo}" + (f" ({grafico})" if grafico else "")
 
@@ -705,13 +707,15 @@ class PopupProdutoEditar:
                 """, (
                     novo_cli_id, sku, tipo, marca, modelo, grafico, cor,
                     numeracao, numeracao, preco_orig, preco_outlet, preco_outlet,
-                    qtd, qtd, status_novo, nome_composto, self.pid
+                    estoque_val, qtd, status_novo, nome_composto, self.pid
                 ))
+                conn.commit()
 
             from core.cache import cache
             cache.invalidate_prefix("outlet")
             cache.invalidate_prefix("dashboard")
             cache.invalidate_prefix("fila")
+            cache.invalidate_prefix("creditos")
 
             win.destroy()
             self.callback()

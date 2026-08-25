@@ -1,6 +1,12 @@
 # Histórico de Versões - Vale Presente Manager
 
 ## [2.2.1] - 2026-08-25
+- Correção de Persistência na Edição de Produtos Outlet ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py)):
+  - Adicionado `conn.commit()` explícito na rotina de salvamento de `PopupProdutoEditar`, corrigindo bug onde a atualização de Status, dados e atributos do produto não era gravada no banco de dados Neon.
+  - Sincronização automática do campo `estoque` conforme o status definido (`estoque=0` para "Baixado", ou quantidade total para "Disponível").
+- Estilização Universal das Barras de Rolagem (Scrollbars) ([ui/components/base.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/components/base.py), [ui/screens/garantias_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/garantias_screen.py), [ui/screens/update_modal.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/update_modal.py)):
+  - Criação de tema e layout para `Vertical.TScrollbar` e `Horizontal.TScrollbar` no `UIBuilder.setup_tree_style`: trilha escura (`troughcolor`), cursor em relevo plano (`BG3`) e realce interativo com vermelho elétrico (`ACCENT`) no hover e dourado (`GOLD`) no clique/arrasto.
+  - Substituição e padronização de `tk.Scrollbar` por `ttk.Scrollbar` em todas as telas, componentes roláveis (`ScrollableFrame`, `scrolled_canvas`, `Treeviews`, Kanban de Garantias e Notas de Atualização).
 - Modal de Detalhes do Produto, Ações de Edição/Baixa e Toggle de Crédito Estilizado ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py), [ui/screens/outlet_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/outlet_screen.py)):
   - Criação do modal `PopupProdutoDetalhes` com visualização completa dos dados do produto (Identificação/SKU/EAN, Características, Valores/Estoque e Proprietário) e status em badge colorido.
   - Botões de ação direta no modal de detalhes: `✏️ Editar Produto` (abre `PopupProdutoEditar`), `✅ Dar Baixa / Venda` (abre `PopupBaixaProduto`) e `🖨️ Imprimir Etiqueta`.
