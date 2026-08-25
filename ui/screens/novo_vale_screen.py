@@ -11,6 +11,7 @@ from config import FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL
 from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from utils.helpers import gerar_codigo, agora, brl
 
 

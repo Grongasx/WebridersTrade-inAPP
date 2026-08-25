@@ -27,6 +27,7 @@ from config import (
 )
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from core.config_local import carregar_config_local, salvar_config_local
 from utils.helpers import brl, agora, gerar_e_persistir_ean13, gerar_imagem_ean13
 

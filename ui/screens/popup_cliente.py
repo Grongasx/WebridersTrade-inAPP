@@ -8,6 +8,7 @@ from config import BG, BG2, BG3, ACCENT, GOLD, TEXT, TEXT_DIM, SUCCESS, DANGER
 from config import FONT_H2, FONT_BODY, FONT_SMALL, FONT_MONO, FONT_CODE
 from ui.components.base import UIBuilder
 from core.database import get_conn
+from core.cache import cache
 from utils.helpers import brl, agora, vencido, creditar_cliente, formatar_data
 
 

@@ -1,5 +1,22 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [2.3.0] - 2026-08-25
+- Novo Dashboard Executivo & Inteligência Operacional 360° ([ui/screens/dashboard_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/dashboard_screen.py)):
+  - Reformulação visual completa com tema escuro premium WEBRIDERS CLUB (#0D0D10 / #18181C / #FF1E27).
+  - 4 Hero KPI Cards no topo com sub-estatísticas e badges executivos:
+    1. *Crédito Total em Circulação*: soma em tempo real do saldo de clientes e vales ativos.
+    2. *Vales Presente*: total disponível, resgatados, taxa de conversão (%) e vencidos.
+    3. *Estoque Outlet*: contagem de peças disponíveis, avaliação financeira do estoque e baixas.
+    4. *Garantias & RMA*: total de chamados em andamento no Kanban e concluídos no histórico.
+  - Gráfico Donut Vetorial Interativo com ciclo de vida dos vales e taxa central de resgate.
+  - Gráfico em Barra Horizontal (Funil) para acompanhamento das 6 etapas do Pipeline de Garantias.
+  - Panorama visual do estoque e vendas do Outlet com barras segmentadas de proporção.
+  - Feed de Atividades Recentes com seletor dinâmico em abas (`🎟️ Vales`, `🛡️ Garantias`, `🏷️ Outlet`).
+  - Ranking Top 5 Clientes com maior saldo e fidelidade.
+  - Barra de Ações Rápidas integradas para criação instantânea de clientes, vales, entrada de outlet e garantias.
+- Correção Defensiva Global de Importações de Cache ([utils/helpers.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/helpers.py), [ui/screens/popup_credito.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_credito.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py), [ui/screens/popup_cliente.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_cliente.py), [ui/screens/novo_vale_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/novo_vale_screen.py), [ui/screens/novo_cliente_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/novo_cliente_screen.py)):
+  - Importação global de `from core.cache import cache` no topo de todos os módulos, eliminando integralmente qualquer ocorrência de `name 'cache' is not defined`.
+
 ## [2.2.1] - 2026-08-25
 - Responsividade Global e Inicialização Otimizada para 1920x1080p ([main.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/main.py), [ui/components/base.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/components/base.py)):
   - Cálculo dinâmico de resolução de tela na inicialização do aplicativo: janela principal dimensionada em proporção ideal para 1920x1080p (`1420x860`), perfeitamente centralizada e com margens seguras para a barra de tarefas.

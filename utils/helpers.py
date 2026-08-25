@@ -5,6 +5,7 @@ Funcoes utilitarias do sistema.
 import uuid
 import datetime
 import re
+from core.cache import cache
 
 
 def gerar_codigo():
