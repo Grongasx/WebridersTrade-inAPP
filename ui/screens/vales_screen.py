@@ -274,5 +274,13 @@ class PopupSelecionarClienteResgate:
                 show_global_loading=False
             )
 
-        UIBuilder.button(brow, "✅ Confirmar", confirmar, color=SUCCESS, width=16).pack(side="left")
-        UIBuilder.button(brow, "Cancelar", win.destroy, color=BG3, width=12).pack(side="left", padx=8)
+        UIBuilder.responsive_button_bar(
+            brow,
+            [
+                ("Cancelar", win.destroy, BG3, TEXT),
+                ("✅ Confirmar", confirmar, SUCCESS, "#000"),
+            ],
+            breakpoint=400,
+            bg=BG,
+            py_btn=7
+        ).pack(fill="x")

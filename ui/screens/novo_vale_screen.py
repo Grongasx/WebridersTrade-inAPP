@@ -35,11 +35,17 @@ class NovoValeScreen(BaseScreen):
         UIBuilder.label(h, "✨ Emitir Vale Presente", font=FONT_TITLE, fg=GOLD).pack(side="left")
         UIBuilder.separator(self.content).pack(fill="x", padx=28, side="top")
 
-        brow = UIBuilder.frame(self.content, bg=BG, pady=15, padx=40)
-        brow.pack(fill="x", side="bottom")
-        btn_submit = UIBuilder.button(brow, "✨ Emitir Vale", self._salvar, color=GOLD, fg="#000", width=22)
-        btn_submit.pack(side="left")
-        UIBuilder.button(brow, "Cancelar", lambda: self.app.show("vales"), color=BG3, width=12).pack(side="left", padx=10)
+        brow = UIBuilder.responsive_button_bar(
+            self.content,
+            [
+                ("Cancelar", lambda: self.app.show("vales"), BG3, TEXT),
+                ("✨ Emitir Vale", self._salvar, GOLD, "#000"),
+            ],
+            breakpoint=500,
+            bg=BG,
+            py_btn=8
+        )
+        brow.pack(fill="x", side="bottom", padx=40, pady=15)
 
         sf = UIBuilder.frame(self.content, padx=40, pady=10)
         sf.pack(fill="both", expand=True, side="top")

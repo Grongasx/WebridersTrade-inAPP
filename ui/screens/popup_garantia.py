@@ -236,13 +236,19 @@ class PopupNovaGarantia:
         self.vs["tipo"].trace_add("write", atualizar_cascata)
 
         # ═══════════════════════════════════════════
-        # Rodapé de Ações
+        # Rodapé de Ações Responsivo
         # ═══════════════════════════════════════════
-        b_bar = UIBuilder.frame(main_fm, bg=BG2)
+        b_bar = UIBuilder.responsive_button_bar(
+            main_fm,
+            [
+                ("✕ Cancelar", self.win.destroy, BG3, TEXT),
+                ("🛡️ Abrir Chamado de Garantia", self._salvar, SUCCESS, "#000"),
+            ],
+            breakpoint=500,
+            bg=BG2,
+            py_btn=7
+        )
         b_bar.pack(fill="x", pady=(14, 0))
-
-        UIBuilder.button(b_bar, "✕ Cancelar", self.win.destroy, color=BG3, width=14).pack(side="left", ipady=5)
-        UIBuilder.button(b_bar, "🛡️ Abrir Chamado de Garantia", self._salvar, color="#22C55E", width=26).pack(side="right", ipady=5)
 
     def _salvar(self):
         sel_cli = self.tv_cli.selection()
@@ -549,20 +555,25 @@ class PopupDetalhesGarantia:
         self.txt_obs_edit.pack(fill="x", pady=(0, 10))
 
         # ═══════════════════════════════════════════
-        # Rodapé de Ações
+        # Rodapé de Ações Responsivo
         # ═══════════════════════════════════════════
-        b_bar = UIBuilder.frame(main_fm, bg=BG2)
-        b_bar.pack(fill="x", pady=(14, 0))
-
-        UIBuilder.button(b_bar, "🗑️ Excluir Chamado", self._excluir, color=DANGER, width=18).pack(side="left", ipady=5)
-        UIBuilder.button(b_bar, "✕ Fechar", self.win.destroy, color=BG3, width=12).pack(side="left", padx=8, ipady=5)
-
         if d[2] in ("finalizada", "cancelada", "concluida"):
-            UIBuilder.button(b_bar, "🔄 Reabrir para Kanban", self._reabrir_chamado, color=GOLD, fg="#000", width=22).pack(side="right", padx=(8, 0), ipady=5)
-            UIBuilder.button(b_bar, "💾 Salvar Observações", self._salvar_edicao, color="#22C55E", width=20).pack(side="right", ipady=5)
+            botoes_det = [
+                ("🗑️ Excluir Chamado", self._excluir, DANGER, TEXT),
+                ("✕ Fechar", self.win.destroy, BG3, TEXT),
+                ("🔄 Reabrir para Kanban", self._reabrir_chamado, GOLD, "#000"),
+                ("💾 Salvar Observações", self._salvar_edicao, SUCCESS, "#000"),
+            ]
         else:
-            UIBuilder.button(b_bar, "🏁 Finalizar Garantia", self._abrir_finalizar, color=GOLD, fg="#000", width=20).pack(side="right", padx=(8, 0), ipady=5)
-            UIBuilder.button(b_bar, "💾 Salvar Alterações", self._salvar_edicao, color="#22C55E", width=20).pack(side="right", ipady=5)
+            botoes_det = [
+                ("🗑️ Excluir Chamado", self._excluir, DANGER, TEXT),
+                ("✕ Fechar", self.win.destroy, BG3, TEXT),
+                ("🏁 Finalizar Garantia", self._abrir_finalizar, GOLD, "#000"),
+                ("💾 Salvar Alterações", self._salvar_edicao, SUCCESS, "#000"),
+            ]
+
+        b_bar = UIBuilder.responsive_button_bar(main_fm, botoes_det, breakpoint=700, bg=BG2, py_btn=7)
+        b_bar.pack(fill="x", pady=(14, 0))
 
     def _abrir_finalizar(self):
         PopupFinalizarGarantia(self.app, self.garantia_id, self.dados[1], self._ao_concluir_finalizacao)
@@ -1079,10 +1090,6 @@ class PopupFinalizarGarantia:
         txt_obs = tk.Text(card, bg=BG3, fg=TEXT, font=FONT_SMALL, height=4, relief="flat", bd=4, wrap="word")
         txt_obs.pack(fill="x", pady=(0, 16))
 
-        # Rodapé de Ações
-        f_botoes = UIBuilder.frame(card, bg=BG2)
-        f_botoes.pack(fill="x", side="bottom")
-
         def _confirmar():
             status_final = v_tipo.get()
             motivo_sel = v_motivo.get().strip() or "Finalizado"
@@ -1122,8 +1129,17 @@ class PopupFinalizarGarantia:
                 mensagem=f"Finalizando garantia {self.protocolo}..."
             )
 
-        UIBuilder.button(f_botoes, "✕ Cancelar", self.win.destroy, color=BG3, width=12).pack(side="left")
-        UIBuilder.button(f_botoes, "🏁 Confirmar Encerramento", _confirmar, color=SUCCESS, fg="#000", width=24).pack(side="right")
+        f_botoes = UIBuilder.responsive_button_bar(
+            card,
+            [
+                ("✕ Cancelar", self.win.destroy, BG3, TEXT),
+                ("🏁 Confirmar Encerramento", _confirmar, SUCCESS, "#000"),
+            ],
+            breakpoint=450,
+            bg=BG2,
+            py_btn=7
+        )
+        f_botoes.pack(fill="x", pady=(10, 0))
 
 
 class PopupHistoricoGarantias:
@@ -1194,14 +1210,20 @@ class PopupHistoricoGarantias:
 
         self.tv.bind("<Double-1>", self._abrir_detalhe)
 
-        # Rodapé de Ações
-        b_bar = UIBuilder.frame(main_fm, bg=BG2)
+        # Rodapé de Ações Responsivo
+        b_bar = UIBuilder.responsive_button_bar(
+            main_fm,
+            [
+                ("👁️ Ver Detalhes", self._abrir_detalhe, BG3, TEXT),
+                ("🔄 Reabrir para Kanban", self._reabrir_selecionado, GOLD, "#000"),
+                ("🗑️ Excluir Registro", self._excluir_selecionado, DANGER, TEXT),
+                ("✕ Fechar", self.win.destroy, BG3, TEXT),
+            ],
+            breakpoint=750,
+            bg=BG2,
+            py_btn=7
+        )
         b_bar.pack(fill="x")
-
-        UIBuilder.button(b_bar, "👁️ Ver Detalhes", self._abrir_detalhe, color=BG3, width=16).pack(side="left", padx=(0, 6))
-        UIBuilder.button(b_bar, "🔄 Reabrir para Kanban", self._reabrir_selecionado, color=GOLD, fg="#000", width=22).pack(side="left", padx=6)
-        UIBuilder.button(b_bar, "🗑️ Excluir Registro", self._excluir_selecionado, color=DANGER, width=18).pack(side="left", padx=6)
-        UIBuilder.button(b_bar, "✕ Fechar", self.win.destroy, color=BG3, width=12).pack(side="right")
 
     def _carregar_dados(self):
         def _task():

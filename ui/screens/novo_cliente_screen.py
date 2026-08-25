@@ -69,13 +69,18 @@ class NovoClienteScreen(BaseScreen):
         h.pack(side="top", fill="x")
         UIBuilder.label(h, "Novo Cliente", font=FONT_TITLE).pack(side="left")
 
-        footer = UIBuilder.frame(self.content, bg=BG2, pady=20, padx=40)
-        footer.pack(side="bottom", fill="x")
-        UIBuilder.button(footer, "🧹 Limpar", lambda: [v.set("") for v in self._vs_cli.values()], color=BG3, width=12).pack(side="left")
-        UIBuilder.button(footer, "Cancelar", lambda: self.app.show("clientes"), color=BG3, width=15).pack(side="right", padx=(10, 0))
-        sb = UIBuilder.button(footer, "✅  Cadastrar Cliente", self._salvar, color=ACCENT, width=22)
-        sb.pack(side="right")
-        sb.config(font=("Segoe UI", 11, "bold"))
+        footer = UIBuilder.responsive_button_bar(
+            self.content,
+            [
+                ("🧹 Limpar Campos", lambda: [v.set("") for v in self._vs_cli.values()], BG3, TEXT),
+                ("Cancelar", lambda: self.app.show("clientes"), BG3, TEXT),
+                ("✅ Cadastrar Cliente", self._salvar, ACCENT, TEXT),
+            ],
+            breakpoint=650,
+            bg=BG2,
+            py_btn=8
+        )
+        footer.pack(side="bottom", fill="x", padx=40, pady=16)
 
         sf = UIBuilder.frame(self.content, padx=40, pady=10)
         sf.pack(side="top", fill="both", expand=True)

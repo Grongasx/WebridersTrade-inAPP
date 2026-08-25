@@ -90,8 +90,17 @@ class PopupLancarCredito:
         # Binds para poder pressionar Enter para salvar
         e_val.bind("<Return>", lambda _: salvar())
         
-        # Botão de confirmação renderizado no rodapé
-        UIBuilder.button(brow, "Confirmar", salvar, color=SUCCESS, width=18).pack(side="left", ipady=5)
+        # Barra de botões responsiva no rodapé
+        UIBuilder.responsive_button_bar(
+            brow,
+            [
+                ("Cancelar", win.destroy, BG3, TEXT),
+                ("✅ Confirmar Lançamento", salvar, SUCCESS, "#000"),
+            ],
+            breakpoint=400,
+            bg=BG2,
+            py_btn=7
+        ).pack(fill="x")
 
 
 class PopupHistoricoCredito:

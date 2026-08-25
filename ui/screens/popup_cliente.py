@@ -262,8 +262,16 @@ class PopupClienteDetalhe:
             )
 
         self.win.bind("<Return>", lambda _: salvar())
-        UIBuilder.button(brow, "✅ Salvar Alterações", salvar, width=18).pack(side="left", ipady=5)
-        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="left", padx=8, ipady=5)
+        UIBuilder.responsive_button_bar(
+            brow,
+            [
+                ("← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), BG3, TEXT),
+                ("✅ Salvar Alterações", salvar, SUCCESS, "#000"),
+            ],
+            breakpoint=450,
+            bg=BG,
+            py_btn=7
+        ).pack(fill="x")
 
     # ═══════════════════════════════════════════
     # SEÇÃO 3: Resgate de Vale Presente
@@ -391,8 +399,16 @@ class PopupClienteDetalhe:
                 show_global_loading=False
             )
 
-        UIBuilder.button(brow, "✅ Confirmar Resgate", confirmar, color=ACCENT, fg=TEXT, width=18).pack(side="left", ipady=5)
-        UIBuilder.button(brow, "← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), color=BG3, width=18).pack(side="left", padx=8, ipady=5)
+        UIBuilder.responsive_button_bar(
+            brow,
+            [
+                ("← Voltar aos Detalhes", lambda: self._trocar_secao("detalhe"), BG3, TEXT),
+                ("✅ Confirmar Resgate", confirmar, ACCENT, TEXT),
+            ],
+            breakpoint=450,
+            bg=BG,
+            py_btn=7
+        ).pack(fill="x")
 
     # ═══════════════════════════════════════════
     # SEÇÃO 4: Detalhes de um Vale Específico

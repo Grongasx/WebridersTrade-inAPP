@@ -80,10 +80,16 @@ class ClientesScreen(BaseScreen):
         
         self._tree_cli.bind("<Double-1>", self._detalhe)
 
-        brow = UIBuilder.frame(self.content, padx=28, pady=8)
-        brow.pack(fill="x")
-        UIBuilder.button(brow, "✏️ Editar",     self._editar_sel,  color=BG3,   width=14).pack(side="left", padx=4)
-        UIBuilder.button(brow, "🗑 Excluir",    self._excluir_sel, color=DANGER, width=14).pack(side="left", padx=4)
+        brow = UIBuilder.responsive_button_bar(
+            self.content,
+            [
+                ("✏️ Editar Cliente", self._editar_sel, BG3, TEXT),
+                ("🗑 Excluir Cliente", self._excluir_sel, DANGER, TEXT),
+            ],
+            breakpoint=600,
+            bg=BG
+        )
+        brow.pack(side="bottom", fill="x", padx=28, pady=8)
 
     def _popular_tree(self):
         """Preenche a Treeview com base no termo de busca digitado."""

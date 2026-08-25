@@ -80,13 +80,19 @@ class OutletScreen(BaseScreen):
         # Filtra a treeview em memória sem nova requisição SQL
         self._busca_out.trace_add("write", lambda *_: self._popular_tree())
 
-        brow = UIBuilder.frame(self.content, padx=28, pady=8)
-        brow.pack(side="bottom", fill="x")
-        UIBuilder.button(brow, "➕ Novo Produto / SKU", self._entrada, color=GOLD, fg="#000", width=20).pack(side="left", padx=4)
-        UIBuilder.button(brow, "👁️ Detalhes", self._detalhes, color=BG3, width=14).pack(side="left", padx=4)
-        UIBuilder.button(brow, "🖨️ Imprimir Etiqueta", self._imprimir_direto, color=ACCENT, width=20).pack(side="left", padx=4)
-        UIBuilder.button(brow, "✅ Dar Baixa / Venda", self._baixa, color=SUCCESS, width=18).pack(side="left", padx=4)
-        UIBuilder.button(brow, "🗑 Remover", self._excluir, color=DANGER, width=14).pack(side="left", padx=4)
+        brow = UIBuilder.responsive_button_bar(
+            self.content,
+            [
+                ("➕ Novo Produto / SKU", self._entrada, GOLD, "#000"),
+                ("👁️ Detalhes", self._detalhes, BG3, TEXT),
+                ("🖨️ Imprimir Etiqueta", self._imprimir_direto, ACCENT, TEXT),
+                ("✅ Dar Baixa / Venda", self._baixa, SUCCESS, "#000"),
+                ("🗑 Remover", self._excluir, DANGER, TEXT),
+            ],
+            breakpoint=880,
+            bg=BG
+        )
+        brow.pack(side="bottom", fill="x", padx=28, pady=8)
 
         tf = UIBuilder.frame(self.content, padx=28, pady=4)
         tf.pack(fill="both", expand=True)

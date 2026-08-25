@@ -67,11 +67,17 @@ class CreditosScreen(BaseScreen):
         # Filtra a treeview em tempo real em memória sem fazer nova requisição SQL
         self._busca_cred.trace_add("write", lambda *_: self._popular_tree())
 
-        brow = UIBuilder.frame(self.content, padx=28, pady=8)
-        brow.pack(side="bottom", fill="x")
-        UIBuilder.button(brow, "➕ Lançar Crédito/Débito", self._lancar, color=SUCCESS, width=22).pack(side="left", padx=4)
-        UIBuilder.button(brow, "📜 Ver Histórico", self._historico, color=BG3, width=14).pack(side="left", padx=4)
-        UIBuilder.button(brow, "📦 Produtos Vinculados", self._produtos, color=GOLD, fg="#000", width=20).pack(side="left", padx=4)
+        brow = UIBuilder.responsive_button_bar(
+            self.content,
+            [
+                ("➕ Lançar Crédito/Débito", self._lancar, SUCCESS, "#000"),
+                ("📜 Ver Histórico", self._historico, BG3, TEXT),
+                ("📦 Produtos Vinculados", self._produtos, GOLD, "#000"),
+            ],
+            breakpoint=700,
+            bg=BG
+        )
+        brow.pack(side="bottom", fill="x", padx=28, pady=8)
 
         tf = UIBuilder.frame(self.content, padx=28, pady=4)
         tf.pack(fill="both", expand=True)

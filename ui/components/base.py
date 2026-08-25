@@ -193,11 +193,82 @@ class UIBuilder:
         return tk.Entry(parent, textvariable=var, font=FONT_BODY, bg=BG3, fg=TEXT, insertbackground=TEXT, relief="flat", bd=0, width=width, **kw)
     
     @staticmethod
-    def button(parent, text, cmd, color=ACCENT, fg=TEXT, width=16, **kw):
-        px = kw.pop('padx', 16)
-        py = kw.pop('pady', 10)
-        return tk.Button(parent, text=text, command=cmd, font=("Segoe UI", 10, "bold"), bg=color, fg=fg, activebackground=color, activeforeground=fg, relief="flat", bd=0, cursor="hand2", padx=px, pady=py, width=width, **kw)
-    
+    def button(parent, text, cmd, color=ACCENT, fg=TEXT, width=None, **kw):
+        px = kw.pop('padx', 14)
+        py = kw.pop('pady', 8)
+        kw_btn = {
+            'text': text,
+            'command': cmd,
+            'font': ("Segoe UI", 10, "bold"),
+            'bg': color,
+            'fg': fg,
+            'activebackground': color,
+            'activeforeground': fg,
+            'relief': "flat",
+            'bd': 0,
+            'cursor': "hand2",
+            'padx': px,
+            'pady': py
+        }
+        if width is not None:
+            kw_btn['width'] = width
+        kw_btn.update(kw)
+        return tk.Button(parent, **kw_btn)
+
+    @staticmethod
+    def responsive_button_bar(parent, buttons_list, breakpoint=780, bg=BG, py_btn=7):
+        """
+        Cria uma barra de botões com grid 100% responsivo, adaptativo e auto-distribuído.
+        buttons_list: Lista de tuplas (texto, callback, cor_bg, cor_fg)
+        """
+        bar = tk.Frame(parent, bg=bg)
+        widgets = []
+        for item in buttons_list:
+            if isinstance(item, (tuple, list)):
+                rotulo = item[0]
+                cmd = item[1]
+                cor_bg = item[2] if len(item) > 2 else ACCENT
+                cor_fg = item[3] if len(item) > 3 else TEXT
+            else:
+                continue
+
+            btn = UIBuilder.button(bar, rotulo, cmd, color=cor_bg, fg=cor_fg, width=None, pady=py_btn)
+            widgets.append(btn)
+
+        n = len(widgets)
+        if n == 0:
+            return bar
+
+        def _reorganizar(event=None):
+            w = event.width if event else bar.winfo_width()
+            if w <= 1:
+                w = 1000
+
+            for btn in widgets:
+                btn.grid_forget()
+
+            if w < breakpoint and n > 2:
+                cols = 2 if n <= 4 else 3
+                for c in range(cols):
+                    bar.grid_columnconfigure(c, weight=1, uniform="r_btn_sub")
+                for c in range(cols, n):
+                    bar.grid_columnconfigure(c, weight=0, uniform="")
+
+                for idx, btn in enumerate(widgets):
+                    r = idx // cols
+                    c = idx % cols
+                    btn.grid(row=r, column=c, padx=3, pady=3, sticky="ew")
+            else:
+                for c in range(n):
+                    bar.grid_columnconfigure(c, weight=1, uniform="r_btn_main")
+
+                for idx, btn in enumerate(widgets):
+                    btn.grid(row=0, column=idx, padx=3, pady=2, sticky="ew")
+
+        bar.bind("<Configure>", _reorganizar)
+        _reorganizar()
+        return bar
+
     @staticmethod
     def separator(parent, bg=BG3, h=1):
         return tk.Frame(parent, bg=bg, height=h)

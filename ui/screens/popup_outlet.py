@@ -916,13 +916,16 @@ class PopupProdutoDetalhes:
                     self.app.toast.show(msg, "sucesso" if sucesso else "erro")
                 self.app.executar_async(funcao_task=_tarefa, callback_sucesso=_fim, mensagem="Imprimindo etiqueta...")
 
-            UIBuilder.button(b_row, "✏️ Editar Produto", _abrir_edicao, color=GOLD, fg="#000", width=18).pack(side="left", padx=(0, 6))
-            
+            botoes_det_out = [
+                ("✏️ Editar Produto", _abrir_edicao, GOLD, "#000"),
+            ]
             if status != "Baixado":
-                UIBuilder.button(b_row, "✅ Dar Baixa / Venda", _abrir_baixa, color=SUCCESS, fg="#000", width=20).pack(side="left", padx=6)
-            
-            UIBuilder.button(b_row, "🖨️ Imprimir Etiqueta", _imprimir, color=ACCENT, width=18).pack(side="left", padx=6)
-            UIBuilder.button(b_row, "Fechar", self.win.destroy, color=BG3, width=10).pack(side="right")
+                botoes_det_out.append(("✅ Dar Baixa / Venda", _abrir_baixa, SUCCESS, "#000"))
+            botoes_det_out.append(("🖨️ Imprimir Etiqueta", _imprimir, ACCENT, TEXT))
+            botoes_det_out.append(("Fechar", self.win.destroy, BG3, TEXT))
+
+            b_row = UIBuilder.responsive_button_bar(self.win, botoes_det_out, breakpoint=680, bg=BG2, py_btn=7)
+            b_row.pack(fill="x", padx=24, pady=12)
 
         self.app.executar_async(
             funcao_task=_buscar,
@@ -1100,7 +1103,14 @@ class PopupBaixaProduto:
                 mensagem="Registrando baixa e crédito..."
             )
 
-        f_acoes = UIBuilder.frame(card, bg=BG2)
+        f_acoes = UIBuilder.responsive_button_bar(
+            card,
+            [
+                ("Cancelar", win.destroy, BG3, TEXT),
+                ("✅ Confirmar Baixa", confirmar, SUCCESS, "#000"),
+            ],
+            breakpoint=450,
+            bg=BG2,
+            py_btn=7
+        )
         f_acoes.pack(fill="x", pady=(10, 0))
-        UIBuilder.button(f_acoes, "✅ Confirmar Baixa", confirmar, color=SUCCESS, fg="#000", width=22).pack(side="left", padx=(0, 6))
-        UIBuilder.button(f_acoes, "Cancelar", win.destroy, color=BG3, width=12).pack(side="left")
