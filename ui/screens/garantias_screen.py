@@ -9,7 +9,7 @@ from config import (
     FONT_TITLE, FONT_H2, FONT_BODY, FONT_SMALL, FONT_MONO, FONT_CODE
 )
 from ui.screens.base_screen import BaseScreen
-from ui.components.base import UIBuilder
+from ui.components.base import UIBuilder, SmoothScroller
 from ui.screens.popup_garantia import (
     PopupNovaGarantia, PopupDetalhesGarantia, PopupMoverEtapaGarantia,
     PopupFinalizarGarantia, PopupHistoricoGarantias,
@@ -199,6 +199,7 @@ class GarantiasScreen(BaseScreen):
 
             inner_col = UIBuilder.frame(canvas, bg=BG2)
             cw = canvas.create_window((0, 0), window=inner_col, anchor="nw")
+            scroller = SmoothScroller(canvas, sensitivity=0.035, friction=0.25)
 
             # Redimensionamento e ajuste de scrollbar responsivo
             def _ajustar_coluna(e, c=canvas, sc_inner=inner_col, sb=vsb, win_id=cw):
@@ -225,7 +226,8 @@ class GarantiasScreen(BaseScreen):
                 "canvas": canvas,
                 "color": color,
                 "box": col_box,
-                "vsb": vsb
+                "vsb": vsb,
+                "scroller": scroller
             }
 
         self.kanban_container.rowconfigure(0, weight=1)
@@ -435,9 +437,12 @@ class GarantiasScreen(BaseScreen):
                 "is_dragging": False, "start_x": 0, "start_y": 0, "item_data": None
             }
 
-        # Scroll com MouseWheel no canvas da coluna
+        # Scroll suave com MouseWheel no canvas da coluna
         def on_mouse_wheel(event):
-            if col_canvas.winfo_exists():
+            scroller = self._colunas.get(col_key, {}).get("scroller")
+            if scroller:
+                scroller.scroll(event.delta)
+            elif col_canvas.winfo_exists():
                 col_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
         # Aplica os eventos no card e em todos os seus elementos filhos

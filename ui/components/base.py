@@ -138,8 +138,70 @@ class LoadingPopup(tk.Frame):
         self._angle = (self._angle + 14) % 360
         self.root.after(25, self._animate)
         
+class SmoothScroller:
+    """Controlador de rolagem ultra-suave com amortecimento cinético e interpolação de física."""
+
+    def __init__(self, canvas, sensitivity=0.028, friction=0.25):
+        self.canvas = canvas
+        self.sensitivity = sensitivity  # Fração de deslocamento suave por entalhe de roda
+        self.friction = friction        # Taxa de amortecimento suave (lerp)
+        self.target_y = 0.0
+        self.is_animating = False
+
+    def scroll(self, delta):
+        if not self.canvas.winfo_exists():
+            return
+        
+        try:
+            current_view = self.canvas.yview()
+            if not current_view:
+                return
+
+            visible_range = current_view[1] - current_view[0]
+            if visible_range >= 0.999:
+                return  # Todo o conteúdo já cabe na tela
+
+            if not self.is_animating:
+                self.target_y = current_view[0]
+
+            notches = float(delta) / 120.0
+            self.target_y -= notches * self.sensitivity
+            max_y = max(0.0, 1.0 - visible_range)
+            self.target_y = max(0.0, min(max_y, self.target_y))
+
+            if not self.is_animating:
+                self.is_animating = True
+                self._animate()
+        except Exception:
+            pass
+
+    def _animate(self):
+        if not self.canvas.winfo_exists():
+            self.is_animating = False
+            return
+
+        try:
+            current_view = self.canvas.yview()
+            if not current_view:
+                self.is_animating = False
+                return
+
+            curr_y = current_view[0]
+            diff = self.target_y - curr_y
+
+            if abs(diff) < 0.0005:
+                self.canvas.yview_moveto(self.target_y)
+                self.is_animating = False
+            else:
+                new_y = curr_y + (diff * self.friction)
+                self.canvas.yview_moveto(new_y)
+                self.canvas.after(14, self._animate)
+        except Exception:
+            self.is_animating = False
+
+
 class ScrollableFrame(tk.Frame):
-    """Frame com scroll vertical."""
+    """Frame com scroll vertical e rolagem cinemática ultra-suave."""
     
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
@@ -148,6 +210,7 @@ class ScrollableFrame(tk.Frame):
         self.canvas = tk.Canvas(self, bg=bg_color, highlightthickness=0)
         self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.scroller = SmoothScroller(self.canvas)
         self.scrollable_frame = tk.Frame(self, bg=bg_color)
         self.scrollable_frame.bind("<Configure>", lambda e: self.after(20, self._ajustar_barra))
         self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
@@ -172,9 +235,12 @@ class ScrollableFrame(tk.Frame):
 
     def _on_mouse_wheel(self, event):
         if not self.canvas.winfo_exists(): return
-        if event.num == 4: self.canvas.yview_scroll(-1, "units")
-        elif event.num == 5: self.canvas.yview_scroll(1, "units")
-        else: self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        if event.num == 4:
+            self.scroller.scroll(120)
+        elif event.num == 5:
+            self.scroller.scroll(-120)
+        else:
+            self.scroller.scroll(event.delta)
 
 
 class UIBuilder:
@@ -412,6 +478,7 @@ class UIBuilder:
         inner = UIBuilder.frame(canvas, bg=bg)
         cw = canvas.create_window((0, 0), window=inner, anchor="nw")
 
+        scroller = SmoothScroller(canvas, sensitivity=0.028, friction=0.25)
         state = {"after_id": None}
 
         def _settle():
@@ -424,14 +491,11 @@ class UIBuilder:
             if not canvas.winfo_exists():
                 return
             if event.num == 4:
-                canvas.yview_scroll(-2, "units")
+                scroller.scroll(120)
             elif event.num == 5:
-                canvas.yview_scroll(2, "units")
+                scroller.scroll(-120)
             else:
-                delta = int(-1 * (event.delta / 40))
-                if delta == 0:
-                    delta = -1 if event.delta > 0 else 1
-                canvas.yview_scroll(delta, "units")
+                scroller.scroll(event.delta)
 
         def _vincular_scroll(widget):
             try:
