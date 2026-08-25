@@ -36,6 +36,7 @@ from utils.helpers import (
     gerar_e_persistir_ean13,
     NUMERACAO_POR_TIPO,
     TIPO_PREFIXOS,
+    formatar_data,
 )
 from utils.formatters import CurrencyFormatter
 
@@ -718,3 +719,383 @@ class PopupProdutoEditar:
 
         b_salvar = UIBuilder.button(main_fm, "💾 Salvar Alterações", salvar, color=SUCCESS, fg="#000", width=36)
         b_salvar.pack(pady=14, ipady=6)
+
+
+class PopupProdutoDetalhes:
+    """Popup de visualização completa dos detalhes do produto outlet com ações de edição e baixa."""
+
+    def __init__(self, app, pid, callback=None):
+        self.app = app
+        self.pid = pid
+        self.callback = callback
+        self.win = None
+        self._build_container()
+        self._carregar_dados()
+
+    def _build_container(self):
+        self.win = tk.Toplevel(self.app)
+        self.win.title(f"Detalhes do Produto — ID #{self.pid}")
+        self.win.geometry("780x640")
+        self.win.configure(bg=BG)
+        self.win.grab_set()
+
+    def _carregar_dados(self):
+        def _buscar():
+            with get_conn() as conn:
+                return conn.execute("""
+                    SELECT p.id, 
+                           COALESCE(p.codigo_barras, '—') AS ean, 
+                           COALESCE(p.sku, '—') AS sku, 
+                           COALESCE(p.tipo, '—') AS tipo, 
+                           COALESCE(p.marca, '—') AS marca, 
+                           COALESCE(p.modelo, p.nome) AS modelo,
+                           COALESCE(p.grafico, '—') AS grafico, 
+                           COALESCE(p.cor, '—') AS cor, 
+                           COALESCE(p.numeracao, p.tamanho, '—') AS numeracao,
+                           COALESCE(p.preco_original, 0) AS preco_orig, 
+                           COALESCE(p.preco_outlet, p.valor_sugerido, 0) AS preco_out, 
+                           COALESCE(p.quantidade, p.estoque, 1) AS quantidade, 
+                           COALESCE(p.status, 'Disponível') AS status, 
+                           p.criado,
+                           COALESCE(c.nome, '—') AS cliente_nome, 
+                           COALESCE(c.cpf, '—') AS cliente_cpf,
+                           COALESCE(c.telefone, '—') AS cliente_tel,
+                           c.id AS cliente_id
+                    FROM produtos_outlet p 
+                    LEFT JOIN clientes c ON p.cliente_id = c.id 
+                    WHERE p.id = %s
+                """, (self.pid,)).fetchone()
+
+        def _render(row):
+            if not row:
+                self.app.toast.show("Produto não encontrado.", "erro")
+                self.win.destroy()
+                return
+
+            for w in self.win.winfo_children():
+                w.destroy()
+
+            (
+                pid, ean, sku, tipo, marca, modelo,
+                grafico, cor, numeracao,
+                preco_orig, preco_out, qtd, status,
+                criado, cli_nome, cli_cpf, cli_tel, cli_id
+            ) = row
+
+            main_fm = UIBuilder.card(self.win, bg=BG2, px=24, py=20)
+            main_fm.pack(fill="both", expand=True, padx=16, pady=16)
+
+            # Cabeçalho com Status Badge
+            h_row = UIBuilder.frame(main_fm, bg=BG2)
+            h_row.pack(fill="x", pady=(0, 12))
+
+            h_left = UIBuilder.frame(h_row, bg=BG2)
+            h_left.pack(side="left")
+            UIBuilder.label(h_left, f"🏷️ {marca} {modelo}", font=FONT_H2, bg=BG2, fg=GOLD).pack(anchor="w")
+            UIBuilder.label(h_left, f"ID #{pid}  •  Adicionado em: {formatar_data(criado)}", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w")
+
+            status_cor = SUCCESS if status == "Disponível" else (DANGER if status == "Baixado" else GOLD)
+            status_bg = "#162E20" if status == "Disponível" else ("#2E1619" if status == "Baixado" else "#2E2416")
+            badge = tk.Label(h_row, text=f"  {status.upper()}  ", font=("Segoe UI", 10, "bold"), bg=status_bg, fg=status_cor, padx=8, pady=4, relief="flat")
+            badge.pack(side="right", padx=(8, 0))
+
+            # Corpo com Scrolled Canvas
+            scroll_fm = UIBuilder.frame(main_fm, bg=BG2)
+            scroll_fm.pack(fill="both", expand=True)
+            canvas, inner = UIBuilder.scrolled_canvas(scroll_fm)
+
+            # 1. Informações de Identificação & SKU
+            c1 = UIBuilder.card(inner, bg=BG3, px=16, py=12)
+            c1.pack(fill="x", pady=(0, 10))
+            UIBuilder.label(c1, "🔢 Identificação & Códigos", font=FONT_SMALL, bg=BG3, fg=GOLD).pack(anchor="w", pady=(0, 6))
+            
+            g1 = UIBuilder.frame(c1, bg=BG3)
+            g1.pack(fill="x")
+            
+            f_sku = UIBuilder.frame(g1, bg=BG3)
+            f_sku.pack(side="left", fill="x", expand=True)
+            UIBuilder.label(f_sku, "SKU Interno:", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+            UIBuilder.label(f_sku, sku, font=FONT_CODE, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            f_ean = UIBuilder.frame(g1, bg=BG3)
+            f_ean.pack(side="left", fill="x", expand=True, padx=(12, 0))
+            UIBuilder.label(f_ean, "Código EAN-13:", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+            UIBuilder.label(f_ean, ean, font=FONT_CODE, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            # 2. Atributos do Produto
+            c2 = UIBuilder.card(inner, bg=BG3, px=16, py=12)
+            c2.pack(fill="x", pady=(0, 10))
+            UIBuilder.label(c2, "📦 Características do Produto", font=FONT_SMALL, bg=BG3, fg=GOLD).pack(anchor="w", pady=(0, 6))
+
+            g2 = UIBuilder.frame(c2, bg=BG3)
+            g2.pack(fill="x", pady=2)
+
+            for col_title, col_val in [("Categoria / Tipo", tipo), ("Marca", marca), ("Modelo / Edição", modelo)]:
+                fc = UIBuilder.frame(g2, bg=BG3)
+                fc.pack(side="left", fill="x", expand=True)
+                UIBuilder.label(fc, col_title, font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+                UIBuilder.label(fc, col_val, font=FONT_BODY, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            g2_b = UIBuilder.frame(c2, bg=BG3)
+            g2_b.pack(fill="x", pady=(8, 0))
+
+            for col_title, col_val in [("Gráfico / Estampa", grafico), ("Cor Dominante", cor), ("Numeração / Tamanho", numeracao)]:
+                fc = UIBuilder.frame(g2_b, bg=BG3)
+                fc.pack(side="left", fill="x", expand=True)
+                UIBuilder.label(fc, col_title, font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+                UIBuilder.label(fc, col_val, font=FONT_BODY, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            # 3. Valores e Estoque
+            c3 = UIBuilder.card(inner, bg=BG3, px=16, py=12)
+            c3.pack(fill="x", pady=(0, 10))
+            UIBuilder.label(c3, "💰 Valores & Estoque", font=FONT_SMALL, bg=BG3, fg=GOLD).pack(anchor="w", pady=(0, 6))
+
+            g3 = UIBuilder.frame(c3, bg=BG3)
+            g3.pack(fill="x")
+
+            f_po = UIBuilder.frame(g3, bg=BG3)
+            f_po.pack(side="left", fill="x", expand=True)
+            UIBuilder.label(f_po, "Preço Original", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+            UIBuilder.label(f_po, brl(preco_orig), font=FONT_BODY, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            f_pout = UIBuilder.frame(g3, bg=BG3)
+            f_pout.pack(side="left", fill="x", expand=True)
+            UIBuilder.label(f_pout, "Preço Outlet (Venda)", font=FONT_SMALL, bg=BG3, fg=GOLD).pack(anchor="w")
+            UIBuilder.label(f_pout, brl(preco_out), font=FONT_H2, bg=BG3, fg=SUCCESS).pack(anchor="w")
+
+            f_qtd = UIBuilder.frame(g3, bg=BG3)
+            f_qtd.pack(side="left", fill="x", expand=True)
+            UIBuilder.label(f_qtd, "Qtd em Estoque", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+            UIBuilder.label(f_qtd, str(qtd), font=FONT_H2, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            # 4. Proprietário (Cliente)
+            c4 = UIBuilder.card(inner, bg=BG3, px=16, py=12)
+            c4.pack(fill="x", pady=(0, 6))
+            UIBuilder.label(c4, "👤 Proprietário (Cliente)", font=FONT_SMALL, bg=BG3, fg=GOLD).pack(anchor="w", pady=(0, 6))
+
+            g4 = UIBuilder.frame(c4, bg=BG3)
+            g4.pack(fill="x")
+
+            f_cnome = UIBuilder.frame(g4, bg=BG3)
+            f_cnome.pack(side="left", fill="x", expand=True)
+            UIBuilder.label(f_cnome, "Nome do Cliente", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+            UIBuilder.label(f_cnome, cli_nome, font=FONT_BODY, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            f_ccpf = UIBuilder.frame(g4, bg=BG3)
+            f_ccpf.pack(side="left", fill="x", expand=True)
+            UIBuilder.label(f_ccpf, "CPF", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+            UIBuilder.label(f_ccpf, cli_cpf, font=FONT_BODY, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            f_ctel = UIBuilder.frame(g4, bg=BG3)
+            f_ctel.pack(side="left", fill="x", expand=True)
+            UIBuilder.label(f_ctel, "Telefone", font=FONT_SMALL, bg=BG3, fg=TEXT_DIM).pack(anchor="w")
+            UIBuilder.label(f_ctel, cli_tel, font=FONT_BODY, bg=BG3, fg=TEXT).pack(anchor="w")
+
+            # Barra Inferior de Botões de Ação
+            b_row = UIBuilder.frame(main_fm, bg=BG2)
+            b_row.pack(fill="x", pady=(14, 0))
+
+            def _abrir_edicao():
+                PopupProdutoEditar(self.app, self.pid, lambda: (self._carregar_dados(), self.callback and self.callback()))
+
+            def _abrir_baixa():
+                PopupBaixaProduto(self.app, self.pid, lambda: (self.win.destroy(), self.callback and self.callback()))
+
+            def _imprimir():
+                from utils.printer import PDFPrinter
+                printer = PDFPrinter()
+                def _tarefa():
+                    return printer.imprimir_produtos_direto([self.pid], {self.pid: 1})
+                def _fim(res):
+                    sucesso, msg = res
+                    self.app.toast.show(msg, "sucesso" if sucesso else "erro")
+                self.app.executar_async(funcao_task=_tarefa, callback_sucesso=_fim, mensagem="Imprimindo etiqueta...")
+
+            UIBuilder.button(b_row, "✏️ Editar Produto", _abrir_edicao, color=GOLD, fg="#000", width=18).pack(side="left", padx=(0, 6))
+            
+            if status != "Baixado":
+                UIBuilder.button(b_row, "✅ Dar Baixa / Venda", _abrir_baixa, color=SUCCESS, fg="#000", width=20).pack(side="left", padx=6)
+            
+            UIBuilder.button(b_row, "🖨️ Imprimir Etiqueta", _imprimir, color=ACCENT, width=18).pack(side="left", padx=6)
+            UIBuilder.button(b_row, "Fechar", self.win.destroy, color=BG3, width=10).pack(side="right")
+
+        self.app.executar_async(
+            funcao_task=_buscar,
+            callback_sucesso=_render,
+            mensagem="Carregando detalhes do produto..."
+        )
+
+
+class PopupBaixaProduto:
+    """Popup para registrar a baixa / venda de um produto outlet com toggle moderno para conversão em crédito."""
+
+    def __init__(self, app, pid, callback):
+        self.app = app
+        self.pid = pid
+        self.callback = callback
+        self._build()
+
+    def _build(self):
+        with get_conn() as conn:
+            row = conn.execute("""
+                SELECT p.id, COALESCE(p.nome, CONCAT(p.marca, ' ', p.modelo)) AS produto,
+                       COALESCE(p.preco_outlet, p.valor_sugerido, 0) AS preco,
+                       p.cliente_id, c.nome AS cliente_nome, p.status, COALESCE(p.sku, '—') AS sku
+                FROM produtos_outlet p
+                LEFT JOIN clientes c ON p.cliente_id = c.id
+                WHERE p.id = %s
+            """, (self.pid,)).fetchone()
+
+        if not row:
+            self.app.toast.show("Produto não encontrado.", "erro")
+            return
+
+        pid, nome_prod, preco_outlet, cliente_id, cliente_nome, status, sku = row
+        preco_val = float(preco_outlet or 0)
+        cli_nome = cliente_nome or "Sem proprietário vinculado"
+
+        win = tk.Toplevel(self.app)
+        win.title(f"Baixa de Produto — ID #{pid}")
+        win.geometry("520x460")
+        win.configure(bg=BG)
+        win.resizable(False, False)
+        win.grab_set()
+
+        # Container Principal
+        card = UIBuilder.card(win, bg=BG2, px=28, py=22)
+        card.pack(fill="both", expand=True, padx=16, pady=16)
+
+        # Cabeçalho
+        UIBuilder.label(card, "✅ Baixa / Venda de Produto", font=FONT_H2, bg=BG2, fg=SUCCESS).pack(anchor="w", pady=(0, 4))
+        UIBuilder.label(card, f"Produto: {nome_prod}", font=FONT_BODY, bg=BG2, fg=TEXT).pack(anchor="w")
+        UIBuilder.label(card, f"SKU: {sku}  •  Proprietário: {cli_nome}", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(0, 14))
+
+        # Campo Valor de Venda
+        UIBuilder.label(card, "Valor Final da Venda (R$)*", font=FONT_SMALL, bg=BG2, fg=GOLD).pack(anchor="w")
+        e_venda = UIBuilder.entry(card, width=28)
+        e_venda.pack(fill="x", ipady=5, pady=(3, 16))
+        e_venda.insert(0, f"{preco_val:.2f}".replace(".", ","))
+        e_venda.bind("<KeyRelease>", lambda _: CurrencyFormatter.formatar_moeda_local(e_venda))
+
+        # Variável de estado do crédito
+        tem_cliente = bool(cliente_id)
+        add_cred = tk.BooleanVar(value=tem_cliente)
+
+        # Card / Toggle Moderno de Conversão em Crédito
+        toggle_card = tk.Frame(
+            card, 
+            bg="#12241A" if tem_cliente else BG3, 
+            padx=14, 
+            pady=12,
+            highlightbackground=SUCCESS if tem_cliente else "#3A3A45", 
+            highlightthickness=1, 
+            cursor="hand2" if tem_cliente else "arrow"
+        )
+        toggle_card.pack(fill="x", pady=(0, 16))
+
+        top_row = tk.Frame(toggle_card, bg=toggle_card["bg"])
+        top_row.pack(fill="x")
+
+        lbl_badge = tk.Label(
+            top_row, 
+            text="🟢 CRÉDITO ATIVO" if tem_cliente else "⚪ DESATIVADO",
+            font=("Segoe UI", 9, "bold"), 
+            bg="#1A3D29" if tem_cliente else BG2,
+            fg=SUCCESS if tem_cliente else TEXT_DIM, 
+            padx=8, 
+            pady=2
+        )
+        lbl_badge.pack(side="left")
+
+        lbl_titulo = tk.Label(
+            top_row, 
+            text="Converter valor em Crédito para o Cliente",
+            font=("Segoe UI", 10, "bold"), 
+            bg=toggle_card["bg"],
+            fg=TEXT if tem_cliente else TEXT_DIM
+        )
+        lbl_titulo.pack(side="left", padx=(8, 0))
+
+        lbl_desc = tk.Label(
+            toggle_card,
+            text=f"O valor pago será creditado diretamente no saldo de '{cli_nome}'." if tem_cliente else "Nenhum cliente vinculado para receber o crédito.",
+            font=FONT_SMALL,
+            bg=toggle_card["bg"],
+            fg=SUCCESS if tem_cliente else TEXT_DIM,
+            wraplength=420,
+            justify="left"
+        )
+        lbl_desc.pack(anchor="w", pady=(6, 0))
+
+        def alternar_credito(event=None):
+            if not cliente_id:
+                self.app.toast.show("Este produto não possui cliente proprietário vinculado.", "aviso")
+                return
+            novo_estado = not add_cred.get()
+            add_cred.set(novo_estado)
+            
+            bg_cor = "#12241A" if novo_estado else BG3
+            badge_bg = "#1A3D29" if novo_estado else BG2
+            border_cor = SUCCESS if novo_estado else "#3A3A45"
+            fg_texto = SUCCESS if novo_estado else TEXT_DIM
+
+            toggle_card.configure(bg=bg_cor, highlightbackground=border_cor)
+            top_row.configure(bg=bg_cor)
+            lbl_titulo.configure(bg=bg_cor, fg=TEXT if novo_estado else TEXT_DIM)
+            lbl_badge.configure(
+                text="🟢 CRÉDITO ATIVO" if novo_estado else "⚪ DESATIVADO",
+                bg=badge_bg,
+                fg=fg_texto
+            )
+            lbl_desc.configure(
+                bg=bg_cor,
+                fg=fg_texto,
+                text=f"O valor pago será creditado diretamente no saldo de '{cli_nome}'." if novo_estado else "Apenas altera status para 'Baixado' sem creditar o cliente."
+            )
+
+        if tem_cliente:
+            toggle_card.bind("<Button-1>", alternar_credito)
+            for w in (top_row, lbl_badge, lbl_titulo, lbl_desc):
+                w.bind("<Button-1>", alternar_credito)
+
+        # Ações
+        def confirmar():
+            val = txt_para_float(e_venda.get())
+            if val < 0:
+                self.app.toast.show("Valor de venda inválido.", "erro")
+                return
+            win.destroy()
+
+            def _tarefa_baixa():
+                with get_conn() as conn:
+                    conn.execute("UPDATE produtos_outlet SET status='Baixado', estoque=0 WHERE id=%s", (pid,))
+                    conn.execute("""
+                        INSERT INTO vendas_outlet (cliente_id, produto_id, quantidade, preco_pago, criado) 
+                        VALUES (%s,%s,%s,%s,%s)
+                    """, (cliente_id, pid, 1, val, agora()))
+                    if add_cred.get() and cliente_id:
+                        conn.execute("UPDATE clientes SET saldo = COALESCE(saldo,0) + %s WHERE id=%s", (val, cliente_id))
+                        conn.execute("""
+                            INSERT INTO historico_credito (cliente_id,tipo,valor,motivo,criado) 
+                            VALUES (%s,%s,%s,%s,%s)
+                        """, (cliente_id, "entrada", val, f"Venda outlet: {nome_prod}", agora()))
+                    conn.commit()
+                cache.invalidate_prefix("outlet")
+                cache.invalidate_prefix("dashboard")
+                cache.invalidate_prefix("creditos")
+                cache.invalidate_prefix("clientes")
+
+            def _ao_concluir_baixa(_):
+                self.app.toast.show("Baixa realizada com sucesso!", "sucesso")
+                self.callback()
+
+            self.app.executar_async(
+                funcao_task=_tarefa_baixa,
+                callback_sucesso=_ao_concluir_baixa,
+                mensagem="Registrando baixa e crédito..."
+            )
+
+        f_acoes = UIBuilder.frame(card, bg=BG2)
+        f_acoes.pack(fill="x", pady=(10, 0))
+        UIBuilder.button(f_acoes, "✅ Confirmar Baixa", confirmar, color=SUCCESS, fg="#000", width=22).pack(side="left", padx=(0, 6))
+        UIBuilder.button(f_acoes, "Cancelar", win.destroy, color=BG3, width=12).pack(side="left")

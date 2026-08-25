@@ -83,7 +83,7 @@ class OutletScreen(BaseScreen):
         brow = UIBuilder.frame(self.content, padx=28, pady=8)
         brow.pack(side="bottom", fill="x")
         UIBuilder.button(brow, "➕ Novo Produto / SKU", self._entrada, color=GOLD, fg="#000", width=20).pack(side="left", padx=4)
-        UIBuilder.button(brow, "✏️ Editar", self._editar, color=BG3, width=12).pack(side="left", padx=4)
+        UIBuilder.button(brow, "👁️ Detalhes", self._detalhes, color=BG3, width=14).pack(side="left", padx=4)
         UIBuilder.button(brow, "🖨️ Imprimir Etiqueta", self._imprimir_direto, color=ACCENT, width=20).pack(side="left", padx=4)
         UIBuilder.button(brow, "✅ Dar Baixa / Venda", self._baixa, color=SUCCESS, width=18).pack(side="left", padx=4)
         UIBuilder.button(brow, "🗑 Remover", self._excluir, color=DANGER, width=14).pack(side="left", padx=4)
@@ -94,7 +94,7 @@ class OutletScreen(BaseScreen):
         widths = [45, 115, 130, 70, 160, 120, 75, 130, 85, 40, 75]
         anchors = ["center", "center", "center", "center", "w", "w", "center", "w", "center", "center", "center"]
         self._tree_out = UIBuilder.make_tree(tf, cols, widths, anchors)
-        self._tree_out.bind("<Double-1>", self._editar)
+        self._tree_out.bind("<Double-1>", self._detalhes)
 
     def _popular_tree(self):
         """Preenche a Treeview com base no termo digitado na busca."""
@@ -130,15 +130,15 @@ class OutletScreen(BaseScreen):
         from ui.screens.popup_outlet import PopupProdutoEntrada
         PopupProdutoEntrada(self.app, self._carregar_outlet)
 
-    def _editar(self, event=None):
+    def _detalhes(self, event=None):
         if event and self._tree_out.identify_region(event.x, event.y) != "cell":
             return
         pid = self._sel_id()
         if not pid:
-            self.app.toast.show("Selecione um produto para editar.", "aviso")
+            self.app.toast.show("Selecione um produto.", "aviso")
             return
-        from ui.screens.popup_outlet import PopupProdutoEditar
-        PopupProdutoEditar(self.app, pid, self._carregar_outlet)
+        from ui.screens.popup_outlet import PopupProdutoDetalhes
+        PopupProdutoDetalhes(self.app, pid, self._carregar_outlet)
 
     def _imprimir_direto(self):
         """Abre modal para imprimir etiqueta diretamente do banco com EAN-13."""
@@ -223,70 +223,12 @@ class OutletScreen(BaseScreen):
         UIBuilder.button(fm, "🖨️ Imprimir Agora", disparar, color=SUCCESS, fg="#000", width=24).pack(pady=14)
 
     def _baixa(self):
-        sel = self._tree_out.selection()
-        if not sel: 
-            self.app.toast.show("Selecione um produto.", "aviso")
+        pid = self._sel_id()
+        if not pid: 
+            self.app.toast.show("Selecione um produto para dar baixa.", "aviso")
             return
-
-        pid = int(sel[0])
-        item_data = next((r for r in self._todos_produtos if r[0] == pid), None)
-        if not item_data: 
-            return
-
-        nome_prod = item_data[4]
-        preco_outlet = float(item_data[8] or 0)
-        cliente_id = item_data[11]
-
-        win = tk.Toplevel(self.app)
-        win.title("Baixa de Produto")
-        win.geometry("460x300")
-        win.configure(bg=BG)
-        win.grab_set()
-
-        fm = UIBuilder.frame(win, bg=BG, padx=28, pady=18)
-        fm.pack(fill="both", expand=True)
-        UIBuilder.label(fm, f"Venda do produto: {nome_prod}", font=FONT_BODY, bg=BG).pack()
-        e_venda = UIBuilder.entry(fm, width=24)
-        e_venda.pack(pady=10)
-        e_venda.insert(0, f"{preco_outlet:.2f}".replace(".", ","))
-        e_venda.bind("<KeyRelease>", lambda _: CurrencyFormatter.mascara_moeda_dinamica(e_venda))
-        add_cred = tk.BooleanVar(value=True)
-        tk.Checkbutton(fm, text="Converter em Crédito", variable=add_cred, bg=BG, fg=TEXT).pack()
-
-        def confirmar():
-            val = txt_para_float(e_venda.get())
-            win.destroy()
-
-            def _tarefa_baixa():
-                with get_conn() as conn:
-                    conn.execute("UPDATE produtos_outlet SET status='Baixado', estoque=0 WHERE id=%s", (pid,))
-                    conn.execute("""
-                        INSERT INTO vendas_outlet (cliente_id, produto_id, quantidade, preco_pago, criado) 
-                        VALUES (%s,%s,%s,%s,%s)
-                    """, (cliente_id, pid, 1, val, agora()))
-                    if add_cred.get():
-                        conn.execute("UPDATE clientes SET saldo = COALESCE(saldo,0) + %s WHERE id=%s", (val, cliente_id))
-                        conn.execute("""
-                            INSERT INTO historico_credito (cliente_id,tipo,valor,motivo,criado) 
-                            VALUES (%s,%s,%s,%s,%s)
-                        """, (cliente_id, "entrada", val, f"Venda outlet: {nome_prod}", agora()))
-                    conn.commit()
-                cache.invalidate_prefix("outlet")
-                cache.invalidate_prefix("dashboard")
-                cache.invalidate_prefix("creditos")
-                cache.invalidate_prefix("clientes")
-
-            def _ao_concluir_baixa(_):
-                self.app.toast.show("Baixa realizada com sucesso!", "sucesso")
-                self._carregar_outlet()
-
-            self.app.executar_async(
-                funcao_task=_tarefa_baixa,
-                callback_sucesso=_ao_concluir_baixa,
-                mensagem="Registrando baixa e crédito..."
-            )
-
-        UIBuilder.button(fm, "Confirmar Baixa", confirmar, color=SUCCESS).pack(pady=10)
+        from ui.screens.popup_outlet import PopupBaixaProduto
+        PopupBaixaProduto(self.app, pid, self._carregar_outlet)
 
     def _excluir(self):
         sel = self._tree_out.selection()

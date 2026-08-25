@@ -1,10 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
 ## [2.2.1] - 2026-08-25
-- Edição Completa de Produtos do Outlet e Atalho de Duplo Clique ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py), [ui/screens/outlet_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/outlet_screen.py)):
-  - Implementação do modal `PopupProdutoEditar` para edição abrangente de produtos Outlet: alteração/transferência de proprietário (cliente), reclassificação hierárquica em cascata (Tipo -> Marca -> Modelo), ajuste de atributos (gráfico/estampa, cor, numeração/tamanho), valores (preço original e preço outlet), quantidade/estoque, status e recálculo dinâmico de SKU.
-  - Inclusão do botão `✏️ Editar` na barra inferior de ações da tela de Outlet.
-  - Vinculação de evento de duplo clique (`<Double-1>`) na tabela de produtos Outlet para abertura instantânea do modal de edição com validação de clique em célula.
+- Modal de Detalhes do Produto, Ações de Edição/Baixa e Toggle de Crédito Estilizado ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py), [ui/screens/outlet_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/outlet_screen.py)):
+  - Criação do modal `PopupProdutoDetalhes` com visualização completa dos dados do produto (Identificação/SKU/EAN, Características, Valores/Estoque e Proprietário) e status em badge colorido.
+  - Botões de ação direta no modal de detalhes: `✏️ Editar Produto` (abre `PopupProdutoEditar`), `✅ Dar Baixa / Venda` (abre `PopupBaixaProduto`) e `🖨️ Imprimir Etiqueta`.
+  - Configuração do duplo clique (`<Double-1>`) e botão `👁️ Detalhes` na tela de Outlet para abertura direta do modal de detalhes.
+  - Implementação do modal `PopupBaixaProduto` com Toggle Card Moderno para conversão em crédito do cliente: substitui o Checkbutton nativo com bug visual escuro por card clicável com badge (`🟢 CRÉDITO ATIVO` / `⚪ DESATIVADO`), realce verde e descrição clara.
 - Atalho de Duplo Clique para Lançamento de Crédito ([ui/screens/creditos_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/creditos_screen.py)):
   - Adicionado binding de duplo clique (`<Double-1>`) na tabela da tela de gestão de créditos para abrir diretamente o modal de lançamento de crédito/débito (`PopupLancarCredito`) do cliente selecionado.
   - Validação de região de clique (`identify_region`) para ignorar duplo clique fora de células (como cabeçalhos e espaços vazios).
