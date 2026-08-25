@@ -21,6 +21,7 @@ from config import (
     FONT_CODE,
 )
 from ui.components.base import UIBuilder
+from core.cache import cache
 from core.database import (
     get_conn,
     obter_tipos,

@@ -1,6 +1,8 @@
 # Histórico de Versões - Vale Presente Manager
 
 ## [2.2.1] - 2026-08-25
+- Correção de Importação de Cache no Módulo Outlet ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py)):
+  - Importação global de `from core.cache import cache` no topo do módulo, eliminando erro de `name 'cache' is not defined` durante a finalização de baixa de produto e crédito.
 - Correção de Persistência na Edição de Produtos Outlet ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py)):
   - Adicionado `conn.commit()` explícito na rotina de salvamento de `PopupProdutoEditar`, corrigindo bug onde a atualização de Status, dados e atributos do produto não era gravada no banco de dados Neon.
   - Sincronização automática do campo `estoque` conforme o status definido (`estoque=0` para "Baixado", ou quantidade total para "Disponível").
