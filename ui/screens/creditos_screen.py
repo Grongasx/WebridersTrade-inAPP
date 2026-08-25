@@ -80,6 +80,7 @@ class CreditosScreen(BaseScreen):
         anchors = ["center", "w", "center", "center"]
         self._tree_cred = UIBuilder.make_tree(tf, cols, widths, anchors)
         self._tree_cred.tag_configure("com_saldo", foreground=SUCCESS)
+        self._tree_cred.bind("<Double-1>", self._lancar)
 
     def _popular_tree(self):
         """Preenche a Treeview com base no termo digitado na busca."""
@@ -118,7 +119,9 @@ class CreditosScreen(BaseScreen):
             return None
         return int(self._tree_cred.item(sel[0], "values")[0])
 
-    def _lancar(self):
+    def _lancar(self, event=None):
+        if event and self._tree_cred.identify_region(event.x, event.y) != "cell":
+            return
         cid = self._sel_id()
         if cid:
             from ui.screens.popup_credito import PopupLancarCredito

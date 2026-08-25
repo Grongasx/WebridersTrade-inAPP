@@ -1,5 +1,14 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [2.2.1] - 2026-08-25
+- Edição Completa de Produtos do Outlet e Atalho de Duplo Clique ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py), [ui/screens/outlet_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/outlet_screen.py)):
+  - Implementação do modal `PopupProdutoEditar` para edição abrangente de produtos Outlet: alteração/transferência de proprietário (cliente), reclassificação hierárquica em cascata (Tipo -> Marca -> Modelo), ajuste de atributos (gráfico/estampa, cor, numeração/tamanho), valores (preço original e preço outlet), quantidade/estoque, status e recálculo dinâmico de SKU.
+  - Inclusão do botão `✏️ Editar` na barra inferior de ações da tela de Outlet.
+  - Vinculação de evento de duplo clique (`<Double-1>`) na tabela de produtos Outlet para abertura instantânea do modal de edição com validação de clique em célula.
+- Atalho de Duplo Clique para Lançamento de Crédito ([ui/screens/creditos_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/creditos_screen.py)):
+  - Adicionado binding de duplo clique (`<Double-1>`) na tabela da tela de gestão de créditos para abrir diretamente o modal de lançamento de crédito/débito (`PopupLancarCredito`) do cliente selecionado.
+  - Validação de região de clique (`identify_region`) para ignorar duplo clique fora de células (como cabeçalhos e espaços vazios).
+
 ## [2.2.0] - 2026-08-20
 - Fluxo de Diálogo Contextual de Rastreamento e Validação na Transição de Colunas do Kanban ([ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [ui/screens/garantias_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/garantias_screen.py), [config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/config.py)):
   - Implementação do modal `PopupMoverEtapaGarantia` acionado automaticamente ao arrastar e soltar cards entre colunas no quadro Kanban.

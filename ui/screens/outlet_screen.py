@@ -83,6 +83,7 @@ class OutletScreen(BaseScreen):
         brow = UIBuilder.frame(self.content, padx=28, pady=8)
         brow.pack(side="bottom", fill="x")
         UIBuilder.button(brow, "➕ Novo Produto / SKU", self._entrada, color=GOLD, fg="#000", width=20).pack(side="left", padx=4)
+        UIBuilder.button(brow, "✏️ Editar", self._editar, color=BG3, width=12).pack(side="left", padx=4)
         UIBuilder.button(brow, "🖨️ Imprimir Etiqueta", self._imprimir_direto, color=ACCENT, width=20).pack(side="left", padx=4)
         UIBuilder.button(brow, "✅ Dar Baixa / Venda", self._baixa, color=SUCCESS, width=18).pack(side="left", padx=4)
         UIBuilder.button(brow, "🗑 Remover", self._excluir, color=DANGER, width=14).pack(side="left", padx=4)
@@ -93,6 +94,7 @@ class OutletScreen(BaseScreen):
         widths = [45, 115, 130, 70, 160, 120, 75, 130, 85, 40, 75]
         anchors = ["center", "center", "center", "center", "w", "w", "center", "w", "center", "center", "center"]
         self._tree_out = UIBuilder.make_tree(tf, cols, widths, anchors)
+        self._tree_out.bind("<Double-1>", self._editar)
 
     def _popular_tree(self):
         """Preenche a Treeview com base no termo digitado na busca."""
@@ -127,6 +129,16 @@ class OutletScreen(BaseScreen):
     def _entrada(self):
         from ui.screens.popup_outlet import PopupProdutoEntrada
         PopupProdutoEntrada(self.app, self._carregar_outlet)
+
+    def _editar(self, event=None):
+        if event and self._tree_out.identify_region(event.x, event.y) != "cell":
+            return
+        pid = self._sel_id()
+        if not pid:
+            self.app.toast.show("Selecione um produto para editar.", "aviso")
+            return
+        from ui.screens.popup_outlet import PopupProdutoEditar
+        PopupProdutoEditar(self.app, pid, self._carregar_outlet)
 
     def _imprimir_direto(self):
         """Abre modal para imprimir etiqueta diretamente do banco com EAN-13."""
