@@ -191,7 +191,7 @@ class GarantiasScreen(BaseScreen):
             scroll_area = UIBuilder.frame(col_box, bg=BG2)
             scroll_area.pack(fill="both", expand=True)
 
-            canvas = tk.Canvas(scroll_area, bg=BG2, highlightthickness=0, yscrollincrement=1)
+            canvas = tk.Canvas(scroll_area, bg=BG2, highlightthickness=0)
             vsb = ttk.Scrollbar(scroll_area, orient="vertical", command=canvas.yview)
             canvas.configure(yscrollcommand=vsb.set)
 
@@ -435,18 +435,10 @@ class GarantiasScreen(BaseScreen):
                 "is_dragging": False, "start_x": 0, "start_y": 0, "item_data": None
             }
 
-        # Scroll suave e controlado com MouseWheel no canvas da coluna
+        # Scroll com MouseWheel no canvas da coluna
         def on_mouse_wheel(event):
             if col_canvas.winfo_exists():
-                if event.num == 4:
-                    col_canvas.yview_scroll(-30, "units")
-                elif event.num == 5:
-                    col_canvas.yview_scroll(30, "units")
-                else:
-                    delta_px = int(-1 * (event.delta / 4))
-                    if delta_px == 0:
-                        delta_px = -30 if event.delta > 0 else 30
-                    col_canvas.yview_scroll(delta_px, "units")
+                col_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
         # Aplica os eventos no card e em todos os seus elementos filhos
         todos_elementos = [widget] + widget.winfo_children()
