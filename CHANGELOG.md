@@ -13,7 +13,11 @@
   - Panorama visual do estoque e vendas do Outlet com barras segmentadas de proporção.
   - Feed de Atividades Recentes com seletor dinâmico em abas (`🎟️ Vales`, `🛡️ Garantias`, `🏷️ Outlet`).
   - Ranking Top 5 Clientes com maior saldo e fidelidade.
-  - Barra de Ações Rápidas integradas para criação instantânea de clientes, vales, entrada de outlet e garantias.
+  - Barra de Ações Rápidas com Grid 100% Responsivo e Distribuição Uniforme: adaptação automática entre 6 colunas (telas largas) e 3x2 colunas (telas compactas), garantindo espaçamento perfeito e eliminando compressão dos botões.
+  - Hero KPI Cards com grid proporcional (`kpi_col`), prevenindo distorção métrica em redimensionamento de janela.
+- Expansão da Skill de Release Notes & Versionamento ([.agents/skills/version-changelog/SKILL.md](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/version-changelog/SKILL.md)):
+  - Adicionados padrões de formatação estruturada de Release Notes para GitHub Releases e modal in-app (`UpdateModal`).
+  - Definição do checklist oficial de lançamento e sincronização de versão.
 - Correção Defensiva Global de Importações de Cache ([utils/helpers.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/helpers.py), [ui/screens/popup_credito.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_credito.py), [ui/screens/popup_config.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_config.py), [ui/screens/popup_cliente.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_cliente.py), [ui/screens/novo_vale_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/novo_vale_screen.py), [ui/screens/novo_cliente_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/novo_cliente_screen.py)):
   - Importação global de `from core.cache import cache` no topo de todos os módulos, eliminando integralmente qualquer ocorrência de `name 'cache' is not defined`.
 

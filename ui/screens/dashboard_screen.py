@@ -216,54 +216,24 @@ class DashboardScreen(BaseScreen):
         wrap.pack(fill="both", expand=True)
 
         # ═══════════════════════════════════════════
-        # Linha 1: Hero KPI Cards (4 Cartões Executivos)
+        # Linha 1: Hero KPI Cards (Grid Proporcional 4 Colunas)
         # ═══════════════════════════════════════════
         row_kpi = UIBuilder.frame(wrap, bg=BG)
         row_kpi.pack(fill="x", pady=(0, 14))
 
-        # Card 1: Crédito Total em Circulação
-        self._hero_kpi_card(
-            row_kpi,
-            badge="💰 CRÉDITO ATIVO",
-            badge_cor=SUCCESS,
-            valor=brl(dados["credito_total_circulacao"]),
-            titulo="Crédito Total em Circulação",
-            subinfo=f"Saldos: {brl(dados['soma_saldo_clientes'])} • Vales: {brl(dados['soma_disponiveis'])}",
-            icone="💳"
-        )
+        for c_idx in range(4):
+            row_kpi.grid_columnconfigure(c_idx, weight=1, uniform="kpi_col")
 
-        # Card 2: Vales Presente
-        self._hero_kpi_card(
-            row_kpi,
-            badge="🎟️ VALES",
-            badge_cor=GOLD,
-            valor=f"{dados['disponiveis']} Ativos",
-            titulo="Vales Disponíveis / Emitidos",
-            subinfo=f"{dados['usados']} resgatados ({dados['taxa_conversao']}%) • {dados['vencidos']} vencidos",
-            icone="🎁"
-        )
+        kpi_list = [
+            ("💰 CRÉDITO ATIVO", SUCCESS, brl(dados["credito_total_circulacao"]), "Crédito Total em Circulação", f"Saldos: {brl(dados['soma_saldo_clientes'])} • Vales: {brl(dados['soma_disponiveis'])}", "💳"),
+            ("🎟️ VALES", GOLD, f"{dados['disponiveis']} Ativos", "Vales Disponíveis / Emitidos", f"{dados['usados']} resgatados ({dados['taxa_conversao']}%) • {dados['vencidos']} vencidos", "🎁"),
+            ("📦 OUTLET", "#3B82F6", f"{dados['outlet_disp']} Peças", "Estoque Outlet Disponível", f"Avaliação: {brl(dados['valor_estoque_outlet'])} • {dados['outlet_baixados']} baixados", "🏷️"),
+            ("🛡️ RMA", "#8B5CF6", f"{dados['garantias_ativas']} Chamados", "Garantias em Andamento", f"{dados['garantias_concluidas']} no histórico • {dados['garantias_canceladas']} canceladas", "⚡"),
+        ]
 
-        # Card 3: Outlet & Trade-in
-        self._hero_kpi_card(
-            row_kpi,
-            badge="📦 OUTLET",
-            badge_cor="#3B82F6",
-            valor=f"{dados['outlet_disp']} Peças",
-            titulo="Estoque Outlet Disponível",
-            subinfo=f"Avaliação: {brl(dados['valor_estoque_outlet'])} • {dados['outlet_baixados']} baixados",
-            icone="🏷️"
-        )
-
-        # Card 4: Garantias & RMA
-        self._hero_kpi_card(
-            row_kpi,
-            badge="🛡️ RMA",
-            badge_cor="#8B5CF6",
-            valor=f"{dados['garantias_ativas']} Chamados",
-            titulo="Garantias em Andamento",
-            subinfo=f"{dados['garantias_concluidas']} concluídas no histórico • {dados['garantias_canceladas']} canceladas",
-            icone="⚡"
-        )
+        for col_idx, (badge, b_cor, val, tit, sub, ico) in enumerate(kpi_list):
+            kc = self._hero_kpi_card(row_kpi, badge, b_cor, val, tit, sub, ico)
+            kc.grid(row=0, column=col_idx, padx=4, sticky="nsew")
 
         # ═══════════════════════════════════════════
         # Linha 2: Seção Principal Dividida (Gráficos vs Feed / Rank)
@@ -358,26 +328,62 @@ class DashboardScreen(BaseScreen):
             UIBuilder.label(card_top, "Nenhum cliente cadastrado.", bg=BG2, fg=TEXT_DIM).pack(pady=6)
 
         # ═══════════════════════════════════════════
-        # Linha 3: Barra de Atalhos e Ações Rápidas
+        # Linha 3: Barra de Atalhos e Ações Rápidas (Grid 100% Responsivo)
         # ═══════════════════════════════════════════
-        card_acoes = UIBuilder.card(wrap, bg=BG2, px=18, py=12)
-        card_acoes.pack(fill="x", pady=(8, 10))
+        card_acoes = UIBuilder.card(wrap, bg=BG2, px=18, py=14)
+        card_acoes.pack(fill="x", pady=(8, 12))
 
-        UIBuilder.label(card_acoes, "⚡ Ações Rápidas", font=FONT_H2, bg=BG2, fg=GOLD).pack(anchor="w", pady=(0, 6))
+        UIBuilder.label(card_acoes, "⚡ Ações Rápidas", font=FONT_H2, bg=BG2, fg=GOLD).pack(anchor="w", pady=(0, 8))
         b_bar = UIBuilder.frame(card_acoes, bg=BG2)
         b_bar.pack(fill="x")
 
-        UIBuilder.button(b_bar, "➕ Novo Cliente", lambda: self.app.show("novo_cli"), color=BG3, width=16, pady=6).pack(side="left", padx=(0, 6))
-        UIBuilder.button(b_bar, "✨ Emitir Vale", lambda: self.app.show("novo_vale"), color=GOLD, fg="#000", width=16, pady=6).pack(side="left", padx=6)
-        UIBuilder.button(b_bar, "📦 Entrada Outlet", self._abrir_entrada_outlet, color=BG3, width=16, pady=6).pack(side="left", padx=6)
-        UIBuilder.button(b_bar, "🛡️ Nova Garantia", self._abrir_nova_garantia, color=BG3, width=16, pady=6).pack(side="left", padx=6)
-        UIBuilder.button(b_bar, "📜 Histórico Garantias", self._abrir_historico_garantias, color=BG3, width=18, pady=6).pack(side="left", padx=6)
-        UIBuilder.button(b_bar, "💳 Lançar Créditos", lambda: self.app.show("creditos"), color="#22C55E", fg="#000", width=16, pady=6).pack(side="right")
+        botoes_acoes = [
+            ("➕ Novo Cliente", lambda: self.app.show("novo_cli"), BG3, TEXT),
+            ("✨ Emitir Vale", lambda: self.app.show("novo_vale"), GOLD, "#000"),
+            ("📦 Entrada Outlet", self._abrir_entrada_outlet, BG3, TEXT),
+            ("🛡️ Nova Garantia", self._abrir_nova_garantia, BG3, TEXT),
+            ("📜 Histórico RMA", self._abrir_historico_garantias, BG3, TEXT),
+            ("💳 Lançar Créditos", lambda: self.app.show("creditos"), SUCCESS, "#000"),
+        ]
+
+        self._btn_widgets = []
+        for rotulo, cmd, cor_bg, cor_fg in botoes_acoes:
+            btn = UIBuilder.button(b_bar, rotulo, cmd, color=cor_bg, fg=cor_fg, pady=8)
+            self._btn_widgets.append(btn)
+
+        def _reorganizar_acoes(event=None):
+            w = event.width if event else b_bar.winfo_width()
+            if w <= 1:
+                w = 1000
+
+            for btn in self._btn_widgets:
+                btn.grid_forget()
+
+            if w < 920:
+                # 3 colunas x 2 linhas
+                for c in range(3):
+                    b_bar.grid_columnconfigure(c, weight=1, uniform="act_3")
+                for c in range(3, 6):
+                    b_bar.grid_columnconfigure(c, weight=0, uniform="")
+
+                for idx, btn in enumerate(self._btn_widgets):
+                    r = idx // 3
+                    c = idx % 3
+                    btn.grid(row=r, column=c, padx=3, pady=3, sticky="ew")
+            else:
+                # 6 colunas x 1 linha (distribuição perfeita)
+                for c in range(6):
+                    b_bar.grid_columnconfigure(c, weight=1, uniform="act_6")
+
+                for idx, btn in enumerate(self._btn_widgets):
+                    btn.grid(row=0, column=idx, padx=3, pady=2, sticky="ew")
+
+        b_bar.bind("<Configure>", _reorganizar_acoes)
+        _reorganizar_acoes()
 
     def _hero_kpi_card(self, parent, badge, badge_cor, valor, titulo, subinfo, icone):
         """Cria cartão métrico estilo KPI Executivo."""
         kc = UIBuilder.card(parent, bg=BG2, px=16, py=14)
-        kc.pack(side="left", fill="x", expand=True, padx=4)
 
         # Header do Card com Badge e Ícone
         hdr = UIBuilder.frame(kc, bg=BG2)
@@ -392,6 +398,8 @@ class DashboardScreen(BaseScreen):
         # Título e Subinfo
         UIBuilder.label(kc, titulo, font=("Segoe UI", 9, "bold"), bg=BG2, fg=TEXT_DIM).pack(anchor="w")
         UIBuilder.label(kc, subinfo, font=("Segoe UI", 8), bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(2, 0))
+
+        return kc
 
     def _draw_donut_chart(self, parent, disponiveis, usados, vencidos, taxa_conv):
         """Desenha gráfico Donut com renderização vetorial anti-aliasing via PIL e overlay de texto."""
