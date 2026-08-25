@@ -384,16 +384,24 @@ class PopupDetalhesGarantia:
         f_st = UIBuilder.frame(hdr, bg=BG2)
         f_st.pack(side="right")
 
-        UIBuilder.label(f_st, "Etapa Atual do Fluxo:", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="e")
-        cb_st = ttk.Combobox(
-            f_st,
-            textvariable=self.v_status,
-            values=[k for k, _, _ in ETAPAS_GARANTIA],
-            state="readonly",
-            font=("Segoe UI", 10, "bold"),
-            width=26
-        )
-        cb_st.pack(anchor="e", pady=(2, 0))
+        if d[2] in ("finalizada", "cancelada", "concluida"):
+            badge_cor = SUCCESS if d[2] in ("finalizada", "concluida") else DANGER
+            badge_txt = "🏁 FINALIZADA (Histórico)" if d[2] in ("finalizada", "concluida") else "🚫 CANCELADA (Histórico)"
+            concl_str = d[25].strftime("%d/%m/%Y às %H:%M") if (d[25] and hasattr(d[25], 'strftime')) else (str(d[25]) if d[25] else "—")
+            
+            UIBuilder.label(f_st, badge_txt, font=("Segoe UI", 11, "bold"), bg=BG2, fg=badge_cor).pack(anchor="e")
+            UIBuilder.label(f_st, f"Concluído em: {concl_str}", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="e")
+        else:
+            UIBuilder.label(f_st, "Etapa Atual do Fluxo:", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="e")
+            cb_st = ttk.Combobox(
+                f_st,
+                textvariable=self.v_status,
+                values=[k for k, _, _ in ETAPAS_GARANTIA],
+                state="readonly",
+                font=("Segoe UI", 10, "bold"),
+                width=26
+            )
+            cb_st.pack(anchor="e", pady=(2, 0))
 
         # Mapeia nomes legiveis
         status_labels = {k: lbl for k, lbl, _ in ETAPAS_GARANTIA}
@@ -549,7 +557,48 @@ class PopupDetalhesGarantia:
         UIBuilder.button(b_bar, "🗑️ Excluir Chamado", self._excluir, color=DANGER, width=18).pack(side="left", ipady=5)
         UIBuilder.button(b_bar, "✕ Fechar", self.win.destroy, color=BG3, width=12).pack(side="left", padx=8, ipady=5)
 
-        UIBuilder.button(b_bar, "💾 Salvar Alterações", self._salvar_edicao, color="#22C55E", width=22).pack(side="right", ipady=5)
+        if d[2] in ("finalizada", "cancelada", "concluida"):
+            UIBuilder.button(b_bar, "🔄 Reabrir para Kanban", self._reabrir_chamado, color=GOLD, fg="#000", width=22).pack(side="right", padx=(8, 0), ipady=5)
+            UIBuilder.button(b_bar, "💾 Salvar Observações", self._salvar_edicao, color="#22C55E", width=20).pack(side="right", ipady=5)
+        else:
+            UIBuilder.button(b_bar, "🏁 Finalizar Garantia", self._abrir_finalizar, color=GOLD, fg="#000", width=20).pack(side="right", padx=(8, 0), ipady=5)
+            UIBuilder.button(b_bar, "💾 Salvar Alterações", self._salvar_edicao, color="#22C55E", width=20).pack(side="right", ipady=5)
+
+    def _abrir_finalizar(self):
+        PopupFinalizarGarantia(self.app, self.garantia_id, self.dados[1], self._ao_concluir_finalizacao)
+
+    def _ao_concluir_finalizacao(self):
+        self.win.destroy()
+        if self.callback:
+            self.callback()
+
+    def _reabrir_chamado(self):
+        if not messagebox.askyesno("Reabrir Chamado", f"Deseja reabrir o chamado {self.dados[1]} de volta para o quadro Kanban ativo?", parent=self.win):
+            return
+
+        def _task_db():
+            with get_conn() as conn:
+                conn.execute("""
+                    UPDATE garantias SET
+                        status = 'solicitacao_cliente',
+                        concluido_em = NULL,
+                        atualizado = %s
+                    WHERE id = %s
+                """, (agora(), self.garantia_id))
+                conn.commit()
+                cache.invalidate_prefix("garantias")
+
+        def _ao_concluir(_):
+            self.app.toast.show("Chamado reaberto no Kanban com sucesso!", "sucesso")
+            self.win.destroy()
+            if self.callback:
+                self.callback()
+
+        self.app.executar_async(
+            funcao_task=_task_db,
+            callback_sucesso=_ao_concluir,
+            mensagem="Reabrindo chamado..."
+        )
 
     def _salvar_edicao(self):
         novo_status = self.v_status.get()
@@ -965,4 +1014,345 @@ class PopupMoverEtapaGarantia:
         self.win.destroy()
         if self.callback_cancelar:
             self.callback_cancelar()
+
+
+class PopupFinalizarGarantia:
+    """Modal para concluir ou cancelar um chamado de garantia com registro de desfecho e nota."""
+
+    def __init__(self, app, garantia_id, protocolo, callback_concluido=None):
+        self.app = app
+        self.garantia_id = garantia_id
+        self.protocolo = protocolo
+        self.callback = callback_concluido
+        self._build()
+
+    def _build(self):
+        self.win = tk.Toplevel(self.app)
+        self.win.title(f"Finalizar Processo de Garantia — {self.protocolo}")
+        self.win.geometry("560x510")
+        self.win.configure(bg=BG)
+        self.win.resizable(False, False)
+        self.win.grab_set()
+
+        card = UIBuilder.card(self.win, bg=BG2, px=26, py=20)
+        card.pack(fill="both", expand=True, padx=16, pady=16)
+
+        # Cabeçalho
+        UIBuilder.label(card, f"🏁 Finalizar Garantia: {self.protocolo}", font=FONT_H2, bg=BG2, fg=GOLD).pack(anchor="w", pady=(0, 4))
+        UIBuilder.label(
+            card, 
+            "Ao finalizar ou cancelar, este chamado sairá das colunas ativas do Kanban e será arquivado no Histórico Global.",
+            font=FONT_SMALL,
+            bg=BG2,
+            fg=TEXT_DIM,
+            wraplength=480,
+            justify="left"
+        ).pack(anchor="w", pady=(0, 14))
+
+        # 1. Tipo de Desfecho (Finalizada vs Cancelada)
+        v_tipo = tk.StringVar(value="finalizada")
+        f_tipo = UIBuilder.frame(card, bg=BG2)
+        f_tipo.pack(fill="x", pady=(0, 12))
+
+        UIBuilder.label(f_tipo, "Desfecho do Processo *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(0, 4))
+        
+        r_box = UIBuilder.frame(f_tipo, bg=BG2)
+        r_box.pack(fill="x")
+        tk.Radiobutton(
+            r_box, text="✅ Finalizada / Concluída", variable=v_tipo, value="finalizada",
+            bg=BG2, fg=SUCCESS, selectcolor=BG3, activebackground=BG2, activeforeground=SUCCESS, font=("Segoe UI", 10, "bold")
+        ).pack(side="left", padx=(0, 16))
+
+        tk.Radiobutton(
+            r_box, text="🚫 Cancelada / Encerrada", variable=v_tipo, value="cancelada",
+            bg=BG2, fg=DANGER, selectcolor=BG3, activebackground=BG2, activeforeground=DANGER, font=("Segoe UI", 10, "bold")
+        ).pack(side="left")
+
+        # 2. Motivo / Resolução
+        UIBuilder.label(card, "Motivo / Resolução Principal *", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(0, 2))
+        v_motivo = tk.StringVar(value="Produto trocado por novo")
+        motivos_opcoes = [
+            "Produto trocado por novo",
+            "Produto reparado com sucesso pelo fabricante",
+            "Crédito / Vale gerado para o cliente",
+            "Reembolso financeiro efetuado",
+            "Cancelado a pedido do cliente",
+            "Garantia recusada (fora de prazo / mau uso)",
+            "Processo finalizado com sucesso",
+            "Outro / Ver parecer detalhado"
+        ]
+        cb_motivo = ttk.Combobox(card, textvariable=v_motivo, values=motivos_opcoes, font=FONT_BODY)
+        cb_motivo.pack(fill="x", ipady=4, pady=(0, 12))
+
+        # 3. Parecer / Parecer Final
+        UIBuilder.label(card, "Parecer Final / Observações de Encerramento (Opcional):", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(anchor="w", pady=(0, 2))
+        txt_obs = tk.Text(card, bg=BG3, fg=TEXT, font=FONT_SMALL, height=4, relief="flat", bd=4, wrap="word")
+        txt_obs.pack(fill="x", pady=(0, 16))
+
+        # Rodapé de Ações
+        f_botoes = UIBuilder.frame(card, bg=BG2)
+        f_botoes.pack(fill="x", side="bottom")
+
+        def _confirmar():
+            status_final = v_tipo.get()
+            motivo_sel = v_motivo.get().strip() or "Finalizado"
+            parecer = txt_obs.get("1.0", tk.END).strip()
+
+            data_hora = agora().strftime("%d/%m/%Y %H:%M")
+            nota_fechamento = f"[{data_hora} - {status_final.upper()}]: Motivo: {motivo_sel}"
+            if parecer:
+                nota_fechamento += f" | Obs: {parecer}"
+
+            self.win.destroy()
+
+            def _task_db():
+                with get_conn() as conn:
+                    obs_antiga = conn.execute("SELECT COALESCE(observacoes, '') FROM garantias WHERE id=%s", (self.garantia_id,)).fetchone()[0]
+                    obs_completa = f"{obs_antiga}\n{nota_fechamento}".strip() if obs_antiga else nota_fechamento
+
+                    conn.execute("""
+                        UPDATE garantias SET
+                            status = %s,
+                            concluido_em = %s,
+                            observacoes = %s,
+                            atualizado = %s
+                        WHERE id = %s
+                    """, (status_final, agora(), obs_completa, agora(), self.garantia_id))
+                    conn.commit()
+                    cache.invalidate_prefix("garantias")
+
+            def _ao_fim(_):
+                self.app.toast.show(f"Garantia {self.protocolo} finalizada e arquivada no histórico!", "sucesso")
+                if self.callback:
+                    self.callback()
+
+            self.app.executar_async(
+                funcao_task=_task_db,
+                callback_sucesso=_ao_fim,
+                mensagem=f"Finalizando garantia {self.protocolo}..."
+            )
+
+        UIBuilder.button(f_botoes, "✕ Cancelar", self.win.destroy, color=BG3, width=12).pack(side="left")
+        UIBuilder.button(f_botoes, "🏁 Confirmar Encerramento", _confirmar, color=SUCCESS, fg="#000", width=24).pack(side="right")
+
+
+class PopupHistoricoGarantias:
+    """Modal do Histórico Global de Garantias Finalizadas e Canceladas."""
+
+    def __init__(self, app, callback_atualizar_pai=None):
+        self.app = app
+        self.callback = callback_atualizar_pai
+        self.win = None
+        self._todos_historico = []
+        self.v_busca = tk.StringVar()
+        self.v_filtro_status = tk.StringVar(value="Todos")
+        self._build()
+        self._carregar_dados()
+
+    def _build(self):
+        self.win = tk.Toplevel(self.app)
+        self.win.title("📜 Histórico Global de Garantias — Finalizadas & Canceladas")
+        self.win.geometry("1140x690")
+        self.win.minsize(980, 560)
+        self.win.configure(bg=BG)
+        self.win.grab_set()
+
+        main_fm = UIBuilder.card(self.win, bg=BG2, px=22, py=18)
+        main_fm.pack(fill="both", expand=True, padx=14, pady=14)
+
+        # Cabeçalho
+        h_row = UIBuilder.frame(main_fm, bg=BG2)
+        h_row.pack(fill="x", pady=(0, 10))
+
+        UIBuilder.label(h_row, "📜 Histórico Global de Garantias", font=FONT_TITLE, bg=BG2, fg=GOLD).pack(side="left")
+        self.lbl_contagem = UIBuilder.label(h_row, "Carregando...", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM)
+        self.lbl_contagem.pack(side="right")
+
+        # Barra de Filtros e Busca
+        f_filtros = UIBuilder.frame(main_fm, bg=BG2)
+        f_filtros.pack(fill="x", pady=(0, 10))
+
+        UIBuilder.label(f_filtros, "🔍 Buscar:", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(side="left", padx=(0, 4))
+        e_busca = UIBuilder.entry(f_filtros, var=self.v_busca, width=32)
+        e_busca.pack(side="left", ipady=3)
+        self.v_busca.trace_add("write", lambda *_: self._popular_tree())
+
+        UIBuilder.label(f_filtros, "Status:", font=FONT_SMALL, bg=BG2, fg=TEXT_DIM).pack(side="left", padx=(18, 4))
+        cb_f = ttk.Combobox(
+            f_filtros,
+            textvariable=self.v_filtro_status,
+            values=["Todos", "Finalizadas", "Canceladas"],
+            state="readonly",
+            font=FONT_BODY,
+            width=16
+        )
+        cb_f.set("Todos")
+        cb_f.pack(side="left")
+        cb_f.bind("<<ComboboxSelected>>", lambda *_: self._popular_tree())
+
+        # Tabela Treeview
+        tf = UIBuilder.frame(main_fm, bg=BG2)
+        tf.pack(fill="both", expand=True, pady=(0, 10))
+
+        cols = ("ID", "Protocolo", "Status", "Cliente", "Produto", "Fornecedor", "Data Abertura", "Data Conclusão")
+        widths = [45, 110, 115, 180, 200, 140, 115, 115]
+        anchors = ["center", "center", "center", "w", "w", "w", "center", "center"]
+
+        self.tv = UIBuilder.make_tree(tf, cols, widths, anchors)
+        self.tv.tag_configure("tag_finalizada", foreground=SUCCESS)
+        self.tv.tag_configure("tag_cancelada", foreground=DANGER)
+
+        self.tv.bind("<Double-1>", self._abrir_detalhe)
+
+        # Rodapé de Ações
+        b_bar = UIBuilder.frame(main_fm, bg=BG2)
+        b_bar.pack(fill="x")
+
+        UIBuilder.button(b_bar, "👁️ Ver Detalhes", self._abrir_detalhe, color=BG3, width=16).pack(side="left", padx=(0, 6))
+        UIBuilder.button(b_bar, "🔄 Reabrir para Kanban", self._reabrir_selecionado, color=GOLD, fg="#000", width=22).pack(side="left", padx=6)
+        UIBuilder.button(b_bar, "🗑️ Excluir Registro", self._excluir_selecionado, color=DANGER, width=18).pack(side="left", padx=6)
+        UIBuilder.button(b_bar, "✕ Fechar", self.win.destroy, color=BG3, width=12).pack(side="right")
+
+    def _carregar_dados(self):
+        def _task():
+            with get_conn() as conn:
+                return conn.execute("""
+                    SELECT g.id, g.protocolo, g.status,
+                           COALESCE(c.nome, 'Sem Cliente') as cli_nome,
+                           CONCAT(COALESCE(g.marca, ''), ' ', COALESCE(g.modelo, g.tipo_produto, '')) as prod_nome,
+                           COALESCE(g.fornecedor_nome, '—') as fornecedor,
+                           g.criado, g.concluido_em,
+                           COALESCE(c.cpf, '') as cli_cpf,
+                           COALESCE(g.numero_serie, '') as serial
+                    FROM garantias g
+                    LEFT JOIN clientes c ON g.cliente_id = c.id
+                    WHERE g.status IN ('finalizada', 'cancelada', 'concluida')
+                    ORDER BY COALESCE(g.concluido_em, g.atualizado, g.criado) DESC
+                """).fetchall()
+
+        def _ao_carregar(rows):
+            self._todos_historico = rows or []
+            self._popular_tree()
+
+        self.app.executar_async(
+            funcao_task=_task,
+            callback_sucesso=_ao_carregar,
+            mensagem="Carregando histórico global de garantias..."
+        )
+
+    def _popular_tree(self):
+        if not self.tv:
+            return
+
+        for child in self.tv.get_children():
+            self.tv.delete(child)
+
+        termo = self.v_busca.get().strip().lower()
+        filtro_st = self.v_filtro_status.get().lower()
+
+        filtrados = 0
+        for r in self._todos_historico:
+            # r = (id, protocolo, status, cli_nome, prod_nome, fornecedor, criado, concluido_em, cli_cpf, serial)
+            g_id, proto, status, cli_nome, prod_nome, fornecedor, criado, concluido_em, cli_cpf, serial = r
+
+            # Filtro por Status
+            if filtro_st == "finalizadas" and status not in ("finalizada", "concluida"):
+                continue
+            if filtro_st == "canceladas" and status != "cancelada":
+                continue
+
+            # Filtro de Busca
+            if termo:
+                match = (
+                    termo in proto.lower() or
+                    termo in cli_nome.lower() or
+                    termo in prod_nome.lower() or
+                    termo in fornecedor.lower() or
+                    termo in cli_cpf.lower() or
+                    termo in serial.lower()
+                )
+                if not match:
+                    continue
+
+            tag = "tag_finalizada" if status in ("finalizada", "concluida") else "tag_cancelada"
+            status_txt = "✅ Finalizada" if status in ("finalizada", "concluida") else "🚫 Cancelada"
+
+            dt_abertura = criado.strftime("%d/%m/%Y %H:%M") if hasattr(criado, 'strftime') else str(criado)
+            dt_conclusao = concluido_em.strftime("%d/%m/%Y %H:%M") if (concluido_em and hasattr(concluido_em, 'strftime')) else (str(concluido_em) if concluido_em else "—")
+
+            self.tv.insert(
+                "",
+                "end",
+                iid=str(g_id),
+                values=(g_id, proto, status_txt, cli_nome, prod_nome, fornecedor, dt_abertura, dt_conclusao),
+                tags=(tag,)
+            )
+            filtrados += 1
+
+        self.lbl_contagem.config(text=f"{filtrados} chamado(s) no histórico")
+
+    def _sel_id(self):
+        sel = self.tv.selection()
+        if not sel:
+            self.app.toast.show("Selecione um chamado no histórico.", "aviso")
+            return None
+        return int(sel[0])
+
+    def _abrir_detalhe(self, event=None):
+        if event and self.tv.identify_region(event.x, event.y) != "cell":
+            return
+        gid = self._sel_id()
+        if not gid:
+            return
+        PopupDetalhesGarantia(self.app, gid, lambda: (self._carregar_dados(), self.callback and self.callback()))
+
+    def _reabrir_selecionado(self):
+        gid = self._sel_id()
+        if not gid:
+            return
+
+        if not messagebox.askyesno("Reabrir Chamado", "Deseja reabrir este chamado e movê-lo de volta para o quadro Kanban ativo?", parent=self.win):
+            return
+
+        def _task():
+            with get_conn() as conn:
+                conn.execute("""
+                    UPDATE garantias SET
+                        status = 'solicitacao_cliente',
+                        concluido_em = NULL,
+                        atualizado = %s
+                    WHERE id = %s
+                """, (agora(), gid))
+                conn.commit()
+                cache.invalidate_prefix("garantias")
+
+        def _fim(_):
+            self.app.toast.show("Garantia reaberta no Kanban ativo!", "sucesso")
+            self._carregar_dados()
+            if self.callback:
+                self.callback()
+
+        self.app.executar_async(funcao_task=_task, callback_sucesso=_fim, mensagem="Reabrindo garantia...")
+
+    def _excluir_selecionado(self):
+        gid = self._sel_id()
+        if not gid:
+            return
+
+        if not messagebox.askyesno("Excluir", "Excluir permanentemente este chamado do histórico?", parent=self.win):
+            return
+
+        def _task():
+            with get_conn() as conn:
+                conn.execute("DELETE FROM garantias WHERE id = %s", (gid,))
+                conn.commit()
+                cache.invalidate_prefix("garantias")
+
+        def _fim(_):
+            self.app.toast.show("Garantia excluída do histórico!", "aviso")
+            self._carregar_dados()
+            if self.callback:
+                self.callback()
+
+        self.app.executar_async(funcao_task=_task, callback_sucesso=_fim, mensagem="Excluindo...")
 

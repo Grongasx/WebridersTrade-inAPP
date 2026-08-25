@@ -12,6 +12,7 @@ from ui.screens.base_screen import BaseScreen
 from ui.components.base import UIBuilder
 from ui.screens.popup_garantia import (
     PopupNovaGarantia, PopupDetalhesGarantia, PopupMoverEtapaGarantia,
+    PopupFinalizarGarantia, PopupHistoricoGarantias,
     ETAPAS_GARANTIA, MAPA_ETAPAS_CAMPOS
 )
 from core.database import get_conn
@@ -140,10 +141,18 @@ class GarantiasScreen(BaseScreen):
 
         UIBuilder.button(
             f_top,
+            "📜 Histórico Global",
+            self._abrir_historico_global,
+            color=BG3,
+            width=18
+        ).pack(side="right", padx=(8, 0))
+
+        UIBuilder.button(
+            f_top,
             "➕ Nova Solicitação",
             self._abrir_nova_garantia,
             color="#22C55E",
-            width=20
+            width=18
         ).pack(side="right")
 
         # ═══════════════════════════════════════════
@@ -237,6 +246,10 @@ class GarantiasScreen(BaseScreen):
             g_id = g[0]
             proto = g[1] or ""
             status = g[2] or "solicitacao_cliente"
+
+            # Chamados finalizados ou cancelados ficam no Histórico Global
+            if status in ("finalizada", "cancelada", "concluida"):
+                continue
             tipo = g[3] or ""
             marca = g[4] or ""
             modelo = g[5] or ""
@@ -538,6 +551,10 @@ class GarantiasScreen(BaseScreen):
     def _abrir_detalhes(self, garantia_id):
         """Abre modal de detalhes completos e edição da garantia ao clicar."""
         PopupDetalhesGarantia(self.app, garantia_id, callback_atualizado=self._recarregar_completo)
+
+    def _abrir_historico_global(self):
+        """Abre modal com o histórico global de chamados finalizados e cancelados."""
+        PopupHistoricoGarantias(self.app, callback_atualizar_pai=self._recarregar_completo)
 
     def _recarregar_completo(self):
         """Invalida cache e recarrega dados do banco."""

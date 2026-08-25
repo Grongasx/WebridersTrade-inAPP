@@ -1,6 +1,12 @@
 # Histórico de Versões - Vale Presente Manager
 
 ## [2.2.1] - 2026-08-25
+- Finalização de Garantia e Histórico Global ([ui/screens/popup_garantia.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_garantia.py), [ui/screens/garantias_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/garantias_screen.py)):
+  - Adicionado botão `🏁 Finalizar Garantia` no modal `PopupDetalhesGarantia`, abrindo o novo modal `PopupFinalizarGarantia`.
+  - Suporte completo a desfechos de garantia com opções `✅ Finalizada / Concluída com Sucesso` e `🚫 Cancelada / Encerrada sem Troca`, seleção de motivos predefinidos e parecer final detalhado.
+  - Criação do modal `PopupHistoricoGarantias` acessível pelo novo botão `📜 Histórico Global` na tela principal de garantias.
+  - Tabela com filtros dinâmicos por status (`Todos`, `Finalizadas`, `Canceladas`), busca instantânea por protocolo, cliente, produto e fornecedor, abertura de detalhes por duplo clique, exclusão e ação de `🔄 Reabrir para Kanban`.
+  - Isolamento dos chamados concluídos/cancelados do quadro ativo do Kanban, mantendo apenas processos em andamento nas 6 etapas operacionais.
 - Correção de Importação de Cache no Módulo Outlet ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py)):
   - Importação global de `from core.cache import cache` no topo do módulo, eliminando erro de `name 'cache' is not defined` durante a finalização de baixa de produto e crédito.
 - Correção de Persistência na Edição de Produtos Outlet ([ui/screens/popup_outlet.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_outlet.py)):
