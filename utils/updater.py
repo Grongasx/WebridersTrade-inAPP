@@ -92,11 +92,10 @@ def verificar_nova_versao(versao_atual: str = APP_VERSION) -> Optional[Dict[str,
                         asset_size = asset.get("size", 0)
                         break
 
-            # 4. Fallback: zipball do release
+            # Se nenhum binário foi anexado à release, ignora (evita baixar zipball de código puro)
             if not asset_download_url:
-                asset_download_url = data.get("zipball_url")
-                asset_name = f"update_{tag_name}.zip"
-                asset_size = 0
+                print(f"[UPDATER] Release {tag_name} não possui pacote compilado (.zip/.exe) anexado.")
+                return None
 
             return {
                 "tag": tag_name,
@@ -205,7 +204,8 @@ def aplicar_atualizacao_e_reiniciar(caminho_arquivo: str):
         with open(bat_path, "w", encoding="utf-8") as f:
             f.write(f"""@echo off
 timeout /t 2 /nobreak >nul
-robocopy "{origem_copia}" "{pasta_app}" /E /XF .env config_local.json /R:3 /W:1 >nul
+taskkill /f /im "{exe_name}" >nul 2>&1
+robocopy "{origem_copia}" "{pasta_app}" /E /XF .env config_local.json /R:5 /W:1 >nul
 if exist "{exe_path}" (
     start "" "{exe_path}"
 )
@@ -229,6 +229,7 @@ exit
             with open(bat_path, "w", encoding="utf-8") as f:
                 f.write(f"""@echo off
 timeout /t 2 /nobreak >nul
+taskkill /f /im "{exe_name}" >nul 2>&1
 copy /y "{caminho_arquivo}" "{exe_path}" >nul
 if exist "{exe_path}" (
     start "" "{exe_path}"
