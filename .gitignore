@@ -18,10 +18,13 @@ __pycache__/
 .vscode/
 
 # PyInstaller, Builds e Instaladores
-dist/
 build/
 *.spec
 Output/
-*.exe
-*.zip
 installers/
+dist/ValePresenteManager/
+dist/*.iss
+dist/*.txt
+!dist/
+!dist/*.zip
+!dist/ValePresenteManager*.zip

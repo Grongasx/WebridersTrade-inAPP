@@ -92,9 +92,33 @@ def verificar_nova_versao(versao_atual: str = APP_VERSION) -> Optional[Dict[str,
                         asset_size = asset.get("size", 0)
                         break
 
-            # Se nenhum binário foi anexado à release, ignora (evita baixar zipball de código puro)
+            # 4. Quarta Prioridade (Direto do Repositório Git): Busca os ZIPs versionados em dist/
             if not asset_download_url:
-                print(f"[UPDATER] Release {tag_name} não possui pacote compilado (.zip/.exe) anexado.")
+                v_clean = tag_name.lstrip("vV")
+                candidatos_repo = [
+                    (f"https://github.com/{REPO_OWNER}/{REPO_NAME}/raw/{tag_name}/dist/ValePresenteManager_v{v_clean}_build.zip", f"ValePresenteManager_v{v_clean}_build.zip"),
+                    (f"https://github.com/{REPO_OWNER}/{REPO_NAME}/raw/main/dist/ValePresenteManager_v{v_clean}_build.zip", f"ValePresenteManager_v{v_clean}_build.zip"),
+                    (f"https://github.com/{REPO_OWNER}/{REPO_NAME}/raw/{tag_name}/dist/ValePresenteManager_v{v_clean}_Instalador_Completo.zip", f"ValePresenteManager_v{v_clean}_Instalador_Completo.zip"),
+                    (f"https://github.com/{REPO_OWNER}/{REPO_NAME}/raw/main/dist/ValePresenteManager_v{v_clean}_Instalador_Completo.zip", f"ValePresenteManager_v{v_clean}_Instalador_Completo.zip"),
+                ]
+                for url_cand, nome_cand in candidatos_repo:
+                    try:
+                        req_test = urllib.request.Request(
+                            url_cand,
+                            headers={"User-Agent": "ValePresenteManager-Updater"}
+                        )
+                        with urllib.request.urlopen(req_test, timeout=5) as resp_test:
+                            if resp_test.status in (200, 302):
+                                asset_download_url = url_cand
+                                asset_name = nome_cand
+                                asset_size = int(resp_test.headers.get("content-length", 0))
+                                break
+                    except Exception:
+                        continue
+
+            # Se nenhum binário foi encontrado nos assets nem no repositório, aborta
+            if not asset_download_url:
+                print(f"[UPDATER] Release {tag_name} não possui pacote compilado (.zip/.exe) nos assets nem na pasta dist/ do repositório.")
                 return None
 
             return {
