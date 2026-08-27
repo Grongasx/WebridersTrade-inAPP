@@ -1,5 +1,14 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [2.3.1] - 2026-08-27
+- Hotfix em Lançamento e Dedução de Crédito de Clientes ([ui/screens/popup_credito.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_credito.py)):
+  - Conversão explícita do saldo retornado do PostgreSQL (`Decimal`) para ponto flutuante (`float`), eliminando erro `TypeError: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'` e `TypeError: '>' not supported` ao adicionar ou deduzir créditos no modal `PopupLancarCredito`.
+  - Tratamento resiliente de timestamp de `criado` em `PopupHistoricoCredito` com `strftime("%d/%m/%Y %H:%M")`, prevenindo crash `TypeError: 'datetime.datetime' object is not subscriptable` ao visualizar histórico.
+  - Conversão de tipo de valor em `PopupProdutosCliente` garantindo exibição correta de preços outlet vinculados ao cliente.
+- Blindagem e Otimização do Atualizador Automático ([utils/updater.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/utils/updater.py)):
+  - Remoção de fallback cego para `zipball_url` (código-fonte bruto) quando a Release no GitHub não possui pacote compilado (`.zip`/`.exe`) anexado.
+  - Adição de encerramento forçado do processo anterior (`taskkill /f /im ValePresenteManager.exe`) antes do `robocopy` para evitar bloqueios de DLLs e arquivos em uso durante o update.
+
 ## [2.3.0] - 2026-08-25
 - Novo Dashboard Executivo & Inteligência Operacional 360° ([ui/screens/dashboard_screen.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/dashboard_screen.py)):
   - Reformulação visual completa com tema escuro premium WEBRIDERS CLUB (#0D0D10 / #18181C / #FF1E27).

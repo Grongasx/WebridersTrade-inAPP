@@ -2,13 +2,14 @@
 Popups relacionados a créditos.
 """
 
+import datetime
 import tkinter as tk
 from config import BG, BG2, BG3, GOLD, TEXT, TEXT_DIM, SUCCESS, DANGER
 from config import FONT_H2, FONT_BODY, FONT_SMALL
 from ui.components.base import UIBuilder
 from core.database import get_conn
 from core.cache import cache
-from utils.helpers import brl, agora, txt_para_float
+from utils.helpers import brl, agora, txt_para_float, formatar_data
 from utils.formatters import CurrencyFormatter
 
 
@@ -25,8 +26,11 @@ class PopupLancarCredito:
         with get_conn() as conn: 
             cli = conn.execute("SELECT nome, COALESCE(saldo,0) FROM clientes WHERE id=%s", (self.cid,)).fetchone()
         
+        nome_cli = cli[0] if cli else "Cliente"
+        saldo_atual = float(cli[1]) if cli and cli[1] is not None else 0.0
+
         win = tk.Toplevel(self.app)
-        win.title("Lançar Crédito")
+        win.title(f"Lançar Crédito — {nome_cli}")
         UIBuilder.centralizar_janela(win, 480, 480, parent=self.app)
         win.configure(bg=BG)
         win.grab_set()
@@ -39,8 +43,8 @@ class PopupLancarCredito:
         fm = UIBuilder.card(win, bg=BG2, px=36, py=24)
         fm.pack(fill="both", expand=True, padx=20, pady=(20, 10))
         
-        UIBuilder.label(fm, f"👤 {cli[0]}", font=FONT_H2, bg=BG2).pack(anchor="w")
-        UIBuilder.label(fm, f"Saldo Atual: {brl(cli[1])}", font=FONT_BODY, bg=BG2, fg=SUCCESS).pack(anchor="w", pady=(0,15))
+        UIBuilder.label(fm, f"👤 {nome_cli}", font=FONT_H2, bg=BG2).pack(anchor="w")
+        UIBuilder.label(fm, f"Saldo Atual: {brl(saldo_atual)}", font=FONT_BODY, bg=BG2, fg=SUCCESS).pack(anchor="w", pady=(0,15))
         
         tipo_var = tk.StringVar(value="entrada")
         r_tipo = UIBuilder.frame(fm, bg=BG2, pady=5)
@@ -64,11 +68,11 @@ class PopupLancarCredito:
                 self.app.toast.show("Valor inválido.", "erro")
                 return
             tipo = tipo_var.get()
-            if tipo == "saida" and val > cli[1]: 
-                self.app.toast.show("Saldo insuficiente.", "erro")
+            if tipo == "saida" and val > saldo_atual: 
+                self.app.toast.show("Saldo insuficiente para dedução.", "erro")
                 return
-            motivo = motivo_var.get().strip() or "Ajuste manual"
-            novo_saldo = cli[1] + val if tipo == "entrada" else cli[1] - val
+            motivo = motivo_var.get().strip() or ("Ajuste de crédito manual" if tipo == "entrada" else "Dedução de saldo manual")
+            novo_saldo = saldo_atual + val if tipo == "entrada" else saldo_atual - val
             try:
                 with get_conn() as conn:
                     conn.execute("UPDATE clientes SET saldo=%s WHERE id=%s", (novo_saldo, self.cid))
@@ -77,13 +81,13 @@ class PopupLancarCredito:
                         VALUES (%s,%s,%s,%s,%s)
                     """, (self.cid, tipo, val, motivo, agora()))
                     conn.commit()
-                from core.cache import cache
                 cache.invalidate_prefix("creditos")
                 cache.invalidate_prefix("clientes")
                 cache.invalidate_prefix("dashboard")
                 win.destroy()
-                self.callback()
-                self.app.toast.show("Crédito atualizado!", "sucesso")
+                if self.callback:
+                    self.callback()
+                self.app.toast.show("Crédito atualizado com sucesso!", "sucesso")
             except Exception as e:
                 self.app.toast.show(f"Erro ao salvar: {e}", "erro")
 
@@ -113,7 +117,8 @@ class PopupHistoricoCredito:
     
     def _build(self):
         with get_conn() as conn: 
-            nome = conn.execute("SELECT nome FROM clientes WHERE id=%s", (self.cid,)).fetchone()[0]
+            cli_row = conn.execute("SELECT nome FROM clientes WHERE id=%s", (self.cid,)).fetchone()
+            nome = cli_row[0] if cli_row else "Cliente"
         
         win = tk.Toplevel(self.app)
         win.title(f"Histórico — {nome}")
@@ -123,7 +128,7 @@ class PopupHistoricoCredito:
         UIBuilder.label(win, f"📜 Histórico: {nome}", font=FONT_H2, padx=20, pady=12).pack(anchor="w")
         tf = UIBuilder.frame(win, padx=20, pady=8)
         tf.pack(fill="both", expand=True)
-        tv = UIBuilder.make_tree(tf, ("Data","Tipo","Valor","Motivo"), [120,80,100,220], ["center","center","center","w"])
+        tv = UIBuilder.make_tree(tf, ("Data","Tipo","Valor","Motivo"), [130,80,100,220], ["center","center","center","w"])
         tv.tag_configure("entrada", foreground=SUCCESS)
         tv.tag_configure("saida", foreground=DANGER)
         
@@ -134,7 +139,16 @@ class PopupHistoricoCredito:
                 WHERE cliente_id=%s ORDER BY criado DESC
             """, (self.cid,)).fetchall()
         for r in hist: 
-            tv.insert("","end", values=(r[0][:16], "Entrada" if r[1]=="entrada" else "Saída", brl(r[2]), r[3]), tags=(r[1],))
+            dt_raw = r[0]
+            if isinstance(dt_raw, (datetime.datetime, datetime.date)):
+                dt_str = dt_raw.strftime("%d/%m/%Y %H:%M")
+            elif dt_raw:
+                dt_str = str(dt_raw)[:16]
+            else:
+                dt_str = "—"
+            
+            valor_num = float(r[2]) if r[2] is not None else 0.0
+            tv.insert("","end", values=(dt_str, "Entrada" if r[1]=="entrada" else "Saída", brl(valor_num), r[3] or "—"), tags=(r[1],))
 
 
 class PopupProdutosCliente:
@@ -147,7 +161,8 @@ class PopupProdutosCliente:
     
     def _build(self):
         with get_conn() as conn: 
-            nome_cli = conn.execute("SELECT nome FROM clientes WHERE id=%s", (self.cid,)).fetchone()[0]
+            cli_row = conn.execute("SELECT nome FROM clientes WHERE id=%s", (self.cid,)).fetchone()
+            nome_cli = cli_row[0] if cli_row else "Cliente"
             produtos = conn.execute("""
                 SELECT id, codigo_barras, nome, marca, tamanho, preco_outlet, estoque, status 
                 FROM produtos_outlet WHERE cliente_id=%s ORDER BY id DESC
@@ -165,4 +180,5 @@ class PopupProdutosCliente:
                                 [50, 120, 240, 100, 50, 110, 60, 90], 
                                 ["center","center","w","w","center","center","center","center"])
         for p in produtos: 
-            tv.insert("","end", values=(p[0], p[1], p[2], p[3], p[4], brl(p[5]), p[6], p[7]))
+            p_val = float(p[5]) if p[5] is not None else 0.0
+            tv.insert("","end", values=(p[0], p[1] or "—", p[2] or "—", p[3] or "—", p[4] or "—", brl(p_val), p[6], p[7]))
