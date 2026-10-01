@@ -1,5 +1,11 @@
 # Histórico de Versões - Vale Presente Manager
 
+## [2.3.2] - 2026-10-01
+- Correção de Conflito de Chave Única em Cadastro de Garantia ([core/database.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/core/database.py)):
+  - Substituição da contagem de linhas (`COUNT(*)`) por busca do maior sufixo sequencial (`MAX`) filtrado por formato `GAR-YYYY-XXXX` em `gerar_protocolo_garantia()`.
+  - Adicionado laço defensivo de verificação de existência (`SELECT 1 FROM garantias WHERE protocolo = %s`), eliminando erro `duplicate key value violates unique constraint "garantias_protocolo_key"` em cenários com gaps ou exclusões prévias de protocolos.
+  - Documentação do caso na skill [problem-troubleshooting](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/.agents/skills/problem-troubleshooting/SKILL.md).
+
 ## [2.3.1] - 2026-08-27
 - Hotfix em Lançamento e Dedução de Crédito de Clientes ([ui/screens/popup_credito.py](file:///c:/Users/Windows/Desktop/vale_presente_manager/WebridersTrade-inAPP-1/ui/screens/popup_credito.py)):
   - Conversão explícita do saldo retornado do PostgreSQL (`Decimal`) para ponto flutuante (`float`), eliminando erro `TypeError: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'` e `TypeError: '>' not supported` ao adicionar ou deduzir créditos no modal `PopupLancarCredito`.

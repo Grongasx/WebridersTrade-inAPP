@@ -372,9 +372,25 @@ def gerar_protocolo_garantia(conn=None):
     ano = datetime.datetime.now().year
 
     def _exec(c):
-        row = c.execute("SELECT COUNT(*) FROM garantias WHERE protocolo LIKE %s", (f"GAR-{ano}-%",)).fetchone()
-        count = (row[0] if row else 0) + 1
-        return f"GAR-{ano}-{str(count).zfill(4)}"
+        row = c.execute(
+            """
+            SELECT COALESCE(
+                MAX(CAST(SPLIT_PART(protocolo, '-', 3) AS INTEGER)),
+                0
+            )
+            FROM garantias
+            WHERE protocolo LIKE %s AND protocolo ~ %s
+            """,
+            (f"GAR-{ano}-%", f"^GAR-{ano}-[0-9]+$")
+        ).fetchone()
+        proximo = (row[0] if row and row[0] is not None else 0) + 1
+
+        while True:
+            candidato = f"GAR-{ano}-{str(proximo).zfill(4)}"
+            existe = c.execute("SELECT 1 FROM garantias WHERE protocolo = %s", (candidato,)).fetchone()
+            if not existe:
+                return candidato
+            proximo += 1
 
     if conn:
         return _exec(conn)
